@@ -64,7 +64,7 @@ export const getSpecies = async (req, res) => {
 
     try {
         const fetchedSpecies = await sql`
-            SELECT * FROM species where id=${id}
+            SELECT * FROM species where species_id=${id}
         `;
 
         res.status(200).json({
