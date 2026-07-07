@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, Download } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 
 import Breadcrumbs from '@/components/ui/Breadcrumbs'
@@ -57,46 +57,102 @@ function StatItem({ value, label }) {
   )
 }
 
+function FilterSelect({ value, onChange, children, className }) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <div className={cn('relative', className)}>
+      <select
+        value={value}
+        onChange={onChange}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => setIsOpen(false)}
+        className="h-11 w-full min-w-[246px] appearance-none rounded-2xl border border-[var(--app-border)] bg-white px-4 pr-12 text-sm text-[var(--app-text)] outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
+      >
+        {children}
+      </select>
+      <ChevronDown
+        className={cn(
+          'pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--app-muted)] transition-transform duration-200',
+          isOpen && 'rotate-180',
+        )}
+      />
+    </div>
+  )
+}
+
 function ConopeptidesTab({ species }) {
   const totalCount = species.statistics[0]?.value ?? species.conopeptides.length
   const [page, setPage] = useState(1)
+  const [geneSuperfamily, setGeneSuperfamily] = useState('All Superfamilies')
+  const [cysteineFramework, setCysteineFramework] = useState('All Cysteine Frameworks')
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <h2 className="font-serif text-[clamp(2.4rem,3.8vw,3.8rem)] leading-none text-black">
+    <div className="space-y-7">
+      <div className="space-y-4">
+        <h2 className="font-serif text-[clamp(2.8rem,4vw,4.2rem)] leading-[0.95] text-black">
           Conopeptides <span className="text-brand-700">({totalCount})</span>
         </h2>
-        <p className="max-w-3xl text-[1rem] leading-7 text-[var(--app-muted)]">
+        <p className="max-w-4xl text-[1.05rem] leading-7 text-[var(--app-muted)]">
           Predicted conopeptides identified from transcriptomic data for this species.
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <SearchInput placeholder="Search conopeptides..." className="w-full lg:max-w-md" />
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end xl:flex-1">
+          <SearchInput placeholder="Search by.." className="w-full lg:max-w-[328px]" />
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-          <select className="h-11 rounded-2xl border border-[var(--app-border)] bg-white px-4 text-sm text-[var(--app-text)] outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100">
-            <option>Gene Superfamily</option>
-            <option>M</option>
-            <option>O1</option>
-            <option>T</option>
-            <option>A</option>
-          </select>
+          <FilterSelect
+              value={geneSuperfamily}
+              onChange={(event) => setGeneSuperfamily(event.target.value)}
+          >
+              <option>All Superfamilies</option>
+              <option>M</option>
+              <option>O1</option>
+              <option>T</option>
+              <option>A</option>
+          </FilterSelect>
 
-          <select className="h-11 rounded-2xl border border-[var(--app-border)] bg-white px-4 text-sm text-[var(--app-text)] outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100">
-            <option>Cysteine Framework</option>
-            <option>Framework III</option>
-            <option>Framework VI/VII</option>
-            <option>Framework XII</option>
-          </select>
+          <FilterSelect
+              value={cysteineFramework}
+              onChange={(event) => setCysteineFramework(event.target.value)}
+          >
+              <option>All Cysteine Frameworks</option>
+              <option>Framework III</option>
+              <option>Framework VI/VII</option>
+              <option>Framework XII</option>
+          </FilterSelect>
+        </div>
 
-          <Button variant="outline" size="md" className="px-5">
-            Filter
-          </Button>
+        <div className="inline-flex items-stretch self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm xl:self-auto">
+          <button
+            type="button"
+            className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
+            onClick={() => {
+              // mock-only action
+            }}
+          >
+            Apply Filter
+          </button>
+          <div className="w-px bg-[var(--app-border)]" />
+          <button
+            type="button"
+            className="px-5 py-3 text-sm font-medium text-[var(--app-muted)] transition hover:bg-brand-50 hover:text-brand-700"
+            onClick={() => {
+              setGeneSuperfamily('All Superfamilies')
+              setCysteineFramework('All Cysteine Frameworks')
+            }}
+            >
+              Reset
+            </button>
+        </div>
+      </div>
 
-          <Button variant="outline" size="md" className="px-5">
+        <div className="flex justify-start">
+          <Button variant="outline" size="md" className="min-w-[106px] gap-2 px-5">
             Export
+            <Download className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -121,8 +177,8 @@ function ConopeptidesTab({ species }) {
                       as={Link}
                       to={`/conopeptides/${row.conopeptideId}`}
                       variant="ghost"
-                      className="h-auto justify-start p-0 text-left font-semibold text-brand-700"
-                    >
+                    className="h-auto justify-start p-0 text-left text-[1.02rem] font-semibold text-brand-700"
+                  >
                       {row.conopeptideId}
                     </Button>
                   </td>
