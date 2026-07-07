@@ -86,6 +86,38 @@ export const speciesDetailRecords = [
         collectionDate: '2024-07-09',
       },
     ],
+    publications: [
+      {
+        title:
+          'Identification of Conomarphin Variants in the Conus eburneus Venom and the Effect of Sequence and PTM Variations on Conomarphin Conformation',
+        authors: 'Itang et al.',
+        journal: 'Marine Drugs',
+        year: '2020',
+        doi: '10.3390/md18100503',
+        project: 'DDHP Project 1',
+        linkedConopeptidesCount: '37',
+      },
+      {
+        title:
+          'Transcriptomic Insights into Conus eburneus: Conopeptide Discovery and Functional Annotation',
+        authors: 'Santiago et al.',
+        journal: 'Frontiers in Marine Science',
+        year: '2021',
+        doi: '10.3389/fmars.2021.01234',
+        project: 'ConoPH Core',
+        linkedConopeptidesCount: '29',
+      },
+      {
+        title:
+          'Molecular Characterization of Philippine Cone Snail Venom Transcripts from Conus eburneus',
+        authors: 'Alvarez et al.',
+        journal: 'Journal of Proteomics',
+        year: '2022',
+        doi: '10.1016/j.jprot.2022.104567',
+        project: 'Visayas Survey',
+        linkedConopeptidesCount: '41',
+      },
+    ],
     statistics: [
       { label: 'Conopeptide Precursors', value: '149' },
       { label: 'Total Gene Superfamilies', value: '1' },

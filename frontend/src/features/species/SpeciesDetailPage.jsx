@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { ArrowUpRight, Download } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 
-import Badge from '@/components/ui/Badge'
 import Breadcrumbs from '@/components/ui/Breadcrumbs'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -305,6 +304,139 @@ function SpecimensTab({ species }) {
   )
 }
 
+function PublicationCard({ publication }) {
+  return (
+    <Card className="!p-0 overflow-hidden">
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+        <div className="space-y-4 px-5 py-5 lg:border-r lg:border-[var(--app-border)]">
+          <h3 className="text-[1.15rem] font-semibold leading-8 text-black sm:text-[1.35rem]">
+            {publication.title}
+          </h3>
+          <p className="max-w-4xl text-[1rem] leading-7 text-[var(--app-muted)]">{publication.authors}</p>
+          <div className="flex flex-wrap gap-3 text-sm text-[var(--app-muted)]">
+            <span className="font-medium text-brand-700">{publication.journal}</span>
+            <span>•</span>
+            <span>{publication.year}</span>
+          </div>
+        </div>
+
+        <div className="grid gap-5 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-1 lg:items-center">
+          <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 gap-y-4 text-sm">
+            <div className="contents">
+              <dt className="font-semibold text-brand-700">DOI</dt>
+              <dd className="break-all text-[var(--app-muted)]">
+                <a
+                  href={`https://doi.org/${publication.doi}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2 transition hover:text-brand-700"
+                >
+                  https://doi.org/{publication.doi}
+                </a>
+              </dd>
+            </div>
+            <div className="contents">
+              <dt className="font-semibold text-brand-700">Associated Project</dt>
+              <dd className="text-[var(--app-muted)]">{publication.project}</dd>
+            </div>
+            <div className="contents">
+              <dt className="font-semibold text-brand-700">Linked Conopeptides</dt>
+              <dd className="text-[var(--app-muted)]">{publication.linkedConopeptidesCount}</dd>
+            </div>
+          </dl>
+
+          <div className="flex items-end justify-start sm:justify-end lg:justify-start">
+            <Button as="a" href={`https://doi.org/${publication.doi}`} target="_blank" rel="noreferrer" className="gap-2 px-5">
+              View Publication
+              <ArrowUpRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function PublicationsTab({ species }) {
+  const totalCount = species.publications.length
+  const [page, setPage] = useState(1)
+  const [year, setYear] = useState('All Years')
+  const [journal, setJournal] = useState('All Journals')
+
+  return (
+    <div className="space-y-7">
+      <div className="space-y-4">
+        <h2 className="font-serif text-[clamp(2.8rem,4vw,4.2rem)] leading-[0.95] text-black">
+          Publications <span className="text-brand-700">({totalCount})</span>
+        </h2>
+        <p className="max-w-4xl text-[1.05rem] leading-7 text-[var(--app-muted)]">
+          Reference papers and related studies associated with this species.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end xl:flex-1 xl:flex-nowrap">
+            <SearchInput placeholder="Search by.." className="w-full lg:max-w-[328px]" />
+
+            <SelectWithChevron value={year} onChange={(event) => setYear(event.target.value)}>
+              <option>All Years</option>
+              <option>2020</option>
+              <option>2021</option>
+              <option>2022</option>
+            </SelectWithChevron>
+
+            <SelectWithChevron value={journal} onChange={(event) => setJournal(event.target.value)}>
+              <option>All Journals</option>
+              <option>Marine Drugs</option>
+              <option>Frontiers in Marine Science</option>
+              <option>Journal of Proteomics</option>
+            </SelectWithChevron>
+          </div>
+
+          <div className="inline-flex items-stretch self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm xl:self-auto">
+            <button
+              type="button"
+              className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
+              onClick={() => {
+                // mock-only action
+              }}
+            >
+              Apply Filter
+            </button>
+            <div className="w-px bg-[var(--app-border)]" />
+            <button
+              type="button"
+              className="px-5 py-3 text-sm font-medium text-[var(--app-muted)] transition hover:bg-brand-50 hover:text-brand-700"
+              onClick={() => {
+                setYear('All Years')
+                setJournal('All Journals')
+              }}
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div className="flex justify-start">
+          <Button variant="outline" size="md" className="min-w-[106px] gap-2 px-5">
+            Export
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        {species.publications.map((publication) => (
+          <PublicationCard key={publication.doi} publication={publication} />
+        ))}
+      </div>
+
+      <Pagination page={page} totalPages={4} onPageChange={setPage} />
+    </div>
+  )
+}
+
 export default function SpeciesDetailPage() {
   const { speciesId } = useParams()
   const species = useMemo(() => {
@@ -489,6 +621,8 @@ export default function SpeciesDetailPage() {
         <ConopeptidesTab species={species} />
       ) : activeTab === 'specimens' ? (
         <SpecimensTab species={species} />
+      ) : activeTab === 'publications' ? (
+        <PublicationsTab species={species} />
       ) : (
         <Card className="border-dashed bg-white/80 text-center text-[var(--app-muted)]">
           This section is not implemented yet.
