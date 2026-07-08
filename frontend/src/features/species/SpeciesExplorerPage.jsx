@@ -2,10 +2,18 @@ import SpeciesExplorerCard from '@/features/species/components/SpeciesExplorerCa
 import SpeciesExplorerFilters from '@/features/species/components/SpeciesExplorerFilters'
 import SpeciesExplorerPagination from '@/features/species/components/SpeciesExplorerPagination'
 import { speciesExplorerCount, speciesExplorerRecords } from '@/features/species/data/speciesExplorerData'
+import Breadcrumbs from '@/components/ui/Breadcrumbs'
 
 export default function SpeciesExplorerPage() {
   return (
     <div className="space-y-8 pb-6">
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/' },
+          { label: 'Species' },
+        ]}
+      />
+
       <section className="space-y-2">
         <h1 className="text-[clamp(3.25rem,4.6vw,4.6rem)] leading-none text-black">
           Species Explorer
