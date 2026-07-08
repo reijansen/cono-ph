@@ -10,6 +10,7 @@ import PublicationsPage from '@/pages/PublicationsPage'
 import SpeciesDetailPage from '@/pages/SpeciesDetailPage'
 import SpeciesPage from '@/pages/SpeciesPage'
 import VisualizationPage from '@/pages/VisualizationPage'
+import ConopeptideOverviewPage from '@/features/visualization/pages/ConopeptideOverviewPage'
 import SpeciesOverviewPage from '@/features/visualization/pages/SpeciesOverviewPage'
 
 export const router = createBrowserRouter([
@@ -24,10 +25,7 @@ export const router = createBrowserRouter([
       { path: '/biomarkers', element: <BiomarkersPage /> },
       { path: '/visualization', element: <VisualizationPage /> },
       { path: '/visualization/species', element: <SpeciesOverviewPage /> },
-      {
-        path: '/visualization/conopeptides',
-        element: <RoutePlaceholder title="Visualization / Conopeptides" />,
-      },
+      { path: '/visualization/conopeptides', element: <ConopeptideOverviewPage /> },
       {
         path: '/visualization/biomarkers',
         element: <RoutePlaceholder title="Visualization / Biomarkers" />,

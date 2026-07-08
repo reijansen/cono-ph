@@ -123,6 +123,131 @@ export const visualizationFilterOptions = {
 
 export const visualizationStatusOptions = ['Published', 'Under Review', 'Unpublished']
 
+export const conopeptideOverviewBreadcrumbs = [
+  { label: 'Home', to: '/' },
+  { label: 'Visualization', to: '/visualization' },
+  { label: 'Conopeptides' },
+]
+
+export const conopeptideOverviewMeta = {
+  title: 'Conopeptide Overview',
+  subtitle: 'Analyze conopeptide diversity, superfamilies, and sequence characteristics.',
+}
+
+export const conopeptideOverviewMetrics = [
+  {
+    icon: Database,
+    value: '3,671',
+    label: 'Total Precursors',
+  },
+  {
+    icon: Sprout,
+    value: '67',
+    label: 'Superfamilies',
+  },
+  {
+    icon: Globe2,
+    value: '1,248',
+    label: 'Unique Peptides',
+  },
+  {
+    icon: FileCheck2,
+    value: '56',
+    label: 'Species with Conopeptides',
+  },
+]
+
+export const conopeptideSuperfamilyLegend = [
+  { label: 'A', count: 648, percent: '52.1%', color: 'bg-slate-900' },
+  { label: 'M', count: 284, percent: '22.8%', color: 'bg-[#9eb8e8]' },
+  { label: 'O1', count: 173, percent: '13.9%', color: 'bg-[#8be2b2]' },
+  { label: 'O2', count: 72, percent: '5.8%', color: 'bg-[#df9ee9]' },
+  { label: 'T', count: 39, percent: '3.1%', color: 'bg-[#aac0e4]' },
+  { label: 'Unknown', count: 32, percent: '2.5%', color: 'bg-brand-200' },
+]
+
+export const conopeptideLengthBins = [
+  { label: '40-60 aa', value: 22 },
+  { label: '61-80 aa', value: 36 },
+  { label: '81-100 aa', value: 45 },
+  { label: '101-120 aa', value: 38 },
+  { label: '121-140 aa', value: 26 },
+  { label: '141+ aa', value: 14 },
+]
+
+export const conopeptideTopAbundantRows = [
+  {
+    name: 'Conantokin-T',
+    superfamily: 'M',
+    framework: 'C-C-CC',
+    count: 42,
+    species: 'Conus geographus, Conus eburneus',
+  },
+  {
+    name: 'Conantokin-G',
+    superfamily: 'M',
+    framework: 'C-C-CC',
+    count: 38,
+    species: 'Conus geographus, Conus imperialis',
+  },
+  {
+    name: 'Contulakin-G',
+    superfamily: 'O1',
+    framework: 'CC-C-C',
+    count: 31,
+    species: 'Conus textile, Conus miles',
+  },
+  {
+    name: 'Conotoxin KIIIA',
+    superfamily: 'A',
+    framework: 'CC-C-C-C',
+    count: 29,
+    species: 'Conus magus, Conus tribblei',
+  },
+  {
+    name: 'Conotoxin GVIA',
+    superfamily: 'A',
+    framework: 'CC-C-C',
+    count: 25,
+    species: 'Conus geographus, Conus tulipa',
+  },
+  {
+    name: 'Conotoxin MVIIA',
+    superfamily: 'A',
+    framework: 'CC-C-C',
+    count: 22,
+    species: 'Conus magus, Conus catus',
+  },
+  {
+    name: 'Conantokin-R',
+    superfamily: 'M',
+    framework: 'C-C-CC',
+    count: 20,
+    species: 'Conus radiatus, Conus eburneus',
+  },
+  {
+    name: 'Conus peptide 1',
+    superfamily: 'Unknown',
+    framework: 'C-X-C',
+    count: 18,
+    species: 'Conus rolani, Conus miles',
+  },
+  {
+    name: 'Conotoxin PnIA',
+    superfamily: 'O2',
+    framework: 'CC-C-C',
+    count: 17,
+    species: 'Conus pennaceus, Conus imperialis',
+  },
+  {
+    name: 'Conotoxin SxVIIA',
+    superfamily: 'T',
+    framework: 'C-C-C',
+    count: 15,
+    species: 'Conus striatus, Conus tessulatus',
+  },
+]
+
 export const speciesOverviewBreadcrumbs = [
   { label: 'Home', to: '/' },
   { label: 'Visualization', to: '/visualization' },
