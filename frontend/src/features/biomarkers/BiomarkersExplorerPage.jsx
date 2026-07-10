@@ -8,8 +8,10 @@ import BiomarkerSidebar from '@/features/biomarkers/components/BiomarkerSidebar'
 import BiomarkerTableCard from '@/features/biomarkers/components/BiomarkerTableCard'
 import {
   biomarkerExplorerBreadcrumbs,
+  biomarkerExplorerInitialFilters,
   biomarkerExplorerMeta,
   biomarkerExplorerMetrics,
+  biomarkerExplorerResultCount,
   biomarkerExplorerRows,
   biomarkerFilterOptions,
   biomarkerPagination,
@@ -25,18 +27,7 @@ export default function BiomarkersExplorerPage() {
       subtitle={biomarkerExplorerMeta.subtitle}
       sidebar={
         <BiomarkerSidebar
-          filters={{
-            search: '',
-            project: 'All Projects',
-            markerType: 'All Marker Types',
-            species: 'All Species',
-            province: 'All Provinces',
-            municipality: 'All Municipalities',
-            sequencingPlatform: 'All Platforms',
-            status: [],
-            hasAccession: false,
-            hasSequenceData: false,
-          }}
+          filters={biomarkerExplorerInitialFilters}
           options={biomarkerFilterOptions}
           onFilterChange={() => {}}
         />
@@ -56,7 +47,7 @@ export default function BiomarkersExplorerPage() {
 
       <BiomarkerTableCard
         title="Biomarker Records"
-        resultCount="312 results"
+        resultCount={biomarkerExplorerResultCount}
         action={
           <button
             type="button"
