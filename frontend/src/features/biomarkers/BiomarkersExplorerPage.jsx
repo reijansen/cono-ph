@@ -1,4 +1,5 @@
-import { Download } from 'lucide-react'
+import { ChevronRight, Download } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 import BiomarkerLayout from '@/features/biomarkers/components/BiomarkerLayout'
 import BiomarkerMetricCard from '@/features/biomarkers/components/BiomarkerMetricCard'
@@ -15,6 +16,8 @@ import {
 } from '@/features/biomarkers/data/biomarkerMockData'
 
 export default function BiomarkersExplorerPage() {
+  const navigate = useNavigate()
+
   return (
     <BiomarkerLayout
       breadcrumbs={biomarkerExplorerBreadcrumbs}
@@ -81,12 +84,25 @@ export default function BiomarkersExplorerPage() {
                     {column}
                   </th>
                 ))}
+                <th className="border-b border-[var(--app-border)] px-4 py-3 font-semibold" />
               </tr>
             </thead>
 
             <tbody className="text-sm text-[var(--app-text)]">
               {biomarkerExplorerRows.map((row) => (
-                <tr key={row.biomarkerId} className="transition hover:bg-brand-50/40">
+                <tr
+                  key={row.biomarkerId}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/biomarkers/${row.biomarkerId}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      navigate(`/biomarkers/${row.biomarkerId}`)
+                    }
+                  }}
+                  className="cursor-pointer transition hover:bg-brand-50/40 focus:outline-none focus-visible:bg-brand-50/40"
+                >
                   <td className="border-b border-[var(--app-border)] px-4 py-4 font-semibold text-brand-700">
                     {row.biomarkerId}
                   </td>
@@ -96,6 +112,9 @@ export default function BiomarkersExplorerPage() {
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.sequenceLength}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.province}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.status}</td>
+                  <td className="border-b border-[var(--app-border)] px-4 py-4 text-right">
+                    <ChevronRight className="ml-auto h-5 w-5 text-[var(--app-muted)]" />
+                  </td>
                 </tr>
               ))}
             </tbody>

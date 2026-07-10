@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 
 import AppLayout from '@/layouts/AppLayout'
 import AboutPage from '@/pages/AboutPage'
+import BiomarkerDetailPage from '@/pages/BiomarkerDetailPage'
 import BiomarkersPage from '@/pages/BiomarkersPage'
 import RoutePlaceholder from '@/components/common/RoutePlaceholder'
 import ConopeptidesPage from '@/pages/ConopeptidesPage'
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: '/conopeptides', element: <ConopeptidesPage /> },
       { path: '/conopeptides/:id', element: <ConopeptideDetailPage /> },
       { path: '/biomarkers', element: <BiomarkersPage /> },
+      { path: '/biomarkers/:id', element: <BiomarkerDetailPage /> },
       { path: '/visualization', element: <VisualizationPage /> },
       { path: '/visualization/species', element: <SpeciesOverviewPage /> },
       { path: '/visualization/conopeptides', element: <ConopeptideOverviewPage /> },
