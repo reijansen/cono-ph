@@ -50,6 +50,57 @@ function CopyAction({ copied, onCopy }) {
   )
 }
 
+function SequenceFieldCard({ label, value, onCopy, multiline = false }) {
+  const isLongValue = String(value).length > 42
+  const displayValue = multiline ? value : isLongValue ? `${String(value).slice(0, 42)}...` : value
+
+  return (
+    <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm text-[var(--app-muted)]">{label}</p>
+          <p
+            className={cn(
+              'mt-2 text-[1rem] font-medium text-[var(--app-text)]',
+              multiline ? 'whitespace-normal break-all leading-6' : 'overflow-hidden text-ellipsis break-words',
+            )}
+            title={String(value)}
+          >
+            {displayValue}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onCopy}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--app-border)] bg-white text-[var(--app-muted)] transition hover:border-brand-300 hover:text-brand-700"
+          aria-label={`Copy ${label}`}
+          title={`Copy ${label}`}
+        >
+          <Copy className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function SequenceBlock({ sequence, note }) {
+  const sequenceText = Array.isArray(sequence) ? sequence.join('\n') : sequence
+
+  return (
+    <div className="space-y-4">
+      <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white p-4">
+        <div className="grid grid-cols-[22px_minmax(0,1fr)] gap-3 text-[0.82rem] text-[var(--app-muted)]">
+          <span>1</span>
+          <pre className="min-w-0 whitespace-pre-wrap break-all font-mono text-[0.95rem] leading-8 tracking-[0.08em] text-[var(--app-text)]">
+            {sequenceText}
+          </pre>
+        </div>
+      </div>
+      {note ? <p className="text-sm leading-7 text-[var(--app-muted)]">{note}</p> : null}
+    </div>
+  )
+}
+
 export default function ConopeptideDetailPage() {
   const { id } = useParams()
   const [activeTab, setActiveTab] = useState('Overview')
@@ -225,17 +276,7 @@ export default function ConopeptideDetailPage() {
               }
             >
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-stretch">
-                <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
-                  <div className="flex gap-4 text-[0.82rem] text-[var(--app-muted)]">
-                    <span>1</span>
-                    <div className="flex-1 font-mono text-[0.95rem] leading-8 tracking-[0.08em] text-[var(--app-text)]">
-                      {sequencesTab.precursorSequence.map((line) => (
-                        <div key={line}>{line}</div>
-                      ))}
-                    </div>
-                    <span className="self-end">60</span>
-                  </div>
-                </div>
+                <SequenceBlock sequence={sequencesTab.precursorSequence} />
 
                 <div className="space-y-4 rounded-2xl border border-[var(--app-border)] bg-white p-5">
                   <div>
@@ -303,6 +344,29 @@ export default function ConopeptideDetailPage() {
         </div>
       ) : activeTab === 'Sequences' ? (
         <div className="space-y-6">
+          <DetailPanel title="Sequence Information">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {sequencesTab.fields.map((item) => (
+                <SequenceFieldCard
+                  key={item.label}
+                  label={item.label}
+                  value={item.value}
+                  multiline={
+                    [
+                      'Precursor Sequence',
+                      'Remarks for Sequence',
+                      'Signal peptide',
+                      'Propeptide sequence',
+                      'Mature Peptide Sequence',
+                      'Post Peptide Sequence',
+                    ].includes(item.label)
+                  }
+                  onCopy={() => copyToClipboard(`sequence-field-${item.label}`, item.value)}
+                />
+              ))}
+            </div>
+          </DetailPanel>
+
           <DetailPanel
             title="Predicted Peptide"
             action={
@@ -339,20 +403,10 @@ export default function ConopeptideDetailPage() {
                 />
               }
             >
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
-                  <div className="flex gap-4 text-[0.82rem] text-[var(--app-muted)]">
-                    <span>1</span>
-                    <div className="flex-1 font-mono text-[0.95rem] leading-8 tracking-[0.08em] text-[var(--app-text)]">
-                      {sequencesTab.precursorSequence.map((line) => (
-                        <div key={line}>{line}</div>
-                      ))}
-                    </div>
-                    <span className="self-end">60</span>
-                  </div>
-                </div>
-                <p className="text-sm leading-7 text-[var(--app-muted)]">{sequencesTab.precursorSequenceNote}</p>
-              </div>
+              <SequenceBlock
+                sequence={sequencesTab.precursorSequence}
+                note={sequencesTab.precursorSequenceNote}
+              />
             </DetailPanel>
 
             <div className="space-y-4 rounded-3xl border border-[var(--app-border)] bg-white p-5">
@@ -386,12 +440,12 @@ export default function ConopeptideDetailPage() {
             }
           >
             <div className="rounded-2xl border border-[var(--app-border)] bg-brand-50/20 p-4">
-              <div className="flex flex-wrap items-center gap-2 font-mono text-[1rem] tracking-[0.38em] text-[var(--app-text)]">
+              <div className="font-mono text-[1rem] leading-8 tracking-[0.28em] text-[var(--app-text)] whitespace-pre-wrap break-words">
                 {sequencesTab.translatedPrecursorSegments.map((segment, index) => (
                   <span
                     key={`${segment.text}-${index}`}
                     className={cn(
-                      'rounded-md px-1 py-1',
+                      'rounded-md px-1 py-1 align-middle',
                       segment.highlighted && 'bg-brand-100 text-brand-700',
                     )}
                   >
