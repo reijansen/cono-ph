@@ -193,6 +193,46 @@ export const conopeptideDetailRecords = [
       { label: 'Collection Date', value: '2022-07-15' },
       { label: 'Sequencing Platform', value: 'Illumina NovaSeq 6000' },
     ],
+    sequencesTab: {
+      predictedPeptide: 'GCCSHPACGKGRRC',
+      predictedPeptideMarkers: ['1', '5', '10', '15'],
+      predictedPeptideNote: 'Predicted mature peptide region with conserved cysteine positions.',
+      precursorSequence: [
+        'ATG GCT TGT TGT TCT CAT CCG GCT TGT GGT AAG GGC GCC GCC TGC TGT GAA GAC',
+        'GCT TGT GAA GGA AAG GAG CGC TGT TAA',
+      ],
+      precursorSequenceNote: 'Transcript-derived nucleotide sequence aligned to the precursor record.',
+      translatedPrecursorSegments: [
+        { text: 'M A C C ', highlighted: false },
+        { text: 'S H P A C G K G R R C E D A E G K E R C', highlighted: true },
+        { text: ' *', highlighted: false },
+      ],
+      translatedPrecursorNote: 'Mature peptide highlighted within the translated precursor.',
+    },
+    annotationsTab: {
+      summary:
+        'Curated as a member of the M superfamily with a cysteine-rich mature peptide motif.',
+      items: [
+        { label: 'Superfamily Assignment', value: 'M Superfamily' },
+        { label: 'Cysteine Framework', value: 'MII' },
+        { label: 'Matched Toxin / Family', value: 'µ-Conotoxin KIIIA' },
+        { label: 'Evidence Level', value: 'Transcriptomic / curated' },
+        { label: 'Functional Summary', value: 'Likely neuroactive peptide associated with ion channel inhibition.' },
+      ],
+    },
+    sourceTab: {
+      citation: 'Lewis, R.J., Garcia, M.L. (2003) Toxicon, 42(2), 135-149',
+      rows: [
+        { label: 'Accession', value: 'ConoPH0001' },
+        { label: 'Transcript ID', value: 'TRINITY_DN100_c0_g1_i1' },
+        { label: 'Project', value: 'Project 1 - Anti-Pain and Anti-Neurodegeneration Drug Candidates' },
+        { label: 'Specimen ID', value: 'UPD-MSI-CTEX-001' },
+        { label: 'Collection Date', value: '2022-07-15' },
+        { label: 'Province', value: 'Cebu' },
+        { label: 'Sequencing Platform', value: 'Illumina NovaSeq 6000' },
+        { label: 'Data Status', value: 'Published' },
+      ],
+    },
     tabs: ['Overview', 'Sequences', 'Annotations', 'Source'],
   },
 ]

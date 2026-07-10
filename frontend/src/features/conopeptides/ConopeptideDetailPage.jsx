@@ -32,8 +32,22 @@ function SummaryItem({ label, value }) {
   )
 }
 
-function PlaceholderTab({ label }) {
-  return <Card className="border-dashed bg-white/80 text-[var(--app-muted)]">{label} content coming soon.</Card>
+function CopyAction({ copied, onCopy }) {
+  return (
+    <Button type="button" variant="outline" className="gap-2 px-3 py-2 text-sm" onClick={onCopy}>
+      {copied ? (
+        <>
+          Copied
+          <Check className="h-4 w-4" />
+        </>
+      ) : (
+        <>
+          Copy
+          <Copy className="h-4 w-4" />
+        </>
+      )}
+    </Button>
+  )
 }
 
 export default function ConopeptideDetailPage() {
@@ -63,6 +77,10 @@ export default function ConopeptideDetailPage() {
   if (!record) {
     return null
   }
+
+  const sequencesTab = record.sequencesTab
+  const annotationsTab = record.annotationsTab
+  const sourceTab = record.sourceTab
 
   return (
     <div className="space-y-6 pb-8">
@@ -131,24 +149,10 @@ export default function ConopeptideDetailPage() {
             <DetailPanel
               title="Predicted Peptide"
               action={
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="gap-2 px-3 py-2 text-sm"
-                  onClick={() => copyToClipboard('predicted-peptide', record.predictedPeptide)}
-                >
-                  {copiedSection === 'predicted-peptide' ? (
-                    <>
-                      Copied
-                      <Check className="h-4 w-4" />
-                    </>
-                  ) : (
-                    <>
-                      Copy
-                      <Copy className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
+                <CopyAction
+                  copied={copiedSection === 'predicted-peptide'}
+                  onCopy={() => copyToClipboard('predicted-peptide', record.predictedPeptide)}
+                />
               }
             >
               <div className="space-y-4">
@@ -212,26 +216,12 @@ export default function ConopeptideDetailPage() {
             <DetailPanel
               title="Precursor Sequence"
               action={
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="gap-2 px-3 py-2 text-sm"
-                  onClick={() =>
-                    copyToClipboard('precursor-sequence', record.precursorSequence.join('\n'))
+                <CopyAction
+                  copied={copiedSection === 'precursor-sequence'}
+                  onCopy={() =>
+                    copyToClipboard('precursor-sequence', sequencesTab.precursorSequence.join('\n'))
                   }
-                >
-                  {copiedSection === 'precursor-sequence' ? (
-                    <>
-                      Copied
-                      <Check className="h-4 w-4" />
-                    </>
-                  ) : (
-                    <>
-                      Copy
-                      <Copy className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
+                />
               }
             >
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-stretch">
@@ -239,7 +229,7 @@ export default function ConopeptideDetailPage() {
                   <div className="flex gap-4 text-[0.82rem] text-[var(--app-muted)]">
                     <span>1</span>
                     <div className="flex-1 font-mono text-[0.95rem] leading-8 tracking-[0.08em] text-[var(--app-text)]">
-                      {record.precursorSequence.map((line) => (
+                      {sequencesTab.precursorSequence.map((line) => (
                         <div key={line}>{line}</div>
                       ))}
                     </div>
@@ -268,34 +258,20 @@ export default function ConopeptideDetailPage() {
           <DetailPanel
             title="Translated Precursor (with predicted mature peptide highlighted)"
             action={
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-2 px-3 py-2 text-sm"
-                onClick={() =>
+              <CopyAction
+                copied={copiedSection === 'translated-precursor'}
+                onCopy={() =>
                   copyToClipboard(
                     'translated-precursor',
-                    record.translatedPrecursorSegments.map((segment) => segment.text).join(''),
+                    sequencesTab.translatedPrecursorSegments.map((segment) => segment.text).join(''),
                   )
                 }
-              >
-                {copiedSection === 'translated-precursor' ? (
-                  <>
-                    Copied
-                    <Check className="h-4 w-4" />
-                  </>
-                ) : (
-                  <>
-                    Copy
-                    <Copy className="h-4 w-4" />
-                  </>
-                )}
-              </Button>
+              />
             }
           >
             <div className="rounded-2xl border border-[var(--app-border)] bg-brand-50/20 p-4">
               <div className="flex flex-wrap items-center gap-2 font-mono text-[1rem] tracking-[0.38em] text-[var(--app-text)]">
-                {record.translatedPrecursorSegments.map((segment, index) => (
+                {sequencesTab.translatedPrecursorSegments.map((segment, index) => (
                   <span
                     key={`${segment.text}-${index}`}
                     className={cn(
@@ -325,8 +301,187 @@ export default function ConopeptideDetailPage() {
             </div>
           </DetailPanel>
         </div>
+      ) : activeTab === 'Sequences' ? (
+        <div className="space-y-6">
+          <DetailPanel
+            title="Predicted Peptide"
+            action={
+              <CopyAction
+                copied={copiedSection === 'sequence-predicted'}
+                onCopy={() => copyToClipboard('sequence-predicted', sequencesTab.predictedPeptide)}
+              />
+            }
+          >
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3 text-[1.95rem] tracking-[0.38em] text-[var(--app-text)] sm:text-[2.2rem]">
+                {sequencesTab.predictedPeptide.split('').map((letter, index) => (
+                  <span key={`${letter}-${index}`} className="inline-flex flex-col items-center">
+                    <span className="font-mono">{letter}</span>
+                    <span className="mt-2 text-sm tracking-normal text-brand-700">
+                      {sequencesTab.predictedPeptideMarkers.includes(String(index + 1))
+                        ? String(index + 1)
+                        : '\u00A0'}
+                    </span>
+                  </span>
+                ))}
+              </div>
+              <p className="text-sm leading-7 text-[var(--app-muted)]">{sequencesTab.predictedPeptideNote}</p>
+            </div>
+          </DetailPanel>
+
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+            <DetailPanel
+              title="Precursor Nucleotide Sequence"
+              action={
+                <CopyAction
+                  copied={copiedSection === 'sequence-precursor'}
+                  onCopy={() => copyToClipboard('sequence-precursor', sequencesTab.precursorSequence.join('\n'))}
+                />
+              }
+            >
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
+                  <div className="flex gap-4 text-[0.82rem] text-[var(--app-muted)]">
+                    <span>1</span>
+                    <div className="flex-1 font-mono text-[0.95rem] leading-8 tracking-[0.08em] text-[var(--app-text)]">
+                      {sequencesTab.precursorSequence.map((line) => (
+                        <div key={line}>{line}</div>
+                      ))}
+                    </div>
+                    <span className="self-end">60</span>
+                  </div>
+                </div>
+                <p className="text-sm leading-7 text-[var(--app-muted)]">{sequencesTab.precursorSequenceNote}</p>
+              </div>
+            </DetailPanel>
+
+            <div className="space-y-4 rounded-3xl border border-[var(--app-border)] bg-white p-5">
+              <div>
+                <p className="text-[1rem] text-[var(--app-muted)]">Length</p>
+                <p className="mt-2 text-[1.1rem] font-semibold text-brand-700">
+                  {record.precursorMetadata.length}
+                </p>
+              </div>
+              <div>
+                <p className="text-[1rem] text-[var(--app-muted)]">Translation</p>
+                <p className="mt-2 text-[1.1rem] font-semibold text-brand-700">
+                  {record.precursorMetadata.translation}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <DetailPanel
+            title="Translated Amino Acid Sequence"
+            action={
+              <CopyAction
+                copied={copiedSection === 'sequence-translated'}
+                onCopy={() =>
+                  copyToClipboard(
+                    'sequence-translated',
+                    sequencesTab.translatedPrecursorSegments.map((segment) => segment.text).join(''),
+                  )
+                }
+              />
+            }
+          >
+            <div className="rounded-2xl border border-[var(--app-border)] bg-brand-50/20 p-4">
+              <div className="flex flex-wrap items-center gap-2 font-mono text-[1rem] tracking-[0.38em] text-[var(--app-text)]">
+                {sequencesTab.translatedPrecursorSegments.map((segment, index) => (
+                  <span
+                    key={`${segment.text}-${index}`}
+                    className={cn(
+                      'rounded-md px-1 py-1',
+                      segment.highlighted && 'bg-brand-100 text-brand-700',
+                    )}
+                  >
+                    {segment.text}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-4 flex items-center gap-2 text-sm text-[var(--app-muted)]">
+                <span className="h-3 w-3 rounded-sm bg-brand-300" />
+                {sequencesTab.translatedPrecursorNote}
+              </div>
+            </div>
+          </DetailPanel>
+        </div>
+      ) : activeTab === 'Annotations' ? (
+        <div className="space-y-6">
+          <DetailPanel title="Annotation Summary">
+            <div className="space-y-4">
+              <p className="max-w-3xl text-[1rem] leading-7 text-[var(--app-muted)]">{annotationsTab.summary}</p>
+              <div className="grid gap-4 lg:grid-cols-2">
+                {annotationsTab.items.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
+                    <p className="text-sm text-[var(--app-muted)]">{item.label}</p>
+                    <p className="mt-2 text-[1rem] font-medium text-[var(--app-text)]">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </DetailPanel>
+
+          <DetailPanel title="Matched Toxin / Functional Note">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h3 className="text-[1.55rem] font-semibold text-[var(--app-text)]">
+                    {record.matchedToxin.name}
+                  </h3>
+                  <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700">
+                    {record.matchedToxin.tag}
+                  </span>
+                </div>
+                <p className="max-w-2xl text-[1rem] leading-7 text-[var(--app-muted)]">
+                  {record.matchedToxin.summary}
+                </p>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
+                  <p className="text-sm text-[var(--app-muted)]">Evidence Note</p>
+                  <p className="mt-2 text-[0.98rem] leading-7 text-[var(--app-text)]">
+                    {annotationsTab.summary}
+                  </p>
+                </div>
+
+                <Button type="button" variant="outline" className="gap-2 px-4">
+                  {record.matchedToxin.referenceAction}
+                  <ArrowUpRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </DetailPanel>
+        </div>
       ) : (
-        <PlaceholderTab label={activeTab} />
+        <div className="space-y-6">
+          <DetailPanel title="Record Source">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
+              <dl className="grid gap-5 sm:grid-cols-2">
+                {sourceTab.rows.map((item) => (
+                  <div key={item.label} className="grid gap-2">
+                    <dt className="text-sm text-[var(--app-muted)]">{item.label}</dt>
+                    <dd className="font-medium text-[var(--app-text)]">{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              <div className="space-y-4 rounded-2xl border border-[var(--app-border)] bg-white p-5">
+                <div>
+                  <p className="text-sm text-[var(--app-muted)]">Citation</p>
+                  <p className="mt-2 text-[0.98rem] leading-7 text-[var(--app-text)]">
+                    {sourceTab.citation}
+                  </p>
+                </div>
+                <Button type="button" variant="outline" className="gap-2 px-4">
+                  View in Reference
+                  <ArrowUpRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </DetailPanel>
+        </div>
       )}
     </div>
   )
