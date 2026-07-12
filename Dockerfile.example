@@ -1,0 +1,24 @@
+FROM node:latest
+
+WORKDIR /app
+
+# install backend dependencies
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+# Example value; update accordingly
+ENV PORT=SOME_INTEGER
+ENV PGUSER="example_neondb_owner"
+ENV PGPASSWORD="example_nrl_yp4FL99aslmn"
+ENV PGHOST="this-is-just-an-example.ap-southeast-1.aws.neon.tech"
+ENV PGDATABASE="example_neondb"
+ENV ARCJET_KEY="example_ajkey_fdsafsfa9hw97f6rnx4"
+ENV ARCJET_ENV=some_word_not_in_quotes
+
+EXPOSE SOME_INTEGER
+
+# run backend and frontend
+CMD ["npm", "run", "dev"]
