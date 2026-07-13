@@ -1,7 +1,7 @@
 {
-  "name": "pern_practice",
+  "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "backend service for ConoPH, a Philippine-based database for cone snails",
   "main": "backend/server.js",
   "scripts": {
     "dev": "nodemon backend/server.js",
