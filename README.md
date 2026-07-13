@@ -2,6 +2,17 @@
 
 A proof-of-concept database that integrates `species taxonomy`, `collection metadata`, `molecular sequence data`, `functional annotations`, and `publication records` for Philippine cone snails and their conopeptides.
 
+## Vercel Deployment
+
+The frontend is Vercel-ready in the `frontend` directory.
+
+1. Create the Vercel project from this repository.
+2. Set the root directory to `frontend`.
+3. Add `VITE_API_BASE_URL` in Vercel to point to the deployed backend API.
+4. Deploy the frontend.
+
+The backend is an Express server and should be deployed separately.
+
 ## Backend Development Setup
 
 **.env setup**

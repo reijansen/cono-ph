@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { ArrowUpRight, Download } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+
 import Breadcrumbs from '@/components/ui/Breadcrumbs'
+import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import ErrorMessage from '@/components/common/ErrorMessage'
-import LoadingSpinner from '@/components/common/LoadingSpinner'
-import { useSpeciesDetail } from '@/hooks/useSpecies'
+import Pagination from '@/components/ui/Pagination'
+import SearchInput from '@/components/ui/SearchInput'
+import SelectWithChevron from '@/components/ui/SelectWithChevron'
 import { cn } from '@/utils/cn'
+
+import { defaultSpeciesDetailId, speciesDetailRecords } from '@/features/species/data/speciesDetailData'
 
 const tabs = [
   { label: 'Overview', value: 'overview' },
@@ -33,164 +38,344 @@ function InfoList({ items }) {
   )
 }
 
-function OverviewTab({ species }) {
-  if (!species) return null
+function SectionCard({ title, children, className }) {
+  return (
+    <Card className={cn('!p-0 overflow-hidden', className)}>
+      <div className="rounded-t-2xl bg-brand-700 px-5 py-4 text-center text-[1.05rem] font-semibold text-white">
+        {title}
+      </div>
+      <div className="overflow-hidden rounded-b-[1.15rem] px-5 py-2">{children}</div>
+    </Card>
+  )
+}
 
-  const infoItems = [
-    { label: 'Scientific Name', value: species.scientific_name || 'N/A' },
-    { label: 'Common Name', value: species.common_name || 'N/A' },
-    { label: 'Related Publications', value: species.num_related_publications || 0 },
-  ]
+function StatItem({ value, label }) {
+  return (
+    <div className="flex min-h-[100px] flex-col items-center justify-center px-3 py-4 text-center">
+      <div className="text-[2rem] font-semibold leading-none text-brand-700">{value}</div>
+      <div className="mt-3 max-w-[10rem] text-[1rem] leading-6 text-[var(--app-muted)]">{label}</div>
+    </div>
+  )
+}
 
-  if (species.created_at) {
-    infoItems.push({
-      label: 'Date Added',
-      value: new Date(species.created_at).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
-    })
-  }
+function ConopeptidesTab({ species }) {
+  const totalCount = species.statistics[0]?.value ?? species.conopeptides.length
+  const [page, setPage] = useState(1)
+  const [geneSuperfamily, setGeneSuperfamily] = useState('All Superfamilies')
+  const [cysteineFramework, setCysteineFramework] = useState('All Cysteine Frameworks')
 
   return (
     <div className="space-y-7">
       <div className="space-y-4">
         <h2 className="font-serif text-[clamp(2.8rem,4vw,4.2rem)] leading-[0.95] text-black">
-          Overview
+          Conopeptides <span className="text-brand-700">({totalCount})</span>
         </h2>
         <p className="max-w-4xl text-[1.05rem] leading-7 text-[var(--app-muted)]">
-          General information about this species.
+          Predicted conopeptides identified from transcriptomic data for this species.
         </p>
       </div>
 
-      <Card className="!p-0 overflow-hidden">
-        <div className="rounded-t-2xl bg-brand-700 px-5 py-4 text-center text-[1.05rem] font-semibold text-white">
-          Species Information
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end xl:flex-1">
+            <SearchInput placeholder="Search by.." className="w-full lg:max-w-[328px]" />
+
+            <SelectWithChevron
+              value={geneSuperfamily}
+              onChange={(event) => setGeneSuperfamily(event.target.value)}
+            >
+              <option>All Superfamilies</option>
+              <option>M</option>
+              <option>O1</option>
+              <option>T</option>
+              <option>A</option>
+            </SelectWithChevron>
+
+            <SelectWithChevron
+              value={cysteineFramework}
+              onChange={(event) => setCysteineFramework(event.target.value)}
+            >
+              <option>All Cysteine Frameworks</option>
+              <option>Framework III</option>
+              <option>Framework VI/VII</option>
+              <option>Framework XII</option>
+            </SelectWithChevron>
+          </div>
+
+          <div className="inline-flex items-stretch self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm xl:self-auto">
+            <button
+              type="button"
+              className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
+              onClick={() => {}}
+            >
+              Apply Filter
+            </button>
+            <div className="w-px bg-[var(--app-border)]" />
+            <button
+              type="button"
+              className="px-5 py-3 text-sm font-medium text-[var(--app-muted)] transition hover:bg-brand-50 hover:text-brand-700"
+              onClick={() => {
+                setGeneSuperfamily('All Superfamilies')
+                setCysteineFramework('All Cysteine Frameworks')
+              }}
+            >
+              Reset
+            </button>
+          </div>
         </div>
-        <div className="overflow-hidden rounded-b-[1.15rem] px-5 py-2">
-          <InfoList items={infoItems} />
+
+        <div className="flex justify-start">
+          <Button variant="outline" size="md" className="min-w-[106px] gap-2 px-5">
+            Export
+            <Download className="h-4 w-4" />
+          </Button>
         </div>
-      </Card>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-[860px] w-full border-collapse">
+            <thead className="bg-brand-50">
+              <tr className="text-left text-sm font-semibold text-brand-800">
+                <th className="px-5 py-4">Conopeptide ID</th>
+                <th className="px-5 py-4">Gene Superfamily</th>
+                <th className="px-5 py-4">Framework</th>
+                <th className="px-5 py-4">Specimen ID</th>
+                <th className="px-5 py-4">Publication</th>
+              </tr>
+            </thead>
+            <tbody>
+              {species.conopeptides.map((row) => (
+                <tr
+                  key={row.conopeptideId}
+                  className="border-t border-[var(--app-border)] transition hover:bg-brand-50/60"
+                >
+                  <td className="px-5 py-4">
+                    <Button
+                      as={Link}
+                      to={`/conopeptides/${row.conopeptideId}`}
+                      variant="ghost"
+                      className="h-auto justify-start p-0 text-left text-[1.02rem] font-semibold text-brand-700"
+                    >
+                      {row.conopeptideId}
+                    </Button>
+                  </td>
+                  <td className="px-5 py-4 text-[var(--app-text)]">{row.geneSuperfamily}</td>
+                  <td className="px-5 py-4 text-[var(--app-text)]">{row.framework}</td>
+                  <td className="px-5 py-4 text-[var(--app-text)]">{row.specimenId}</td>
+                  <td className="px-5 py-4 text-[var(--app-text)]">{row.publication}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <Pagination page={page} totalPages={4} onPageChange={setPage} />
     </div>
   )
 }
 
-function ComingSoonTab({ label }) {
+function SpecimensTab({ species }) {
+  const totalCount = species.specimens.length
+  const [page, setPage] = useState(1)
+  const [province, setProvince] = useState('All Provinces')
+  const [repository, setRepository] = useState('All Repositories')
+  const [sequencingPlatform, setSequencingPlatform] = useState('All Platforms')
+
   return (
     <div className="space-y-7">
       <div className="space-y-4">
         <h2 className="font-serif text-[clamp(2.8rem,4vw,4.2rem)] leading-[0.95] text-black">
-          {label}
+          Specimens <span className="text-brand-700">({totalCount})</span>
         </h2>
         <p className="max-w-4xl text-[1.05rem] leading-7 text-[var(--app-muted)]">
-          This section is coming soon. We're working on bringing you more detailed information about {label.toLowerCase()}.
+          Individual specimen records collected for this species.
         </p>
       </div>
 
-      <Card className="p-8 text-center">
-        <p className="text-[var(--app-muted)]">Content coming soon...</p>
-      </Card>
-    </div>
-  )
-}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end xl:flex-1 xl:flex-nowrap">
+            <SearchInput placeholder="Search by.." className="w-full lg:max-w-[328px]" />
 
-export default function SpeciesDetailPage() {
-  const { id } = useParams()
-  const [activeTab, setActiveTab] = useState('overview')
-  const { species, loading, error, refetch } = useSpeciesDetail(Number(id))
+            <SelectWithChevron value={province} onChange={(event) => setProvince(event.target.value)}>
+              <option>All Provinces</option>
+              <option>Cebu</option>
+              <option>Bohol</option>
+              <option>Palawan</option>
+            </SelectWithChevron>
 
-  if (loading) {
-    return (
-      <div className="space-y-8 pb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', to: '/' },
-            { label: 'Species', to: '/species' },
-            { label: 'Loading...' },
-          ]}
-        />
-        <LoadingSpinner label="Loading species details..." />
-      </div>
-    )
-  }
+            <SelectWithChevron value={repository} onChange={(event) => setRepository(event.target.value)}>
+              <option>All Repositories</option>
+              <option>The Marine Science Institute (MSI)</option>
+              <option>University Repository</option>
+            </SelectWithChevron>
 
-  if (error || !species) {
-    return (
-      <div className="space-y-8 pb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', to: '/' },
-            { label: 'Species', to: '/species' },
-            { label: 'Error' },
-          ]}
-        />
-        <div className="space-y-4">
-          <ErrorMessage 
-            error={error || 'Species not found'} 
-            onDismiss={refetch}
-            title="Failed to load species details"
-          />
-          <Link 
-            to="/species" 
-            className="inline-block rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
-          >
-            Back to Species List
-          </Link>
+            <SelectWithChevron
+              value={sequencingPlatform}
+              onChange={(event) => setSequencingPlatform(event.target.value)}
+            >
+              <option>All Platforms</option>
+              <option>Novaseq 6000</option>
+              <option>Oxford Nanopore</option>
+              <option>PacBio</option>
+            </SelectWithChevron>
+          </div>
+
+          <div className="inline-flex items-stretch self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm xl:self-auto">
+            <button
+              type="button"
+              className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
+              onClick={() => {}}
+            >
+              Apply Filter
+            </button>
+            <div className="w-px bg-[var(--app-border)]" />
+            <button
+              type="button"
+              className="px-5 py-3 text-sm font-medium text-[var(--app-muted)] transition hover:bg-brand-50 hover:text-brand-700"
+              onClick={() => {
+                setProvince('All Provinces')
+                setRepository('All Repositories')
+                setSequencingPlatform('All Platforms')
+              }}
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div className="flex justify-start">
+          <Button variant="outline" size="md" className="min-w-[106px] gap-2 px-5">
+            Export
+            <Download className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-    )
-  }
 
-  return (
-    <div className="space-y-8 pb-6">
-      <Breadcrumbs
-        items={[
-          { label: 'Home', to: '/' },
-          { label: 'Species', to: '/species' },
-          { label: species.scientific_name },
-        ]}
-      />
-
-      <section className="space-y-2">
-        <h1 className="text-[clamp(3.25rem,4.6vw,4.6rem)] leading-none text-black">
-          <span className="font-serif italic">{species.scientific_name}</span>
-        </h1>
-        {species.common_name && (
-          <p className="max-w-3xl text-sm leading-6 text-[var(--app-muted)] sm:text-base">
-            {species.common_name}
-          </p>
-        )}
-      </section>
-
-      {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-[#e6e1dc] overflow-x-auto">
-        {tabs.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setActiveTab(tab.value)}
-            className={cn(
-              'px-4 py-3 text-sm font-medium whitespace-nowrap transition border-b-2 -mb-[2px]',
-              activeTab === tab.value
-                ? 'text-brand-700 border-brand-700'
-                : 'text-[var(--app-muted)] border-transparent hover:text-[var(--app-text)]',
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-[1100px] w-full border-collapse">
+            <thead className="bg-brand-50">
+              <tr className="text-left text-sm font-semibold text-brand-800">
+                <th className="px-5 py-4">Specimen ID</th>
+                <th className="px-5 py-4">Author</th>
+                <th className="px-5 py-4">Repository</th>
+                <th className="px-5 py-4">Province</th>
+                <th className="px-5 py-4">Tissue Source</th>
+                <th className="px-5 py-4">Sequencing Platform</th>
+                <th className="px-5 py-4">Total Conopeptide Sequences</th>
+              </tr>
+            </thead>
+            <tbody>
+              {species.specimens.map((specimen) => (
+                <tr
+                  key={specimen.specimenId}
+                  className="border-t border-[var(--app-border)] transition hover:bg-brand-50/60"
+                >
+                  <td className="px-5 py-4 align-top">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="whitespace-nowrap text-[1.02rem] font-semibold text-brand-700">
+                          {specimen.specimenId}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 align-top text-[var(--app-text)]">{specimen.author}</td>
+                  <td className="px-5 py-4 align-top text-[var(--app-text)]">{specimen.repository}</td>
+                  <td className="px-5 py-4 align-top text-[var(--app-text)]">{specimen.province}</td>
+                  <td className="px-5 py-4 align-top text-[var(--app-text)]">{specimen.tissueSource}</td>
+                  <td className="px-5 py-4 align-top text-[var(--app-text)]">{specimen.sequencingPlatform}</td>
+                  <td className="px-5 py-4 align-top text-[var(--app-text)]">
+                    {specimen.totalConopeptideSequences}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Tab Content */}
-      <section>
-        {activeTab === 'overview' && <OverviewTab species={species} />}
-        {activeTab === 'conopeptides' && <ComingSoonTab label="Conopeptides" />}
-        {activeTab === 'specimens' && <ComingSoonTab label="Specimens" />}
-        {activeTab === 'publications' && <ComingSoonTab label="Publications" />}
-      </section>
+      <Pagination page={page} totalPages={4} onPageChange={setPage} />
     </div>
   )
 }
+
+function PublicationCard({ publication }) {
+  return (
+    <Card className="!p-0 overflow-hidden">
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+        <div className="space-y-4 px-5 py-5 lg:border-r lg:border-[var(--app-border)]">
+          <h3 className="text-[1.15rem] font-semibold leading-8 text-black sm:text-[1.35rem]">
+            {publication.title}
+          </h3>
+          <p className="max-w-4xl text-[1rem] leading-7 text-[var(--app-muted)]">{publication.authors}</p>
+          <div className="flex flex-wrap gap-3 text-sm text-[var(--app-muted)]">
+            <span className="font-medium text-brand-700">{publication.journal}</span>
+            <span>•</span>
+            <span>{publication.year}</span>
+          </div>
+        </div>
+
+        <div className="grid gap-5 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-1 lg:items-center">
+          <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 gap-y-4 text-sm">
+            <div className="contents">
+              <dt className="font-semibold text-brand-700">DOI</dt>
+              <dd className="break-all text-[var(--app-muted)]">
+                <a
+                  href={`https://doi.org/${publication.doi}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2 transition hover:text-brand-700"
+                >
+                  https://doi.org/{publication.doi}
+                </a>
+              </dd>
+            </div>
+            <div className="contents">
+              <dt className="font-semibold text-brand-700">Associated Project</dt>
+              <dd className="text-[var(--app-muted)]">{publication.project}</dd>
+            </div>
+            <div className="contents">
+              <dt className="font-semibold text-brand-700">Linked Conopeptides</dt>
+              <dd className="text-[var(--app-muted)]">{publication.linkedConopeptidesCount}</dd>
+            </div>
+          </dl>
+
+          <div className="flex items-end justify-start sm:justify-end lg:justify-start">
+            <Button
+              as="a"
+              href={`https://doi.org/${publication.doi}`}
+              target="_blank"
+              rel="noreferrer"
+              className="gap-2 px-5"
+            >
+              View Publication
+              <ArrowUpRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function PublicationsTab({ species }) {
+  const totalCount = species.publications.length
+  const [page, setPage] = useState(1)
+  const [year, setYear] = useState('All Years')
+  const [journal, setJournal] = useState('All Journals')
+
+  return (
+    <div className="space-y-7">
+      <div className="space-y-4">
+        <h2 className="font-serif text-[clamp(2.8rem,4vw,4.2rem)] leading-[0.95] text-black">
+          Publications <span className="text-brand-700">({totalCount})</span>
+        </h2>
+        <p className="max-w-4xl text-[1.05rem] leading-7 text-[var(--app-muted)]">
+          Reference papers and related studies associated with this species.
         </p>
       </div>
 
@@ -218,9 +403,7 @@ export default function SpeciesDetailPage() {
             <button
               type="button"
               className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
-              onClick={() => {
-                // mock-only action
-              }}
+              onClick={() => {}}
             >
               Apply Filter
             </button>
@@ -426,7 +609,13 @@ export default function SpeciesDetailPage() {
                     </div>
 
                     <div className="flex items-end justify-start sm:justify-end">
-                      <Button as="a" href={species.publication.doi} target="_blank" rel="noreferrer" className="gap-2 px-5">
+                      <Button
+                        as="a"
+                        href={species.publication.doi}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="gap-2 px-5"
+                      >
                         View Publication
                         <ArrowUpRight className="h-4 w-4" />
                       </Button>
