@@ -1,5 +1,5 @@
-import RoutePlaceholder from '@/components/common/RoutePlaceholder'
+import BiomarkersExplorerPage from '@/features/biomarkers/BiomarkersExplorerPage'
 
 export default function BiomarkersPage() {
-  return <RoutePlaceholder title="Biomarkers" />
+  return <BiomarkersExplorerPage />
 }

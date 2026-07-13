@@ -1,5 +1,5 @@
-import RoutePlaceholder from '@/components/common/RoutePlaceholder'
+import ConopeptidesExplorerPage from '@/features/conopeptides/ConopeptidesExplorerPage'
 
 export default function ConopeptidesPage() {
-  return <RoutePlaceholder title="Conopeptides" />
+  return <ConopeptidesExplorerPage />
 }
