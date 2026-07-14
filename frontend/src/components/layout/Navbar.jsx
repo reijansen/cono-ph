@@ -41,7 +41,7 @@ export default function Navbar() {
           <div className="hidden justify-center lg:flex">
             <PrimaryNav
               isSolid={isScrolled}
-              className="fixed left-1/2 top-4 z-40 w-[min(820px,calc(100vw-4rem))] -translate-x-1/2 lg:top-5"
+              className="fixed left-1/2 top-4 z-40 w-[min(920px,calc(100vw-6rem))] -translate-x-1/2 lg:top-5 xl:w-[min(980px,calc(100vw-8rem))]"
             />
           </div>
 

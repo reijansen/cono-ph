@@ -16,7 +16,7 @@ function DetailPanel({ title, description, action, children, className }) {
     <Card className={cn('!p-0 overflow-hidden', className)}>
       <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <div className="text-[1.05rem] font-semibold text-brand-700">{title}</div>
+          <div className="text-[1rem] font-semibold text-brand-700">{title}</div>
           {description ? (
             <p className="max-w-3xl text-sm leading-6 text-[var(--app-muted)]">{description}</p>
           ) : null}
@@ -32,7 +32,7 @@ function SummaryItem({ label, value }) {
   return (
     <div className="join-item flex min-w-0 items-center justify-center border-brand-100 bg-white px-3 py-3 text-center sm:px-4">
       <div>
-        <div className="text-[0.72rem] uppercase tracking-[0.12em] text-[var(--app-muted)]">{label}</div>
+        <div className="text-[0.68rem] uppercase tracking-[0.14em] text-[var(--app-muted)]">{label}</div>
         <div className="mt-1 text-[0.9rem] font-medium text-[var(--app-text)]">{value}</div>
       </div>
     </div>
@@ -59,13 +59,13 @@ function CopyAction({ copied, onCopy }) {
 
 function FieldList({ items }) {
   return (
-    <dl className="space-y-4">
+    <dl className="space-y-3">
       {items.map((item) => (
         <div
           key={item.label}
-          className="grid gap-1 sm:grid-cols-[minmax(180px,220px)_minmax(0,1fr)] sm:items-start sm:gap-4"
+          className="grid gap-1 border-b border-[var(--app-border)]/70 pb-3 last:border-b-0 last:pb-0 sm:grid-cols-[minmax(180px,220px)_minmax(0,1fr)] sm:items-start sm:gap-4"
         >
-          <dt className="text-sm font-semibold text-black">{item.label}</dt>
+          <dt className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[var(--app-muted)]">{item.label}</dt>
           <dd className="min-w-0 text-[0.98rem] leading-7 text-[var(--app-text)]">{item.value}</dd>
         </div>
       ))}
@@ -247,9 +247,9 @@ export default function BiomarkerDetailPage() {
       </section>
 
       <section className="join join-vertical w-full overflow-hidden rounded-[1.5rem] border border-brand-100 bg-brand-100/60 sm:grid sm:grid-cols-2 sm:gap-px sm:rounded-[1.5rem] xl:grid-cols-6">
-          {record.topSummaryItems.map((item) => (
-            <SummaryItem key={item.label} label={item.label} value={item.value} />
-          ))}
+        {record.topSummaryItems.map((item) => (
+          <SummaryItem key={item.label} label={item.label} value={item.value} />
+        ))}
       </section>
 
       <div className="space-y-6">

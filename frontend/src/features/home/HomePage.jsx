@@ -31,39 +31,39 @@ const functionalityItems = [
 
 export default function HomePage() {
   return (
-    <div className="space-y-12 pb-4 pt-0 sm:space-y-14 sm:pt-0">
-      <section className="space-y-5 pt-2 text-center sm:space-y-6">
+    <div className="space-y-10 pb-4 pt-0 sm:space-y-12 sm:pt-0">
+      <section className="space-y-4 pt-2 text-center sm:space-y-5">
         <div className="space-y-4">
-          <h1 className="text-[clamp(3.2rem,8vw,6.3rem)] leading-[0.95] tracking-tight text-brand-700 sm:text-[clamp(4rem,8vw,7rem)]">
+          <h1 className="text-[clamp(3.45rem,8vw,6.8rem)] leading-[0.92] tracking-tight text-brand-700 sm:text-[clamp(4.4rem,8vw,7.4rem)]">
             ConoPH
           </h1>
-          <p className="text-[clamp(1rem,1.7vw,1.55rem)] text-brand-700 sm:leading-none">
+          <p className="mx-auto max-w-3xl text-[clamp(1rem,1.7vw,1.4rem)] leading-6 text-brand-700 sm:leading-7">
             Database for Philippine Cone Snails and Conopeptides
           </p>
         </div>
-        <div className="relative mx-auto mt-4 h-[210px] max-w-[1120px] overflow-visible sm:mt-8 sm:h-[300px] md:h-[330px]">
+        <div className="relative mx-auto mt-4 h-[210px] w-full max-w-[1240px] overflow-visible sm:mt-8 sm:h-[300px] md:h-[330px] xl:h-[370px] xl:max-w-[1380px]">
           <HomeShellBackdrop />
           <img
             src={homeShellImage}
             alt="ConoPH hero shell"
-            className="absolute bottom-0 left-1/2 z-10 h-[94%] w-auto max-w-none -translate-x-1/2 object-contain"
+            className="absolute bottom-0 left-1/2 z-10 h-[94%] w-auto max-w-none -translate-x-1/2 object-contain xl:h-[98%]"
           />
         </div>
       </section>
 
       <HomeDashboardSection />
 
-      <section className="space-y-6 border-t border-brand-100 pt-8 sm:space-y-8 sm:pt-10">
+      <section className="space-y-6 border-t border-brand-100 pt-8 sm:space-y-7 sm:pt-10">
         <h2 className="text-[clamp(2rem,3.4vw,3rem)] leading-none text-black">
           Core Functionalities
         </h2>
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {functionalityItems.map((item) => (
-            <div key={item.number} className="space-y-6 border-t border-black/10 pt-4">
-              <div className="text-4xl font-light text-black/35 sm:text-5xl">{item.number}</div>
+            <div key={item.number} className="space-y-4 border-t border-black/10 pt-4">
+              <div className="text-3xl font-light text-black/35 sm:text-4xl">{item.number}</div>
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-black">{item.title}</h3>
-                <p className="text-sm leading-6 text-[var(--app-muted)]">{item.description}</p>
+                <h3 className="text-[0.92rem] font-semibold text-black">{item.title}</h3>
+                <p className="text-[0.92rem] leading-6 text-[var(--app-muted)]">{item.description}</p>
               </div>
             </div>
           ))}

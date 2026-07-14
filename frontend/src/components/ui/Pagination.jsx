@@ -18,18 +18,16 @@ export default function Pagination({ page = 1, totalPages = 1, onPageChange, cla
   const pages = buildPages(page, totalPages)
 
   return (
-    <div className={cn('flex flex-wrap items-center justify-between gap-3', className)}>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange?.(Math.max(1, page - 1))}
-        disabled={page <= 1}
-      >
-        <ChevronLeft className="mr-1.5 h-4 w-4 shrink-0" />
-        Previous
-      </Button>
-
-      <div className="flex flex-wrap items-center gap-2">
+    <div className={cn('flex flex-wrap items-center justify-center gap-3', className)}>
+      <div className="join">
+        <button
+          type="button"
+          onClick={() => onPageChange?.(Math.max(1, page - 1))}
+          disabled={page <= 1}
+          className="btn btn-sm join-item border-[var(--app-border)] bg-white text-[var(--app-text)] hover:border-brand-200 hover:bg-brand-50 disabled:border-[var(--app-border)] disabled:bg-white disabled:text-[var(--app-muted)]"
+        >
+          <ChevronLeft className="h-4 w-4 shrink-0" />
+        </button>
         {pages.map((pageNumber) => (
           <button
             key={pageNumber}
@@ -37,24 +35,22 @@ export default function Pagination({ page = 1, totalPages = 1, onPageChange, cla
             onClick={() => onPageChange?.(pageNumber)}
             className={
               pageNumber === page
-                ? 'rounded-full bg-brand-600 px-3 py-2 text-sm font-medium text-white'
-                : 'rounded-full border border-[var(--app-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--app-text)]'
+                ? 'btn btn-sm join-item border-brand-700 bg-brand-700 text-white hover:border-brand-700 hover:bg-brand-700'
+                : 'btn btn-sm join-item border-[var(--app-border)] bg-white text-[var(--app-text)] hover:border-brand-200 hover:bg-brand-50'
             }
           >
             {pageNumber}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => onPageChange?.(Math.min(totalPages, page + 1))}
+          disabled={page >= totalPages}
+          className="btn btn-sm join-item border-[var(--app-border)] bg-white text-[var(--app-text)] hover:border-brand-200 hover:bg-brand-50 disabled:border-[var(--app-border)] disabled:bg-white disabled:text-[var(--app-muted)]"
+        >
+          <ChevronRight className="h-4 w-4 shrink-0" />
+        </button>
       </div>
-
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange?.(Math.min(totalPages, page + 1))}
-        disabled={page >= totalPages}
-      >
-        Next
-        <ChevronRight className="ml-1.5 h-4 w-4 shrink-0" />
-      </Button>
     </div>
   )
 }

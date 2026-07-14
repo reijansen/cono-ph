@@ -18,7 +18,7 @@ function SectionHeading({ eyebrow, title, description }) {
   return (
     <div className="space-y-3 text-center">
       <p className="text-[11px] uppercase tracking-[0.28em] text-brand-500">{eyebrow}</p>
-      <h2 className="text-[clamp(1.9rem,3.3vw,2.8rem)] leading-none text-black">{title}</h2>
+      <h2 className="text-[clamp(2rem,3.2vw,3rem)] leading-none text-black">{title}</h2>
       <p className="mx-auto max-w-3xl text-sm leading-7 text-[var(--app-muted)] sm:text-base">
         {description}
       </p>
@@ -44,9 +44,9 @@ function MetricTile({ metric }) {
 
 function ListSection({ title, description, children }) {
   return (
-    <section className="space-y-3 border-t border-brand-100 pt-6">
+    <section className="space-y-3 border-t border-brand-100 pt-5">
       <div>
-        <h3 className="text-sm font-semibold text-black">{title}</h3>
+        <h3 className="text-[0.95rem] font-semibold text-black">{title}</h3>
         <p className="mt-1 text-xs text-[var(--app-muted)]">{description}</p>
       </div>
       {children}
@@ -59,7 +59,7 @@ function SuperfamilyBarChart() {
 
   return (
     <ListSection title="Conopeptides by Superfamily" description="Bar graph breakdown">
-      <div className="overflow-hidden rounded-[1.75rem] border border-[var(--app-border)] bg-white px-5 py-5 shadow-sm">
+      <div className="overflow-hidden rounded-[1.75rem] border border-[var(--app-border)] bg-white px-5 py-5 shadow-[0_10px_26px_rgba(16,16,16,0.04)]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h4 className="text-base font-semibold text-[var(--app-text)]">Conopeptides by Superfamily</h4>
@@ -172,7 +172,7 @@ function DiscoveryLineChart() {
 
   return (
     <ListSection title="Conopeptide Discoveries Over Time" description="Line graph with year filters">
-      <div className="overflow-hidden rounded-[1.75rem] border border-[var(--app-border)] bg-white px-5 py-5 shadow-sm">
+      <div className="overflow-hidden rounded-[1.75rem] border border-[var(--app-border)] bg-white px-5 py-5 shadow-[0_10px_26px_rgba(16,16,16,0.04)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="mt-1 text-xs text-[var(--app-muted)]">Filtered by publication year range</p>
@@ -280,7 +280,7 @@ function DiscoveryLineChart() {
 
 export default function HomeDashboardSection() {
   return (
-    <section className="space-y-8 border-t border-brand-100 pt-8">
+    <section className="space-y-7 border-t border-brand-100 pt-8">
       <SectionHeading
         eyebrow="Interactive Dashboard"
         title="Explore species, peptides, publications, and updates"
@@ -300,7 +300,7 @@ export default function HomeDashboardSection() {
         </div>
 
         <div className="space-y-6">
-          <section className="overflow-hidden rounded-[2rem] border border-[var(--app-border)] bg-white shadow-sm">
+          <section className="overflow-hidden rounded-[2rem] border border-[var(--app-border)] bg-white shadow-[0_10px_26px_rgba(16,16,16,0.04)]">
             <img
               src={mapImage}
               alt="Philippine map preview"
@@ -310,7 +310,7 @@ export default function HomeDashboardSection() {
         </div>
       </div>
 
-      <section className="space-y-6 border-t border-brand-100 pt-8">
+      <section className="space-y-5 border-t border-brand-100 pt-8">
         <DiscoveryLineChart />
       </section>
 

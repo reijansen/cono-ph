@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default;
+}
 
 @theme {
   --color-brand-50: #f3f6e8;
@@ -56,6 +59,6 @@ h4 {
 
 @layer components {
   .app-container {
-    @apply mx-auto w-full max-w-[1360px] px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-[1520px] px-4 sm:px-6 lg:px-8 xl:px-10;
   }
 }

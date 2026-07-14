@@ -1,8 +1,9 @@
+import Breadcrumbs from '@/components/ui/Breadcrumbs'
+import Card from '@/components/ui/Card'
 import SpeciesExplorerCard from '@/features/species/components/SpeciesExplorerCard'
 import SpeciesExplorerFilters from '@/features/species/components/SpeciesExplorerFilters'
 import SpeciesExplorerPagination from '@/features/species/components/SpeciesExplorerPagination'
 import { speciesExplorerCount, speciesExplorerRecords } from '@/features/species/data/speciesExplorerData'
-import Breadcrumbs from '@/components/ui/Breadcrumbs'
 
 export default function SpeciesExplorerPage() {
   return (
@@ -19,17 +20,22 @@ export default function SpeciesExplorerPage() {
         </aside>
 
         <section className="space-y-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-lg font-semibold text-brand-700">{speciesExplorerCount} Species Found</p>
-          </div>
+          <Card className="space-y-5 border-transparent p-4 shadow-none sm:p-5 lg:p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-[1.55rem] leading-none text-[var(--app-text)]">Species Records</h2>
+              <p className="self-start rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700">
+                {speciesExplorerCount} Species Found
+              </p>
+            </div>
 
-          <div className="space-y-5">
-            {speciesExplorerRecords.map((species) => (
-              <SpeciesExplorerCard key={species.id} species={species} />
-            ))}
-          </div>
+            <div className="space-y-5">
+              {speciesExplorerRecords.map((species) => (
+                <SpeciesExplorerCard key={species.id} species={species} />
+              ))}
+            </div>
 
-          <SpeciesExplorerPagination />
+            <SpeciesExplorerPagination />
+          </Card>
         </section>
       </div>
     </div>

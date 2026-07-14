@@ -26,12 +26,12 @@ function InfoList({ items }) {
         <div
           key={item.label}
           className={cn(
-            'grid grid-cols-1 gap-2 py-5 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] sm:gap-4',
+            'grid grid-cols-1 gap-1 py-4 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] sm:gap-4',
             index !== items.length - 1 && 'border-b border-[#e6e1dc]',
           )}
         >
-          <dt className="text-[1.05rem] font-semibold text-[var(--app-muted)]">{item.label}</dt>
-          <dd className="text-[1.03rem] leading-7 text-[var(--app-text)] sm:text-right">{item.value}</dd>
+          <dt className="text-[0.9rem] font-semibold text-[var(--app-muted)]">{item.label}</dt>
+          <dd className="text-[0.98rem] leading-7 text-[var(--app-text)] sm:text-right">{item.value}</dd>
         </div>
       ))}
     </dl>
@@ -41,19 +41,19 @@ function InfoList({ items }) {
 function SectionCard({ title, children, className }) {
   return (
     <Card className={cn('!p-0 overflow-hidden', className)}>
-      <div className="rounded-t-2xl bg-brand-700 px-5 py-4 text-center text-[1.05rem] font-semibold text-white">
+      <div className="border-b border-[var(--app-border)] bg-brand-50/70 px-5 py-4 text-[1rem] font-semibold text-brand-700">
         {title}
       </div>
-      <div className="overflow-hidden rounded-b-[1.15rem] px-5 py-2">{children}</div>
+      <div className="overflow-hidden px-5 py-1">{children}</div>
     </Card>
   )
 }
 
 function StatItem({ value, label }) {
   return (
-    <div className="flex min-h-[100px] flex-col items-center justify-center px-3 py-4 text-center">
-      <div className="text-[2rem] font-semibold leading-none text-brand-700">{value}</div>
-      <div className="mt-3 max-w-[10rem] text-[1rem] leading-6 text-[var(--app-muted)]">{label}</div>
+    <div className="flex min-h-[92px] flex-col items-center justify-center px-3 py-4 text-center">
+      <div className="text-[1.75rem] font-semibold leading-none text-brand-700">{value}</div>
+      <div className="mt-2 max-w-[10rem] text-[0.92rem] leading-5 text-[var(--app-muted)]">{label}</div>
     </div>
   )
 }
@@ -65,7 +65,7 @@ function ConopeptidesTab({ species }) {
   const [cysteineFramework, setCysteineFramework] = useState('All Cysteine Frameworks')
 
   return (
-      <div className="space-y-6">
+    <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="font-serif text-[clamp(2rem,3.6vw,3.1rem)] leading-[0.95] text-black">
           Conopeptides <span className="text-brand-700">({totalCount})</span>
@@ -184,7 +184,7 @@ function SpecimensTab({ species }) {
   const [sequencingPlatform, setSequencingPlatform] = useState('All Platforms')
 
   return (
-      <div className="space-y-6">
+    <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="font-serif text-[clamp(2rem,3.6vw,3.1rem)] leading-[0.95] text-black">
           Specimens <span className="text-brand-700">({totalCount})</span>
@@ -369,7 +369,7 @@ function PublicationsTab({ species }) {
   const [journal, setJournal] = useState('All Journals')
 
   return (
-      <div className="space-y-6">
+    <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="font-serif text-[clamp(2rem,3.6vw,3.1rem)] leading-[0.95] text-black">
           Publications <span className="text-brand-700">({totalCount})</span>
@@ -506,8 +506,8 @@ export default function SpeciesDetailPage() {
                 type="button"
                 onClick={() => setActiveTab(tab.value)}
                 className={cn(
-                  'pb-4 text-[1rem] font-medium transition sm:text-[1.08rem]',
-                  isActive ? 'text-brand-700' : 'text-brand-700/80 hover:text-brand-700',
+                  'rounded-t-xl border-b-2 border-transparent pb-4 text-[1rem] font-medium transition sm:text-[1.08rem]',
+                  isActive ? 'border-brand-500 text-brand-700' : 'text-brand-700/80 hover:text-brand-700',
                 )}
               >
                 {tab.label}
@@ -571,7 +571,7 @@ export default function SpeciesDetailPage() {
               <div className="grid gap-8 px-5 py-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                 <div className="space-y-8">
                   <div>
-                    <p className="text-[1.05rem] font-semibold text-[var(--app-muted)]">DOI</p>
+                    <p className="text-[0.9rem] font-semibold text-[var(--app-muted)]">DOI</p>
                     <a
                       href={species.publication.doi}
                       target="_blank"
@@ -583,7 +583,7 @@ export default function SpeciesDetailPage() {
                   </div>
 
                   <div>
-                    <p className="text-[1.05rem] font-semibold text-[var(--app-muted)]">Authors</p>
+                    <p className="text-[0.9rem] font-semibold text-[var(--app-muted)]">Authors</p>
                     <p className="mt-1 max-w-[34rem] text-[1rem] leading-7 text-[var(--app-muted)]">
                       {species.publication.authors}
                     </p>
@@ -592,7 +592,7 @@ export default function SpeciesDetailPage() {
 
                 <div className="space-y-8">
                   <div>
-                    <p className="text-[1.05rem] font-semibold text-[var(--app-muted)]">Title of Paper</p>
+                    <p className="text-[0.9rem] font-semibold text-[var(--app-muted)]">Title of Paper</p>
                     <p className="mt-1 max-w-[48rem] text-[1rem] leading-7 text-[var(--app-muted)]">
                       {species.publication.title}
                     </p>
@@ -600,7 +600,7 @@ export default function SpeciesDetailPage() {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="text-[1.05rem] font-semibold text-[var(--app-muted)]">
+                      <p className="text-[0.9rem] font-semibold text-[var(--app-muted)]">
                         Associated Project
                       </p>
                       <p className="mt-1 text-[1rem] text-[var(--app-muted)]">

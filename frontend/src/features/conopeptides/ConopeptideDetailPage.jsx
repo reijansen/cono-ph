@@ -14,8 +14,8 @@ import {
 function DetailPanel({ title, action, children, className }) {
   return (
     <Card className={cn('!p-0 overflow-hidden', className)}>
-      <div className="flex items-center justify-between gap-4 px-5 py-4">
-        <div className="text-[1.05rem] font-semibold text-brand-700">{title}</div>
+      <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-[1rem] font-semibold text-brand-700">{title}</div>
         {action}
       </div>
       <div className="border-t border-[var(--app-border)] px-5 py-5">{children}</div>
@@ -25,9 +25,9 @@ function DetailPanel({ title, action, children, className }) {
 
 function SummaryItem({ label, value }) {
   return (
-    <div className="min-w-0 border-r border-[var(--app-border)] px-5 py-2 last:border-r-0">
-      <div className="text-[0.82rem] text-[var(--app-muted)]">{label}</div>
-      <div className="mt-2 text-[1rem] font-medium text-[var(--app-text)]">{value}</div>
+    <div className="min-w-0 border-r border-[var(--app-border)] px-5 py-3 last:border-r-0">
+      <div className="text-[0.72rem] uppercase tracking-[0.12em] text-[var(--app-muted)]">{label}</div>
+      <div className="mt-1.5 text-[0.98rem] font-medium text-[var(--app-text)]">{value}</div>
     </div>
   )
 }
@@ -55,13 +55,13 @@ function SequenceFieldCard({ label, value, onCopy, multiline = false }) {
   const displayValue = multiline ? value : isLongValue ? `${String(value).slice(0, 42)}...` : value
 
   return (
-    <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
+    <div className="rounded-[1.25rem] border border-[var(--app-border)] bg-[#fcfcf8] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm text-[var(--app-muted)]">{label}</p>
+          <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[var(--app-muted)]">{label}</p>
           <p
             className={cn(
-              'mt-2 text-[1rem] font-medium text-[var(--app-text)]',
+              'mt-2 text-[0.98rem] font-medium text-[var(--app-text)]',
               multiline ? 'whitespace-normal break-all leading-6' : 'overflow-hidden text-ellipsis break-words',
             )}
             title={String(value)}
@@ -162,7 +162,7 @@ export default function ConopeptideDetailPage() {
         </Button>
       </section>
 
-      <Card className="!p-0 overflow-hidden">
+      <Card className="!p-0 overflow-hidden bg-[#fcfcf8]">
         <div className="grid gap-0 md:grid-cols-2 xl:grid-cols-6">
           {record.topSummaryItems.map((item) => (
             <SummaryItem key={item.label} label={item.label} value={item.value} />
@@ -227,7 +227,7 @@ export default function ConopeptideDetailPage() {
             </DetailPanel>
 
             <DetailPanel title="About">
-              <p className="text-[1.02rem] leading-7 text-brand-700">{record.about}</p>
+              <p className="text-[0.98rem] leading-7 text-[var(--app-muted)]">{record.about}</p>
             </DetailPanel>
           </section>
 
@@ -248,8 +248,8 @@ export default function ConopeptideDetailPage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
-                <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
-                  <p className="text-sm text-[var(--app-muted)]">Reference</p>
+                <div className="rounded-[1.25rem] border border-[var(--app-border)] bg-[#fcfcf8] p-4">
+                  <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[var(--app-muted)]">Reference</p>
                   <p className="mt-2 text-[0.98rem] leading-7 text-[var(--app-text)]">
                     {record.matchedToxin.reference}
                   </p>
@@ -278,15 +278,15 @@ export default function ConopeptideDetailPage() {
               <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-stretch">
                 <SequenceBlock sequence={sequencesTab.precursorSequence} />
 
-                <div className="space-y-4 rounded-2xl border border-[var(--app-border)] bg-white p-5">
+                <div className="space-y-4 rounded-[1.25rem] border border-[var(--app-border)] bg-[#fcfcf8] p-5">
                   <div>
-                    <p className="text-[1rem] text-[var(--app-muted)]">Length</p>
+                    <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[var(--app-muted)]">Length</p>
                     <p className="mt-2 text-[1.1rem] font-semibold text-brand-700">
                       {record.precursorMetadata.length}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[1rem] text-[var(--app-muted)]">Translation</p>
+                    <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[var(--app-muted)]">Translation</p>
                     <p className="mt-2 text-[1.1rem] font-semibold text-brand-700">
                       {record.precursorMetadata.translation}
                     </p>
@@ -310,7 +310,7 @@ export default function ConopeptideDetailPage() {
               />
             }
           >
-            <div className="rounded-2xl border border-[var(--app-border)] bg-brand-50/20 p-4">
+            <div className="rounded-[1.25rem] border border-brand-100 bg-brand-50/30 p-4">
               <div className="flex flex-wrap items-center gap-2 font-mono text-[1rem] tracking-[0.38em] text-[var(--app-text)]">
                 {sequencesTab.translatedPrecursorSegments.map((segment, index) => (
                   <span
@@ -409,15 +409,15 @@ export default function ConopeptideDetailPage() {
               />
             </DetailPanel>
 
-            <div className="space-y-4 rounded-3xl border border-[var(--app-border)] bg-white p-5">
+            <div className="space-y-4 rounded-[1.25rem] border border-[var(--app-border)] bg-[#fcfcf8] p-5">
               <div>
-                <p className="text-[1rem] text-[var(--app-muted)]">Length</p>
+                <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[var(--app-muted)]">Length</p>
                 <p className="mt-2 text-[1.1rem] font-semibold text-brand-700">
                   {record.precursorMetadata.length}
                 </p>
               </div>
               <div>
-                <p className="text-[1rem] text-[var(--app-muted)]">Translation</p>
+                <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[var(--app-muted)]">Translation</p>
                 <p className="mt-2 text-[1.1rem] font-semibold text-brand-700">
                   {record.precursorMetadata.translation}
                 </p>
@@ -439,7 +439,7 @@ export default function ConopeptideDetailPage() {
               />
             }
           >
-            <div className="rounded-2xl border border-[var(--app-border)] bg-brand-50/20 p-4">
+            <div className="rounded-[1.25rem] border border-brand-100 bg-brand-50/30 p-4">
               <div className="font-mono text-[1rem] leading-8 tracking-[0.28em] text-[var(--app-text)] whitespace-pre-wrap break-words">
                 {sequencesTab.translatedPrecursorSegments.map((segment, index) => (
                   <span
@@ -467,8 +467,8 @@ export default function ConopeptideDetailPage() {
               <p className="max-w-3xl text-[1rem] leading-7 text-[var(--app-muted)]">{annotationsTab.summary}</p>
               <div className="grid gap-4 xl:grid-cols-2">
                 {annotationsTab.items.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
-                    <p className="text-sm text-[var(--app-muted)]">{item.label}</p>
+                  <div key={item.label} className="rounded-[1.25rem] border border-[var(--app-border)] bg-[#fcfcf8] p-4">
+                    <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[var(--app-muted)]">{item.label}</p>
                     <p className="mt-2 text-[1rem] font-medium text-[var(--app-text)]">{item.value}</p>
                   </div>
                 ))}
@@ -493,8 +493,8 @@ export default function ConopeptideDetailPage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
-                <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
-                  <p className="text-sm text-[var(--app-muted)]">Evidence Note</p>
+                <div className="rounded-[1.25rem] border border-[var(--app-border)] bg-[#fcfcf8] p-4">
+                  <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[var(--app-muted)]">Evidence Note</p>
                   <p className="mt-2 text-[0.98rem] leading-7 text-[var(--app-text)]">
                     {annotationsTab.summary}
                   </p>
@@ -521,9 +521,9 @@ export default function ConopeptideDetailPage() {
                 ))}
               </dl>
 
-              <div className="space-y-4 rounded-2xl border border-[var(--app-border)] bg-white p-5">
+              <div className="space-y-4 rounded-[1.25rem] border border-[var(--app-border)] bg-[#fcfcf8] p-5">
                 <div>
-                  <p className="text-sm text-[var(--app-muted)]">Citation</p>
+                  <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[var(--app-muted)]">Citation</p>
                   <p className="mt-2 text-[0.98rem] leading-7 text-[var(--app-text)]">
                     {sourceTab.citation}
                   </p>

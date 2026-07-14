@@ -41,11 +41,13 @@ export default function ConopeptidesExplorerPage() {
       <ConopeptideTableCard
         title="Conopeptide Precursors"
         action={
-          <div className="flex flex-col items-start gap-3 text-sm font-medium text-[var(--app-muted)] sm:flex-row sm:items-center">
-            <span>3,671 results</span>
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <span className="rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700">
+              3,671 results
+            </span>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--app-text)] transition hover:border-brand-300 hover:text-brand-700"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--app-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--app-text)] transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
             >
               <Download className="h-4 w-4" />
               Export
@@ -56,7 +58,7 @@ export default function ConopeptidesExplorerPage() {
         <div className="-mx-4 overflow-x-auto sm:mx-0">
           <table className="w-full min-w-[760px] border-separate border-spacing-0">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-[var(--app-muted)]">
+              <tr className="bg-brand-50/45 text-left text-[0.72rem] uppercase tracking-[0.16em] text-[var(--app-muted)]">
                 {[
                   'Accession',
                   'Gene Superfamily',
@@ -89,7 +91,7 @@ export default function ConopeptidesExplorerPage() {
                       navigate(`/conopeptides/${row.accession}`)
                     }
                   }}
-                  className="cursor-pointer transition hover:bg-brand-50/50 focus:outline-none focus-visible:bg-brand-50/50"
+                  className="cursor-pointer transition even:bg-[#fcfcf8] hover:bg-brand-50/60 focus:outline-none focus-visible:bg-brand-50/60"
                 >
                   <td className="border-b border-[var(--app-border)] px-4 py-4 font-semibold text-brand-700">
                     {row.accession}

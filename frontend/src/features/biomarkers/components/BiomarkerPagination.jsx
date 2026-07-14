@@ -1,7 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-import Button from '@/components/ui/Button'
-
 export default function BiomarkerPagination({
   pagination = { page: 1, totalPages: 1 },
   onPageChange = () => {},
@@ -47,22 +45,19 @@ export default function BiomarkerPagination({
   const pageNumbers = getPageNumbers()
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2 pt-4 sm:gap-3">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-slate-300"
-        disabled={page <= 1 || loading}
-        onClick={() => onPageChange(page - 1)}
-      >
-        <ChevronLeft className="mr-1.5 h-4 w-4 shrink-0" />
-        Previous
-      </Button>
-
-      <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+    <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="join">
+        <button
+          type="button"
+          disabled={page <= 1 || loading}
+          onClick={() => onPageChange(page - 1)}
+          className="btn btn-sm join-item border-[var(--app-border)] bg-white text-[var(--app-text)] hover:border-brand-200 hover:bg-brand-50 disabled:border-[var(--app-border)] disabled:bg-white disabled:text-[var(--app-muted)]"
+        >
+          <ChevronLeft className="h-4 w-4 shrink-0" />
+        </button>
         {pageNumbers.map((pageNum) =>
           typeof pageNum === 'string' ? (
-            <span key={pageNum} className="px-3 py-2 text-sm text-[var(--app-text)]">
+            <span key={pageNum} className="btn btn-sm btn-disabled join-item border-[var(--app-border)] bg-white text-[var(--app-text)] opacity-100">
               ...
             </span>
           ) : (
@@ -73,26 +68,23 @@ export default function BiomarkerPagination({
               onClick={() => onPageChange(pageNum)}
               className={
                 pageNum === page
-                  ? 'rounded-lg bg-brand-700 px-3 py-2 text-sm font-medium text-white'
-                  : 'rounded-lg px-3 py-2 text-sm font-medium text-[var(--app-text)] transition hover:bg-black/5 disabled:opacity-50'
+                  ? 'btn btn-sm join-item border-brand-700 bg-brand-700 text-white hover:border-brand-700 hover:bg-brand-700'
+                  : 'btn btn-sm join-item border-[var(--app-border)] bg-white text-[var(--app-text)] hover:border-brand-200 hover:bg-brand-50 disabled:border-[var(--app-border)] disabled:bg-white'
               }
             >
               {pageNum}
             </button>
           ),
         )}
+        <button
+          type="button"
+          disabled={page >= totalPages || loading}
+          onClick={() => onPageChange(page + 1)}
+          className="btn btn-sm join-item border-[var(--app-border)] bg-white text-[var(--app-text)] hover:border-brand-200 hover:bg-brand-50 disabled:border-[var(--app-border)] disabled:bg-white disabled:text-[var(--app-muted)]"
+        >
+          <ChevronRight className="h-4 w-4 shrink-0" />
+        </button>
       </div>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-[var(--app-text)]"
-        disabled={page >= totalPages || loading}
-        onClick={() => onPageChange(page + 1)}
-      >
-        Next
-        <ChevronRight className="ml-1.5 h-4 w-4 shrink-0" />
-      </Button>
     </div>
   )
 }

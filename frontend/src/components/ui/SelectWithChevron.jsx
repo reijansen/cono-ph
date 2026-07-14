@@ -17,7 +17,7 @@ export default function SelectWithChevron({
         value={value}
         onChange={onChange}
         className={cn(
-          'h-11 w-full appearance-none rounded-2xl border border-[var(--app-border)] bg-white px-4 pr-12 text-sm text-[var(--app-text)] outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100',
+          'h-10 w-full appearance-none rounded-[1.1rem] border border-[var(--app-border)] bg-white px-4 pr-12 text-sm text-[var(--app-text)] outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-100',
           selectClassName,
         )}
         {...props}

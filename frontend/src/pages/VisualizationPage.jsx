@@ -17,7 +17,7 @@ import {
 function PreviewList({ title, items }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-base font-medium text-[var(--app-muted)]">{title}</h3>
+      <h3 className="text-[0.95rem] font-semibold text-[var(--app-muted)]">{title}</h3>
       <ul className="space-y-2">
         {items.map((item) => (
           <li key={item.name} className="flex items-center justify-between gap-3 text-sm">
@@ -32,9 +32,9 @@ function PreviewList({ title, items }) {
 
 function InsightCard({ children }) {
   return (
-    <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4 shadow-sm">
+    <div className="rounded-[1.25rem] border border-[var(--app-border)] bg-white p-4 shadow-[0_10px_24px_rgba(16,16,16,0.03)]">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 h-12 w-12 shrink-0 rounded-full bg-brand-50" />
+        <span className="mt-0.5 h-10 w-10 shrink-0 rounded-full bg-brand-50" />
         <p className="text-sm leading-6 text-[var(--app-muted)]">{children}</p>
       </div>
     </div>
@@ -60,7 +60,7 @@ function OverviewPreviewCard({ card }) {
                 <Icon className="h-5 w-5" strokeWidth={1.8} />
               </span>
             ) : null}
-            <p className="text-lg font-medium text-[var(--app-muted)]">{card.previewTitle}</p>
+            <p className="text-[1rem] font-medium text-[var(--app-muted)]">{card.previewTitle}</p>
           </div>
 
           {showStaticMap ? (
@@ -101,7 +101,7 @@ export default function VisualizationPage() {
       title={visualizationMeta.title}
       subtitle={visualizationMeta.subtitle}
     >
-      <section className="rounded-[1.75rem] border border-brand-100 bg-white/80 p-5 shadow-sm sm:p-6">
+      <section className="rounded-[1.75rem] border border-brand-100 bg-white/80 p-5 shadow-[0_10px_26px_rgba(16,16,16,0.04)] sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">
@@ -136,10 +136,10 @@ export default function VisualizationPage() {
         ))}
       </section>
 
-      <Card className="space-y-5 bg-brand-50/25 p-5 sm:p-6">
+      <Card className="space-y-5 bg-brand-50/20 p-5 sm:p-6">
         <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)] xl:items-start">
           <div className="space-y-2">
-            <h2 className="text-[2rem] leading-none text-black">Cross-Data Insights</h2>
+            <h2 className="text-[1.8rem] leading-none text-black">Cross-Data Insights</h2>
             <p className="text-sm leading-6 text-[var(--app-muted)] sm:text-base">
               Integrated insights across species, conopeptides, and biomarkers.
             </p>
