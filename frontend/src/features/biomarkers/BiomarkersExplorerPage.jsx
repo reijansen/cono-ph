@@ -44,8 +44,8 @@ export default function BiomarkersExplorerPage() {
           </button>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-separate border-spacing-0">
+        <div className="-mx-4 overflow-x-auto sm:mx-0">
+          <table className="w-full min-w-[760px] border-separate border-spacing-0">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-[var(--app-muted)]">
                 {[

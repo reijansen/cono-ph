@@ -47,7 +47,7 @@ export default function BiomarkerPagination({
   const pageNumbers = getPageNumbers()
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+    <div className="flex flex-wrap items-center justify-center gap-2 pt-4 sm:gap-3">
       <Button
         variant="ghost"
         size="sm"
@@ -59,7 +59,7 @@ export default function BiomarkerPagination({
         Previous
       </Button>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
         {pageNumbers.map((pageNum) =>
           typeof pageNum === 'string' ? (
             <span key={pageNum} className="px-3 py-2 text-sm text-[var(--app-text)]">

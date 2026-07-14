@@ -6,13 +6,13 @@ const pages = [1, 2, 3, 'ellipsis', 67, 68]
 
 export default function SpeciesExplorerPagination() {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+    <div className="flex flex-wrap items-center justify-center gap-2 pt-4 sm:gap-3">
       <Button variant="ghost" size="sm" className="text-slate-300" disabled>
         <ChevronLeft className="mr-1.5 h-4 w-4 shrink-0" />
         Previous
       </Button>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
         {pages.map((page) =>
           page === 'ellipsis' ? (
             <span key={page} className="px-3 py-2 text-sm text-[var(--app-text)]">

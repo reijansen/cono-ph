@@ -41,7 +41,7 @@ export default function ConopeptidesExplorerPage() {
       <ConopeptideTableCard
         title="Conopeptide Precursors"
         action={
-          <div className="flex items-center gap-3 text-sm font-medium text-[var(--app-muted)]">
+          <div className="flex flex-col items-start gap-3 text-sm font-medium text-[var(--app-muted)] sm:flex-row sm:items-center">
             <span>3,671 results</span>
             <button
               type="button"
@@ -53,8 +53,8 @@ export default function ConopeptidesExplorerPage() {
           </div>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-separate border-spacing-0">
+        <div className="-mx-4 overflow-x-auto sm:mx-0">
+          <table className="w-full min-w-[760px] border-separate border-spacing-0">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-[var(--app-muted)]">
                 {[

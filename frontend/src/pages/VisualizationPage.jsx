@@ -68,7 +68,7 @@ function OverviewPreviewCard({ card }) {
               <img
                 src={card.previewImage}
                 alt={card.previewAlt}
-                className="h-[330px] w-full object-cover object-center"
+                className="h-[220px] w-full object-cover object-center sm:h-[280px] lg:h-[330px]"
               />
             </div>
           ) : (
@@ -102,7 +102,7 @@ export default function VisualizationPage() {
       subtitle={visualizationMeta.subtitle}
     >
       <section className="rounded-[1.75rem] border border-brand-100 bg-white/80 p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">
               Visualization Gateway
@@ -112,7 +112,7 @@ export default function VisualizationPage() {
             </p>
           </div>
 
-          <Button as={Link} to={visualizationMeta.primaryCtaTo} size="lg" className="min-w-56">
+          <Button as={Link} to={visualizationMeta.primaryCtaTo} size="lg" className="w-full sm:min-w-56 sm:w-auto">
             {visualizationMeta.primaryCtaLabel}
           </Button>
         </div>
@@ -130,16 +130,16 @@ export default function VisualizationPage() {
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-3">
+      <section className="grid gap-5 xl:grid-cols-3">
         {visualizationOverviewCards.map((card) => (
           <OverviewPreviewCard key={card.id} card={card} />
         ))}
       </section>
 
       <Card className="space-y-5 bg-brand-50/25 p-5 sm:p-6">
-        <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+        <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)] xl:items-start">
           <div className="space-y-2">
-            <h2 className="text-3xl leading-none text-black">Cross-Data Insights</h2>
+            <h2 className="text-[2rem] leading-none text-black">Cross-Data Insights</h2>
             <p className="text-sm leading-6 text-[var(--app-muted)] sm:text-base">
               Integrated insights across species, conopeptides, and biomarkers.
             </p>

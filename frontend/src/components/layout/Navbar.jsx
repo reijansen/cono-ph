@@ -28,20 +28,20 @@ export default function Navbar() {
 
   return (
     <header className="relative z-30">
-      <div className="app-container pt-4">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
+      <div className="app-container pt-3 sm:pt-4">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
           <NavLink
             to="/"
             end
-            className="text-[1.35rem] font-medium tracking-tight text-black lg:text-[1.55rem]"
+            className="text-[1.15rem] font-medium tracking-tight text-black sm:text-[1.3rem] lg:text-[1.55rem]"
           >
             ConoPH
           </NavLink>
 
-          <div className="flex justify-center">
+          <div className="hidden justify-center lg:flex">
             <PrimaryNav
               isSolid={isScrolled}
-              className="fixed left-1/2 top-4 z-40 w-[min(860px,calc(100vw-1rem))] -translate-x-1/2 lg:top-5 lg:w-[min(860px,calc(100vw-4rem))]"
+              className="fixed left-1/2 top-4 z-40 w-[min(820px,calc(100vw-4rem))] -translate-x-1/2 lg:top-5"
             />
           </div>
 
@@ -67,11 +67,12 @@ export default function Navbar() {
         </div>
 
         {isMenuOpen ? (
-          <div className="mt-3 rounded-[2rem] border border-black/5 bg-white/85 p-4 shadow-[0_18px_45px_rgba(0,0,0,0.12)] backdrop-blur-xl lg:hidden">
+          <div className="mt-3 rounded-[1.5rem] border border-black/5 bg-white/95 p-3 shadow-[0_18px_45px_rgba(0,0,0,0.12)] backdrop-blur-xl lg:hidden">
             <div id="mobile-menu">
               <PrimaryNav
-                className="w-full rounded-[1.5rem] bg-brand-50 px-4 py-4"
+                className="w-full"
                 isSolid
+                mobile
               />
               <Button as="a" href="/#contact" variant="primary" size="sm" className="mt-3 w-full">
                 Contact Us

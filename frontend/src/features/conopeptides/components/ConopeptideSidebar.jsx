@@ -202,7 +202,7 @@ export default function ConopeptideSidebar({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 pt-1">
+      <div className="grid gap-3 pt-1 sm:grid-cols-2">
         <Button
           variant="outline"
           size="md"

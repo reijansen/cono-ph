@@ -287,7 +287,7 @@ export default function HomeDashboardSection() {
         description="Reusable data modules for the home dashboard with metric tiles, publication lists, species lists, and readable summary sections."
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2">
             {homeMetrics.map((metric) => (
@@ -301,7 +301,11 @@ export default function HomeDashboardSection() {
 
         <div className="space-y-6">
           <section className="overflow-hidden rounded-[2rem] border border-[var(--app-border)] bg-white shadow-sm">
-            <img src={mapImage} alt="Philippine map preview" className="h-full w-full object-cover" />
+            <img
+              src={mapImage}
+              alt="Philippine map preview"
+              className="h-[240px] w-full object-cover sm:h-[320px] lg:h-full"
+            />
           </section>
         </div>
       </div>
@@ -312,12 +316,12 @@ export default function HomeDashboardSection() {
 
       <section className="space-y-6">
         <ListSection title="Top 3 Recent Species" description="Sorted by linked publication date">
-          <div className="flex gap-4 overflow-x-auto pb-1 [scrollbar-width:thin]">
+          <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
             {recentSpecies.map((species, index) => (
               <div
                 key={species.id}
                 title={species.name}
-                className="min-w-[280px] rounded-2xl border border-[var(--app-border)] bg-white px-4 py-4 shadow-sm"
+                className="min-w-[250px] rounded-2xl border border-[var(--app-border)] bg-white px-4 py-4 shadow-sm sm:min-w-[280px]"
               >
                 <div className="text-[11px] uppercase tracking-[0.18em] text-[var(--app-muted)]">
                   #{index + 1}
@@ -335,12 +339,12 @@ export default function HomeDashboardSection() {
         </ListSection>
 
         <ListSection title="Top 3 Recent Publications" description="Most recent by publication date">
-          <div className="flex gap-4 overflow-x-auto pb-1 [scrollbar-width:thin]">
+          <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
             {recentPublications.map((publication, index) => (
               <div
                 key={publication.id}
                 title={publication.title}
-                className="min-w-[280px] rounded-2xl border border-[var(--app-border)] bg-white px-4 py-4 shadow-sm"
+                className="min-w-[250px] rounded-2xl border border-[var(--app-border)] bg-white px-4 py-4 shadow-sm sm:min-w-[280px]"
               >
                 <div className="space-y-2">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-[var(--app-muted)]">

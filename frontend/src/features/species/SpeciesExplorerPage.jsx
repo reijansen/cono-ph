@@ -13,13 +13,13 @@ export default function SpeciesExplorerPage() {
           { label: 'Species' },
         ]}
       />
-      <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start">
+      <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)] xl:items-start">
         <aside>
           <SpeciesExplorerFilters />
         </aside>
 
         <section className="space-y-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-lg font-semibold text-brand-700">{speciesExplorerCount} Species Found</p>
           </div>
 

@@ -146,14 +146,14 @@ export default function ConopeptideDetailPage() {
       <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-serif text-[clamp(2.6rem,4.6vw,4.75rem)] leading-[0.95] text-black">
+            <h1 className="font-serif text-[clamp(2rem,4vw,3.4rem)] leading-[0.95] text-black">
               {record.title}
             </h1>
             <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700">
               {record.status}
             </span>
           </div>
-          <p className="text-[1.05rem] text-[var(--app-muted)]">{record.subtitle}</p>
+          <p className="text-[0.98rem] leading-6 text-[var(--app-muted)] sm:text-[1.05rem]">{record.subtitle}</p>
         </div>
 
         <Button type="button" variant="outline" className="gap-2 self-start px-4">
@@ -171,7 +171,7 @@ export default function ConopeptideDetailPage() {
       </Card>
 
       <section className="border-b border-[var(--app-border)]">
-        <div className="flex flex-wrap gap-6 sm:gap-10">
+        <div className="-mb-px flex flex-wrap gap-4 sm:gap-8">
           {record.tabs.map((tab) => {
             const isActive = tab === activeTab
 
@@ -181,7 +181,7 @@ export default function ConopeptideDetailPage() {
                 type="button"
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  'border-b-2 border-transparent pb-4 text-[1rem] font-medium transition',
+                  'border-b-2 border-transparent pb-4 text-[0.95rem] font-medium transition sm:text-[1rem]',
                   isActive
                     ? 'border-brand-500 text-brand-700'
                     : 'text-[var(--app-muted)] hover:text-brand-700',
@@ -196,7 +196,7 @@ export default function ConopeptideDetailPage() {
 
       {activeTab === 'Overview' ? (
         <div className="space-y-6">
-          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,0.75fr)]">
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(280px,0.75fr)]">
             <DetailPanel
               title="Predicted Peptide"
               action={
@@ -207,7 +207,7 @@ export default function ConopeptideDetailPage() {
               }
             >
               <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-3 text-[1.95rem] tracking-[0.38em] text-[var(--app-text)] sm:text-[2.2rem]">
+                <div className="flex flex-wrap items-center gap-2 text-[1.35rem] tracking-[0.22em] text-[var(--app-text)] sm:gap-3 sm:text-[1.8rem] lg:text-[2.1rem]">
                   {record.predictedPeptide.split('').map((letter, index) => (
                     <span key={`${letter}-${index}`} className="inline-flex flex-col items-center">
                       <span className="font-mono">{letter}</span>
@@ -232,7 +232,7 @@ export default function ConopeptideDetailPage() {
           </section>
 
           <DetailPanel title="Matched Toxin">
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:items-center">
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <h3 className="text-[1.55rem] font-semibold text-[var(--app-text)]">
@@ -247,7 +247,7 @@ export default function ConopeptideDetailPage() {
                 </p>
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
                 <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
                   <p className="text-sm text-[var(--app-muted)]">Reference</p>
                   <p className="mt-2 text-[0.98rem] leading-7 text-[var(--app-text)]">
@@ -275,7 +275,7 @@ export default function ConopeptideDetailPage() {
                 />
               }
             >
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-stretch">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-stretch">
                 <SequenceBlock sequence={sequencesTab.precursorSequence} />
 
                 <div className="space-y-4 rounded-2xl border border-[var(--app-border)] bg-white p-5">
@@ -332,7 +332,7 @@ export default function ConopeptideDetailPage() {
           </DetailPanel>
 
           <DetailPanel title="Additional Information">
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-2">
               {record.additionalInformation.map((item) => (
                 <div key={item.label} className="grid gap-2 sm:grid-cols-[180px_minmax(0,1fr)]">
                   <dt className="font-semibold text-brand-700">{item.label}</dt>
@@ -377,7 +377,7 @@ export default function ConopeptideDetailPage() {
             }
           >
             <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-3 text-[1.95rem] tracking-[0.38em] text-[var(--app-text)] sm:text-[2.2rem]">
+              <div className="flex flex-wrap items-center gap-2 text-[1.35rem] tracking-[0.22em] text-[var(--app-text)] sm:gap-3 sm:text-[1.8rem] lg:text-[2.1rem]">
                 {sequencesTab.predictedPeptide.split('').map((letter, index) => (
                   <span key={`${letter}-${index}`} className="inline-flex flex-col items-center">
                     <span className="font-mono">{letter}</span>
@@ -393,7 +393,7 @@ export default function ConopeptideDetailPage() {
             </div>
           </DetailPanel>
 
-          <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]">
             <DetailPanel
               title="Precursor Nucleotide Sequence"
               action={
@@ -465,7 +465,7 @@ export default function ConopeptideDetailPage() {
           <DetailPanel title="Annotation Summary">
             <div className="space-y-4">
               <p className="max-w-3xl text-[1rem] leading-7 text-[var(--app-muted)]">{annotationsTab.summary}</p>
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-4 xl:grid-cols-2">
                 {annotationsTab.items.map((item) => (
                   <div key={item.label} className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
                     <p className="text-sm text-[var(--app-muted)]">{item.label}</p>
@@ -477,7 +477,7 @@ export default function ConopeptideDetailPage() {
           </DetailPanel>
 
           <DetailPanel title="Matched Toxin / Functional Note">
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:items-center">
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <h3 className="text-[1.55rem] font-semibold text-[var(--app-text)]">
@@ -492,7 +492,7 @@ export default function ConopeptideDetailPage() {
                 </p>
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
                 <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
                   <p className="text-sm text-[var(--app-muted)]">Evidence Note</p>
                   <p className="mt-2 text-[0.98rem] leading-7 text-[var(--app-text)]">
@@ -511,7 +511,7 @@ export default function ConopeptideDetailPage() {
       ) : (
         <div className="space-y-6">
           <DetailPanel title="Record Source">
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:items-start">
               <dl className="grid gap-5 sm:grid-cols-2">
                 {sourceTab.rows.map((item) => (
                   <div key={item.label} className="grid gap-2">

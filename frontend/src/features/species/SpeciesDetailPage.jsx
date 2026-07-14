@@ -65,19 +65,19 @@ function ConopeptidesTab({ species }) {
   const [cysteineFramework, setCysteineFramework] = useState('All Cysteine Frameworks')
 
   return (
-    <div className="space-y-7">
+      <div className="space-y-6">
       <div className="space-y-4">
-        <h2 className="font-serif text-[clamp(2.8rem,4vw,4.2rem)] leading-[0.95] text-black">
+        <h2 className="font-serif text-[clamp(2rem,3.6vw,3.1rem)] leading-[0.95] text-black">
           Conopeptides <span className="text-brand-700">({totalCount})</span>
         </h2>
-        <p className="max-w-4xl text-[1.05rem] leading-7 text-[var(--app-muted)]">
+        <p className="max-w-4xl text-[0.98rem] leading-7 text-[var(--app-muted)] sm:text-[1.05rem]">
           Predicted conopeptides identified from transcriptomic data for this species.
         </p>
       </div>
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end xl:flex-1">
+          <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-wrap xl:items-end">
             <SearchInput placeholder="Search by.." className="w-full lg:max-w-[328px]" />
 
             <SelectWithChevron
@@ -102,7 +102,7 @@ function ConopeptidesTab({ species }) {
             </SelectWithChevron>
           </div>
 
-          <div className="inline-flex items-stretch self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm xl:self-auto">
+          <div className="grid w-full grid-cols-2 self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm sm:w-auto sm:inline-flex xl:self-auto">
             <button
               type="button"
               className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
@@ -125,7 +125,7 @@ function ConopeptidesTab({ species }) {
         </div>
 
         <div className="flex justify-start">
-          <Button variant="outline" size="md" className="min-w-[106px] gap-2 px-5">
+          <Button variant="outline" size="md" className="w-full gap-2 px-5 sm:w-auto sm:min-w-[106px]">
             Export
             <Download className="h-4 w-4" />
           </Button>
@@ -133,8 +133,8 @@ function ConopeptidesTab({ species }) {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="min-w-[860px] w-full border-collapse">
+        <div className="-mx-4 overflow-x-auto sm:mx-0">
+          <table className="w-full min-w-[760px] border-collapse">
             <thead className="bg-brand-50">
               <tr className="text-left text-sm font-semibold text-brand-800">
                 <th className="px-5 py-4">Conopeptide ID</th>
@@ -184,19 +184,19 @@ function SpecimensTab({ species }) {
   const [sequencingPlatform, setSequencingPlatform] = useState('All Platforms')
 
   return (
-    <div className="space-y-7">
+      <div className="space-y-6">
       <div className="space-y-4">
-        <h2 className="font-serif text-[clamp(2.8rem,4vw,4.2rem)] leading-[0.95] text-black">
+        <h2 className="font-serif text-[clamp(2rem,3.6vw,3.1rem)] leading-[0.95] text-black">
           Specimens <span className="text-brand-700">({totalCount})</span>
         </h2>
-        <p className="max-w-4xl text-[1.05rem] leading-7 text-[var(--app-muted)]">
+        <p className="max-w-4xl text-[0.98rem] leading-7 text-[var(--app-muted)] sm:text-[1.05rem]">
           Individual specimen records collected for this species.
         </p>
       </div>
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end xl:flex-1 xl:flex-nowrap">
+          <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-wrap xl:items-end">
             <SearchInput placeholder="Search by.." className="w-full lg:max-w-[328px]" />
 
             <SelectWithChevron value={province} onChange={(event) => setProvince(event.target.value)}>
@@ -223,7 +223,7 @@ function SpecimensTab({ species }) {
             </SelectWithChevron>
           </div>
 
-          <div className="inline-flex items-stretch self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm xl:self-auto">
+          <div className="grid w-full grid-cols-2 self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm sm:w-auto sm:inline-flex xl:self-auto">
             <button
               type="button"
               className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
@@ -247,7 +247,7 @@ function SpecimensTab({ species }) {
         </div>
 
         <div className="flex justify-start">
-          <Button variant="outline" size="md" className="min-w-[106px] gap-2 px-5">
+          <Button variant="outline" size="md" className="w-full gap-2 px-5 sm:w-auto sm:min-w-[106px]">
             Export
             <Download className="h-4 w-4" />
           </Button>
@@ -255,8 +255,8 @@ function SpecimensTab({ species }) {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="min-w-[1100px] w-full border-collapse">
+        <div className="-mx-4 overflow-x-auto sm:mx-0">
+          <table className="w-full min-w-[900px] border-collapse">
             <thead className="bg-brand-50">
               <tr className="text-left text-sm font-semibold text-brand-800">
                 <th className="px-5 py-4">Specimen ID</th>
@@ -306,7 +306,7 @@ function SpecimensTab({ species }) {
 function PublicationCard({ publication }) {
   return (
     <Card className="!p-0 overflow-hidden">
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+      <div className="grid gap-0 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
         <div className="space-y-4 px-5 py-5 lg:border-r lg:border-[var(--app-border)]">
           <h3 className="text-[1.15rem] font-semibold leading-8 text-black sm:text-[1.35rem]">
             {publication.title}
@@ -369,19 +369,19 @@ function PublicationsTab({ species }) {
   const [journal, setJournal] = useState('All Journals')
 
   return (
-    <div className="space-y-7">
+      <div className="space-y-6">
       <div className="space-y-4">
-        <h2 className="font-serif text-[clamp(2.8rem,4vw,4.2rem)] leading-[0.95] text-black">
+        <h2 className="font-serif text-[clamp(2rem,3.6vw,3.1rem)] leading-[0.95] text-black">
           Publications <span className="text-brand-700">({totalCount})</span>
         </h2>
-        <p className="max-w-4xl text-[1.05rem] leading-7 text-[var(--app-muted)]">
+        <p className="max-w-4xl text-[0.98rem] leading-7 text-[var(--app-muted)] sm:text-[1.05rem]">
           Reference papers and related studies associated with this species.
         </p>
       </div>
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end xl:flex-1 xl:flex-nowrap">
+          <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-wrap xl:items-end">
             <SearchInput placeholder="Search by.." className="w-full lg:max-w-[328px]" />
 
             <SelectWithChevron value={year} onChange={(event) => setYear(event.target.value)}>
@@ -399,7 +399,7 @@ function PublicationsTab({ species }) {
             </SelectWithChevron>
           </div>
 
-          <div className="inline-flex items-stretch self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm xl:self-auto">
+          <div className="grid w-full grid-cols-2 self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm sm:w-auto sm:inline-flex xl:self-auto">
             <button
               type="button"
               className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
@@ -422,7 +422,7 @@ function PublicationsTab({ species }) {
         </div>
 
         <div className="flex justify-start">
-          <Button variant="outline" size="md" className="min-w-[106px] gap-2 px-5">
+          <Button variant="outline" size="md" className="w-full gap-2 px-5 sm:w-auto sm:min-w-[106px]">
             Export
             <Download className="h-4 w-4" />
           </Button>
@@ -465,7 +465,7 @@ export default function SpeciesDetailPage() {
         ]}
       />
 
-      <section className="grid gap-8 lg:grid-cols-[378px_minmax(0,1fr)] lg:items-start">
+      <section className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)] xl:items-start">
         <div className="overflow-hidden rounded-2xl bg-black">
           <img
             src={species.species.image}
@@ -475,10 +475,10 @@ export default function SpeciesDetailPage() {
         </div>
 
         <div className="pt-1">
-          <h1 className="font-serif text-[clamp(3rem,5vw,5.1rem)] leading-[0.95] text-black">
+          <h1 className="font-serif text-[clamp(2.2rem,4.5vw,3.8rem)] leading-[0.95] text-black">
             {species.species.scientificName}
           </h1>
-          <p className="mt-3 text-[clamp(1.45rem,2vw,2rem)] leading-none text-brand-700">
+          <p className="mt-3 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-none text-brand-700">
             {species.species.commonName}
           </p>
           <p className="mt-2 text-[1rem] text-[var(--app-muted)]">
@@ -496,7 +496,7 @@ export default function SpeciesDetailPage() {
       </section>
 
       <section className="border-b border-brand-300">
-        <div className="flex flex-wrap gap-4 sm:gap-12">
+        <div className="flex flex-wrap gap-x-5 gap-y-3 sm:gap-x-10">
           {tabs.map((tab) => {
             const isActive = tab.value === activeTab
 
@@ -506,7 +506,7 @@ export default function SpeciesDetailPage() {
                 type="button"
                 onClick={() => setActiveTab(tab.value)}
                 className={cn(
-                  'pb-4 text-[1.15rem] font-medium transition',
+                  'pb-4 text-[1rem] font-medium transition sm:text-[1.08rem]',
                   isActive ? 'text-brand-700' : 'text-brand-700/80 hover:text-brand-700',
                 )}
               >
@@ -519,7 +519,7 @@ export default function SpeciesDetailPage() {
 
       {activeTab === 'overview' ? (
         <div className="space-y-8">
-          <section className="grid gap-8 lg:grid-cols-3">
+          <section className="grid gap-6 lg:grid-cols-3">
             <SectionCard title="Taxonomy and Biological Information">
               <InfoList
                 items={[
@@ -564,11 +564,11 @@ export default function SpeciesDetailPage() {
 
           <section>
             <Card className="!p-0 overflow-hidden">
-              <div className="rounded-t-2xl bg-brand-700 px-5 py-4 text-[1.05rem] font-semibold text-white">
+              <div className="rounded-t-2xl bg-brand-700 px-5 py-4 text-[1rem] font-semibold text-white sm:text-[1.05rem]">
                 Publication Information
               </div>
 
-              <div className="grid gap-8 px-5 py-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+              <div className="grid gap-8 px-5 py-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                 <div className="space-y-8">
                   <div>
                     <p className="text-[1.05rem] font-semibold text-[var(--app-muted)]">DOI</p>
