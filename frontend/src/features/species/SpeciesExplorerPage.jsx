@@ -13,16 +13,6 @@ export default function SpeciesExplorerPage() {
           { label: 'Species' },
         ]}
       />
-
-      <section className="space-y-2">
-        <h1 className="text-[clamp(2.4rem,4vw,3.5rem)] leading-none text-black">
-          Species Explorer
-        </h1>
-        <p className="max-w-3xl text-sm leading-6 text-[var(--app-muted)] sm:text-base">
-          Browse and explore Philippine cone snail species and specimen records.
-        </p>
-      </section>
-
       <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start">
         <aside>
           <SpeciesExplorerFilters />
