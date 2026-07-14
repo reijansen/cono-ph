@@ -10,7 +10,7 @@ export default function ConopeptideLayout({
   className,
 }) {
   return (
-    <div className={cn('w-full space-y-8 pb-10', className)}>
+    <div className={cn('w-full space-y-2 pb-10', className)}>
       {breadcrumbs.length ? <Breadcrumbs items={breadcrumbs} /> : null}
 
       <div className="grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)] lg:items-start">

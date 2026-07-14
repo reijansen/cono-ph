@@ -96,19 +96,11 @@ function SuperfamilyBarChart() {
 function SpecimenPieChart() {
   const total = specimenDistribution.reduce((sum, item) => sum + item.value, 0)
 
-  const gradient = `conic-gradient(${specimenDistribution
-    .map((item, index, array) => {
-      const start = array.slice(0, index).reduce((sum, current) => sum + current.value, 0)
-      const end = start + item.value
-      return `${item.color} ${start}% ${end}%`
-    })
-    .join(', ')})`
-
   return (
     <ListSection title="Specimen Distribution" description="Pie chart breakdown">
       <div className="grid gap-5 md:grid-cols-[auto_1fr] md:items-center">
         <div className="flex justify-center">
-          <div className="relative h-36 w-36 rounded-full" style={{ background: gradient }} title="Regional composition">
+          <div className="relative h-36 w-36 rounded-full border-[18px] border-brand-300 border-r-brand-700 border-b-brand-700 bg-white shadow-sm" title="Regional composition">
             <div className="absolute inset-[22%] rounded-full bg-white" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">

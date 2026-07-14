@@ -89,7 +89,7 @@ export function MapPlaceholder({ className }) {
   return (
     <PlaceholderFrame title="Map placeholder" className={className}>
       <div className="relative h-56 w-full rounded-3xl border border-[var(--app-border)] bg-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(108,127,34,0.18),transparent_30%),radial-gradient(circle_at_75%_55%,rgba(160,180,74,0.18),transparent_28%),linear-gradient(135deg,rgba(243,246,232,0.9),rgba(255,255,255,0.98))]" />
+        <div className="absolute inset-0 bg-brand-50/70" />
         <div className="absolute inset-6 rounded-2xl border border-dashed border-brand-200" />
         <div className="absolute left-8 top-8 h-20 w-24 rounded-[32%_68%_58%_42%/49%_48%_52%_51%] bg-brand-200/80" />
         <div className="absolute right-14 top-16 h-24 w-18 rounded-[55%_45%_44%_56%/45%_42%_58%_55%] bg-brand-300/80" />
@@ -136,12 +136,7 @@ export function GaugePlaceholder({
     <PlaceholderFrame title="Gauge placeholder" className={className}>
       <div className="grid place-items-center">
         <div className="relative flex h-[300px] w-[300px] items-center justify-center">
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: `conic-gradient(#566518 0 ${value}%, rgba(226,226,212,0.9) ${value}% 100%)`,
-            }}
-          />
+          <div className="absolute inset-0 rounded-full border-[24px] border-brand-300 border-r-brand-700 border-b-brand-700 bg-white" />
           <div className="absolute inset-[18px] rounded-full bg-white shadow-sm" />
           <div className="relative z-10 text-center">
             <div className="text-4xl font-semibold text-[var(--app-text)]">{value}%</div>

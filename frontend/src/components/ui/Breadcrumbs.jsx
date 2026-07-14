@@ -5,7 +5,7 @@ import { cn } from '@/utils/cn'
 
 export default function Breadcrumbs({ items = [], className }) {
   return (
-    <nav aria-label="Breadcrumb" className={cn('pb-1', className)}>
+    <nav aria-label="Breadcrumb" className={className}>
       <ol className="flex flex-wrap items-center gap-1.5 text-[0.82rem] text-[var(--app-muted)] sm:text-sm">
         {items.map((item, index) => {
           const isLast = index === items.length - 1

@@ -7,7 +7,7 @@ import { speciesExplorerCount, speciesExplorerRecords } from '@/features/species
 
 export default function SpeciesExplorerPage() {
   return (
-    <div className="space-y-8 pb-6">
+    <div className="space-y-2 pb-6">
       <Breadcrumbs
         items={[
           { label: 'Home', to: '/' },
@@ -34,8 +34,9 @@ export default function SpeciesExplorerPage() {
               ))}
             </div>
 
-            <SpeciesExplorerPagination />
           </Card>
+
+          <SpeciesExplorerPagination />
         </section>
       </div>
     </div>

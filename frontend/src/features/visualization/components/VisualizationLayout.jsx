@@ -9,7 +9,7 @@ export default function VisualizationLayout({
   className,
 }) {
   return (
-    <div className={cn('w-full space-y-8 pb-10', className)}>
+    <div className={cn('w-full space-y-2 pb-10', className)}>
       {breadcrumbs.length ? <Breadcrumbs items={breadcrumbs} /> : null}
 
       <main className="min-w-0 space-y-8">{children}</main>

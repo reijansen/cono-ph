@@ -97,9 +97,11 @@ export default function BiomarkersExplorerPage() {
             </tbody>
           </table>
         </div>
-
-        <BiomarkerPagination pagination={biomarkerPagination} onPageChange={() => {}} loading={false} />
       </BiomarkerTableCard>
+
+      <div className="pt-2">
+        <BiomarkerPagination pagination={biomarkerPagination} onPageChange={() => {}} loading={false} />
+      </div>
     </BiomarkerLayout>
   )
 }

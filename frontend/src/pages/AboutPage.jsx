@@ -46,42 +46,42 @@ const developerItems = [
     role: 'Data Modeller',
     contribution: 'Data modelling, metadata organization, and record structuring.',
     initials: 'BG',
-    avatarClass: 'from-brand-100 via-white to-brand-50',
+    avatarClass: 'bg-brand-50',
   },
   {
     name: 'Timothy James Guela',
     role: 'Backend Developer',
     contribution: 'Database logic, integration scaffolding, and API-ready data structures.',
     initials: 'TJ',
-    avatarClass: 'from-brand-50 via-white to-brand-100',
+    avatarClass: 'bg-brand-100',
   },
   {
     name: 'Rei Jansen Buerom',
     role: 'UI/UX and Frontend Developer',
     contribution: 'Interface composition, layout implementation, and responsive styling.',
     initials: 'RJ',
-    avatarClass: 'from-brand-200 via-white to-brand-50',
+    avatarClass: 'bg-brand-200',
   },
   {
     name: 'Lamberto Fonseca Jr.',
     role: 'Tech Mentor',
     contribution: 'Project direction, technical review, and implementation guidance.',
     initials: 'LF',
-    avatarClass: 'from-brand-50 via-white to-brand-100',
+    avatarClass: 'bg-brand-100',
   },
   {
     name: 'Dan Jethro Masacupan',
     role: 'Bioinformatics Mentor',
     contribution: 'Bioinformatics review, research guidance, and analytical oversight.',
     initials: 'DJ',
-    avatarClass: 'from-brand-100 via-white to-brand-50',
+    avatarClass: 'bg-brand-50',
   },
   {
     name: 'Gliezel Ann Pajarilla',
     role: 'Tech Mentor',
     contribution: 'Technical validation, UI feedback, and project support.',
     initials: 'GA',
-    avatarClass: 'from-brand-50 via-white to-brand-100',
+    avatarClass: 'bg-brand-100',
   },
 ]
 
@@ -130,7 +130,7 @@ function AvatarPlaceholder({ initials, avatarClass }) {
   return (
     <div
       className={cn(
-        'flex h-28 w-28 items-center justify-center rounded-full border border-brand-100 bg-gradient-to-br text-lg font-semibold tracking-[0.2em] text-[var(--app-text)] shadow-sm',
+        'flex h-28 w-28 items-center justify-center rounded-full border border-brand-100 text-lg font-semibold tracking-[0.2em] text-[var(--app-text)] shadow-sm',
         avatarClass,
       )}
     >
@@ -193,7 +193,7 @@ export default function AboutPage() {
         </div>
 
         <div className="overflow-hidden rounded-[2rem] border border-brand-100 bg-brand-50/40 p-4 shadow-sm sm:p-5">
-          <div className="overflow-hidden rounded-[1.75rem] bg-[linear-gradient(180deg,rgba(243,246,232,0.95),rgba(255,255,255,1))] p-4 sm:p-6">
+          <div className="overflow-hidden rounded-[1.75rem] bg-white p-4 sm:p-6">
             <img
               src={homeShellImage}
               alt="Cone snail shell illustration"

@@ -110,9 +110,11 @@ export default function ConopeptidesExplorerPage() {
             </tbody>
           </table>
         </div>
-
-        <ConopeptidePagination pagination={conopeptidePagination} onPageChange={() => {}} loading={false} />
       </ConopeptideTableCard>
+
+      <div className="pt-2">
+        <ConopeptidePagination pagination={conopeptidePagination} onPageChange={() => {}} loading={false} />
+      </div>
     </ConopeptideLayout>
   )
 }

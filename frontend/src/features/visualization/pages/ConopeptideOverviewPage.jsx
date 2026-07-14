@@ -3,7 +3,6 @@ import {
   BarChartPlaceholder,
   DonutChartPlaceholder,
 } from '@/features/visualization/components/ChartPlaceholders'
-import MetricCard from '@/features/visualization/components/MetricCard'
 import VisualizationLayout from '@/features/visualization/components/VisualizationLayout'
 import Table from '@/components/ui/Table'
 import {
@@ -29,6 +28,28 @@ function LegendItem({ label, count, percent, color }) {
   )
 }
 
+function MetricJoinCard({ metric }) {
+  const Icon = metric.icon
+
+  return (
+    <div className="join-item flex min-w-0 flex-1 gap-3 border border-[var(--app-border)] bg-white p-3 sm:p-4">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+        {Icon ? <Icon className="h-5 w-5" strokeWidth={1.8} /> : null}
+      </div>
+
+      <div className="min-w-0">
+        <p className="text-[1.35rem] font-semibold tracking-tight text-[var(--app-text)] sm:text-[1.5rem]">
+          {metric.value}
+        </p>
+        <p className="mt-0.5 text-[0.82rem] font-semibold text-brand-700">{metric.label}</p>
+        {metric.description ? (
+          <p className="mt-1 text-[0.82rem] leading-5 text-[var(--app-muted)]">{metric.description}</p>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 export default function ConopeptideOverviewPage() {
   return (
     <VisualizationLayout
@@ -36,15 +57,9 @@ export default function ConopeptideOverviewPage() {
       title={conopeptideOverviewMeta.title}
       subtitle={conopeptideOverviewMeta.subtitle}
     >
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="join w-full flex-col overflow-hidden rounded-[1.5rem] border border-[var(--app-border)] bg-white shadow-[0_10px_26px_rgba(16,16,16,0.04)] xl:flex-row">
         {conopeptideOverviewMetrics.map((metric) => (
-          <MetricCard
-            key={metric.label}
-            icon={metric.icon}
-            value={metric.value}
-            label={metric.label}
-            className="p-3 sm:p-4"
-          />
+          <MetricJoinCard key={metric.label} metric={metric} />
         ))}
       </section>
 
