@@ -11,11 +11,16 @@ import {
   defaultBiomarkerDetailId,
 } from '@/features/biomarkers/data/biomarkerMockData'
 
-function DetailPanel({ title, action, children, className }) {
+function DetailPanel({ title, description, action, children, className }) {
   return (
     <Card className={cn('!p-0 overflow-hidden', className)}>
-      <div className="flex items-center justify-between gap-4 px-5 py-4">
-        <div className="text-[1.05rem] font-semibold text-brand-700">{title}</div>
+      <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <div className="text-[1.05rem] font-semibold text-brand-700">{title}</div>
+          {description ? (
+            <p className="max-w-3xl text-sm leading-6 text-[var(--app-muted)]">{description}</p>
+          ) : null}
+        </div>
         {action}
       </div>
       <div className="border-t border-[var(--app-border)] px-5 py-5">{children}</div>
@@ -25,9 +30,11 @@ function DetailPanel({ title, action, children, className }) {
 
 function SummaryItem({ label, value }) {
   return (
-    <div className="min-w-0 border-r border-[var(--app-border)] px-5 py-2 last:border-r-0">
-      <div className="text-[0.82rem] text-[var(--app-muted)]">{label}</div>
-      <div className="mt-2 text-[1rem] font-medium text-[var(--app-text)]">{value}</div>
+    <div className="join-item flex min-w-0 items-center justify-center border-brand-100 bg-white px-3 py-3 text-center sm:px-4">
+      <div>
+        <div className="text-[0.72rem] uppercase tracking-[0.12em] text-[var(--app-muted)]">{label}</div>
+        <div className="mt-1 text-[0.9rem] font-medium text-[var(--app-text)]">{value}</div>
+      </div>
     </div>
   )
 }
@@ -50,24 +57,27 @@ function CopyAction({ copied, onCopy }) {
   )
 }
 
-function FieldGrid({ items }) {
+function FieldList({ items }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <dl className="space-y-4">
       {items.map((item) => (
-        <div key={item.label} className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
-          <p className="text-sm text-[var(--app-muted)]">{item.label}</p>
-          <p className="mt-2 text-[1rem] font-medium leading-7 text-[var(--app-text)]">{item.value}</p>
+        <div
+          key={item.label}
+          className="grid gap-1 sm:grid-cols-[minmax(180px,220px)_minmax(0,1fr)] sm:items-start sm:gap-4"
+        >
+          <dt className="text-sm font-semibold text-black">{item.label}</dt>
+          <dd className="min-w-0 text-[0.98rem] leading-7 text-[var(--app-text)]">{item.value}</dd>
         </div>
       ))}
-    </div>
+    </dl>
   )
 }
 
 function SequenceBlock({ sequence, note }) {
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white p-4">
-        <pre className="whitespace-pre-wrap break-all font-mono text-[0.95rem] leading-8 tracking-[0.08em] text-[var(--app-text)]">
+      <div className="overflow-x-auto rounded-xl bg-[#faf9f5] p-4">
+        <pre className="whitespace-pre-wrap break-all font-mono text-[0.9rem] leading-7 tracking-[0.04em] text-[var(--app-text)]">
           {sequence}
         </pre>
       </div>
@@ -76,22 +86,33 @@ function SequenceBlock({ sequence, note }) {
   )
 }
 
-function MetadataGrid({ items }) {
+function ValueText({ value }) {
+  const text = value ?? 'Unavailable'
+  const isLink = typeof text === 'string' && text.startsWith('http')
+  const isUnavailable = text === 'Unavailable' || text === 'Under Review'
+
+  if (isLink) {
+    return (
+      <a
+        href={text}
+        target="_blank"
+        rel="noreferrer"
+        className="break-all text-brand-700 underline decoration-brand-200 underline-offset-4 transition hover:text-brand-800"
+      >
+        {text}
+      </a>
+    )
+  }
+
   return (
-    <dl className="grid gap-5 sm:grid-cols-2">
-      {items.map((item) => (
-        <div key={item.label} className="grid gap-2">
-          <dt className="text-sm text-[var(--app-muted)]">{item.label}</dt>
-          <dd className="font-medium leading-7 text-[var(--app-text)]">{item.value}</dd>
-        </div>
-      ))}
-    </dl>
+    <span className={cn(isUnavailable && 'text-[var(--app-muted)]')}>
+      {text}
+    </span>
   )
 }
 
 export default function BiomarkerDetailPage() {
   const { id } = useParams()
-  const [activeTab, setActiveTab] = useState('Overview')
   const [copiedSection, setCopiedSection] = useState('')
 
   const record = useMemo(() => {
@@ -117,6 +138,85 @@ export default function BiomarkerDetailPage() {
     return null
   }
 
+  const generalInformationItems = [
+    { label: 'Scientific Name', value: record.topSummaryItems[0]?.value ?? 'Unavailable' },
+    { label: 'specimen_id', value: record.topSummaryItems[1]?.value ?? 'Unavailable' },
+    { label: 'Province', value: record.topSummaryItems[4]?.value ?? 'Unavailable' },
+    {
+      label: 'Municipality',
+      value:
+        record.metadataTab.rows.find((item) => item.label === 'Collection Site (Municipality)')?.value ??
+        'Unavailable',
+    },
+  ]
+
+  const annotationInformationItems = [
+    { label: 'gene_marker', value: record.topSummaryItems[2]?.value ?? 'Unavailable' },
+    {
+      label: 'gene_name',
+      value:
+        record.topSummaryItems[2]?.value === 'COI'
+          ? 'Cytochrome c oxidase subunit I'
+          : 'Unavailable',
+    },
+    {
+      label: 'genome_origin',
+      value:
+        record.topSummaryItems[2]?.value === 'COI'
+          ? 'Mitochondrial'
+          : 'Unavailable',
+    },
+    {
+      label: 'sequence_completeness',
+      value:
+        record.sequenceTab.summaryItems?.find((item) => item.label === 'Sequence Completeness')?.value ??
+        'Unavailable',
+    },
+    {
+      label: 'sequence_length_bp',
+      value: record.topSummaryItems[3]?.value ?? record.sequenceTab.length ?? 'Unavailable',
+    },
+    {
+      label: 'source_method',
+      value:
+        record.sequenceTab.summaryItems?.find((item) => item.label === 'Source Method')?.value ??
+        record.metadataTab.rows.find((item) => item.label === 'Source Method')?.value ??
+        'Unavailable',
+    },
+    { label: 'validation_status', value: record.topSummaryItems[5]?.value ?? record.status },
+  ]
+
+  const referenceItems = [
+    {
+      label: 'sequence_database',
+      value:
+        record.metadataTab.rows.find((item) => item.label === 'Sequence Database')?.value ?? 'Unavailable',
+    },
+    {
+      label: 'external_accession',
+      value: record.overview.fields.find((item) => item.label === 'External Accession')?.value ?? 'Unavailable',
+    },
+    {
+      label: 'publication_doi',
+      value: record.overview.fields.find((item) => item.label === 'Publication DOI')?.value ?? 'Unavailable',
+    },
+  ]
+
+  const generalInformationRows = generalInformationItems.map((item) => ({
+    ...item,
+    value: <ValueText value={item.value} />,
+  }))
+
+  const annotationInformationRows = annotationInformationItems.map((item) => ({
+    ...item,
+    value: <ValueText value={item.value} />,
+  }))
+
+  const referenceRows = referenceItems.map((item) => ({
+    ...item,
+    value: <ValueText value={item.value} />,
+  }))
+
   return (
     <div className="space-y-6 pb-8">
       <Breadcrumbs
@@ -127,17 +227,17 @@ export default function BiomarkerDetailPage() {
         ]}
       />
 
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-serif text-[clamp(2.6rem,4.6vw,4.75rem)] leading-[0.95] text-black">
+            <h1 className="font-serif text-[clamp(1.7rem,3vw,2.6rem)] leading-[0.95] text-black">
               {record.title}
             </h1>
             <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700">
               {record.status}
             </span>
           </div>
-          <p className="text-[1.05rem] text-[var(--app-muted)]">{record.subtitle}</p>
+          <p className="text-sm leading-6 text-[var(--app-muted)]">{record.subtitle}</p>
         </div>
 
         <Button type="button" variant="outline" className="gap-2 self-start px-4">
@@ -146,173 +246,47 @@ export default function BiomarkerDetailPage() {
         </Button>
       </section>
 
-      <Card className="!p-0 overflow-hidden">
-        <div className="grid gap-0 md:grid-cols-2 xl:grid-cols-6">
+      <section className="join join-vertical w-full overflow-hidden rounded-[1.5rem] border border-brand-100 bg-brand-100/60 sm:grid sm:grid-cols-2 sm:gap-px sm:rounded-[1.5rem] xl:grid-cols-6">
           {record.topSummaryItems.map((item) => (
             <SummaryItem key={item.label} label={item.label} value={item.value} />
           ))}
-        </div>
-      </Card>
-
-      <section className="border-b border-[var(--app-border)]">
-        <div className="flex flex-wrap gap-6 sm:gap-10">
-          {record.tabs.map((tab) => {
-            const isActive = tab === activeTab
-
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  'border-b-2 border-transparent pb-4 text-[1rem] font-medium transition',
-                  isActive
-                    ? 'border-brand-500 text-brand-700'
-                    : 'text-[var(--app-muted)] hover:text-brand-700',
-                )}
-              >
-                {tab}
-              </button>
-            )
-          })}
-        </div>
       </section>
 
-      {activeTab === 'Overview' ? (
-        <div className="space-y-6">
-          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
-            <DetailPanel title="Record Summary">
-              <div className="space-y-5">
-                <FieldGrid items={record.overview.fields} />
-                <p className="text-[1rem] leading-7 text-[var(--app-muted)]">{record.overview.description}</p>
-              </div>
-            </DetailPanel>
+      <div className="space-y-6">
+        <DetailPanel
+          title="General Information"
+          description="Core specimen and locality details."
+        >
+          <FieldList items={generalInformationRows} />
+        </DetailPanel>
 
-            <DetailPanel title="Overview Note">
-              <p className="text-[1.02rem] leading-7 text-brand-700">{record.overview.note}</p>
-            </DetailPanel>
-          </section>
+        <DetailPanel
+          title="Annotation Information"
+          description="Marker-specific metadata and validation context."
+        >
+          <FieldList items={annotationInformationRows} />
+        </DetailPanel>
 
-          <DetailPanel title={record.overview.reference.title}>
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-              <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
-                <p className="text-sm text-[var(--app-muted)]">Citation</p>
-                <p className="mt-2 text-[0.98rem] leading-7 text-[var(--app-text)]">
-                  {record.overview.reference.citation}
-                </p>
-              </div>
+        <DetailPanel
+          title="Sequence"
+          description="Nucleotide sequence with copy action."
+          action={
+            <CopyAction
+              copied={copiedSection === 'nucleotide-sequence'}
+              onCopy={() => copyToClipboard('nucleotide-sequence', record.sequenceTab.sequence)}
+            />
+          }
+        >
+          <SequenceBlock sequence={record.sequenceTab.sequence} note={record.sequenceTab.translatedNote} />
+        </DetailPanel>
 
-              <Button type="button" variant="outline" className="gap-2 px-4">
-                {record.overview.reference.actionLabel}
-                <ArrowUpRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </DetailPanel>
-        </div>
-      ) : activeTab === 'Sequence' ? (
-        <div className="space-y-6">
-          <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
-            <DetailPanel
-              title="Nucleotide Sequence"
-              action={
-                <CopyAction
-                  copied={copiedSection === 'nucleotide-sequence'}
-                  onCopy={() => copyToClipboard('nucleotide-sequence', record.sequenceTab.sequence)}
-                />
-              }
-            >
-              <SequenceBlock sequence={record.sequenceTab.sequence} />
-            </DetailPanel>
-
-            <div className="space-y-4 rounded-3xl border border-[var(--app-border)] bg-white p-5">
-              {record.sequenceTab.summaryItems?.map((item) => (
-                <div key={item.label}>
-                  <p className="text-[1rem] text-[var(--app-muted)]">{item.label}</p>
-                  <p className="mt-2 text-[1.1rem] font-semibold text-brand-700">{item.value}</p>
-                </div>
-              )) || (
-                <div>
-                  <p className="text-[1rem] text-[var(--app-muted)]">Sequence Length</p>
-                  <p className="mt-2 text-[1.1rem] font-semibold text-brand-700">
-                    {record.sequenceTab.length}
-                  </p>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <DetailPanel
-            title="Translated Preview"
-            action={
-              <CopyAction
-                copied={copiedSection === 'translated-preview'}
-                onCopy={() => copyToClipboard('translated-preview', record.sequenceTab.translated)}
-              />
-            }
-          >
-            <SequenceBlock sequence={record.sequenceTab.translated} note={record.sequenceTab.translatedNote} />
-          </DetailPanel>
-        </div>
-      ) : activeTab === 'Annotations' ? (
-        <div className="space-y-6">
-          <DetailPanel title="Annotation Summary">
-            <div className="space-y-4">
-              <p className="max-w-3xl text-[1rem] leading-7 text-[var(--app-muted)]">
-                {record.annotationsTab.summary}
-              </p>
-              <div className="grid gap-4 lg:grid-cols-2">
-                {record.annotationsTab.items.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
-                    <p className="text-sm text-[var(--app-muted)]">{item.label}</p>
-                    <p className="mt-2 text-[1rem] font-medium leading-7 text-[var(--app-text)]">
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </DetailPanel>
-
-          {record.annotationsTab.reference ? (
-            <DetailPanel title="Annotation Reference">
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-                <div className="rounded-2xl border border-[var(--app-border)] bg-white p-4">
-                  <p className="text-sm text-[var(--app-muted)]">{record.annotationsTab.reference.label}</p>
-                  <p className="mt-2 text-[0.98rem] leading-7 text-[var(--app-text)]">
-                    {record.annotationsTab.reference.value}
-                  </p>
-                </div>
-
-                <Button type="button" variant="outline" className="gap-2 px-4">
-                  {record.annotationsTab.reference.actionLabel}
-                  <ArrowUpRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </DetailPanel>
-          ) : null}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <DetailPanel title="Record Metadata">
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
-              <MetadataGrid items={record.metadataTab.rows} />
-
-              <div className="space-y-4 rounded-2xl border border-[var(--app-border)] bg-white p-5">
-                <div>
-                  <p className="text-sm text-[var(--app-muted)]">Citation</p>
-                  <p className="mt-2 text-[0.98rem] leading-7 text-[var(--app-text)]">
-                    {record.metadataTab.citation}
-                  </p>
-                </div>
-                <Button type="button" variant="outline" className="gap-2 px-4">
-                  View in Reference
-                  <ArrowUpRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </DetailPanel>
-        </div>
-      )}
+        <DetailPanel
+          title="References"
+          description="External accession and publication linkage."
+        >
+          <FieldList items={referenceRows} />
+        </DetailPanel>
+      </div>
     </div>
   )
 }
