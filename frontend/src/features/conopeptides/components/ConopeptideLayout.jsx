@@ -15,7 +15,7 @@ export default function ConopeptideLayout({
 
       <header className="space-y-3">
         <div className="space-y-2">
-          <h1 className="text-[clamp(2.6rem,4.5vw,4.7rem)] leading-none tracking-tight text-black">
+          <h1 className="text-[clamp(2.2rem,3.8vw,3.3rem)] leading-none tracking-tight text-black">
             {title}
           </h1>
           {subtitle ? (

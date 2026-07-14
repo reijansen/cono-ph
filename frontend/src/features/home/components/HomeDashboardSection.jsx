@@ -18,7 +18,7 @@ function SectionHeading({ eyebrow, title, description }) {
   return (
     <div className="space-y-3 text-center">
       <p className="text-[11px] uppercase tracking-[0.28em] text-brand-500">{eyebrow}</p>
-      <h2 className="text-[clamp(2.2rem,4vw,3.5rem)] leading-none text-black">{title}</h2>
+      <h2 className="text-[clamp(1.9rem,3.3vw,2.8rem)] leading-none text-black">{title}</h2>
       <p className="mx-auto max-w-3xl text-sm leading-7 text-[var(--app-muted)] sm:text-base">
         {description}
       </p>

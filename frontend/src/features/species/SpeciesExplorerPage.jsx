@@ -15,7 +15,7 @@ export default function SpeciesExplorerPage() {
       />
 
       <section className="space-y-2">
-        <h1 className="text-[clamp(3.25rem,4.6vw,4.6rem)] leading-none text-black">
+        <h1 className="text-[clamp(2.4rem,4vw,3.5rem)] leading-none text-black">
           Species Explorer
         </h1>
         <p className="max-w-3xl text-sm leading-6 text-[var(--app-muted)] sm:text-base">

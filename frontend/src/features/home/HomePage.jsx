@@ -34,10 +34,10 @@ export default function HomePage() {
     <div className="space-y-14 pb-4 pt-0 sm:pt-0">
       <section className="space-y-6 pt-2 text-center">
         <div className="space-y-4">
-          <h1 className="text-[clamp(4rem,10vw,8rem)] leading-[0.95] tracking-tight text-brand-700 sm:text-[clamp(5rem,9vw,9rem)]">
+          <h1 className="text-[clamp(3.2rem,8vw,6.3rem)] leading-[0.95] tracking-tight text-brand-700 sm:text-[clamp(4rem,8vw,7rem)]">
             ConoPH
           </h1>
-          <p className="text-[clamp(1.15rem,2vw,2rem)] text-brand-700 sm:leading-none">
+          <p className="text-[clamp(1rem,1.7vw,1.55rem)] text-brand-700 sm:leading-none">
             Database for Philippine Cone Snails and Conopeptides
           </p>
         </div>
@@ -54,7 +54,7 @@ export default function HomePage() {
       <HomeDashboardSection />
 
       <section className="space-y-8 border-t border-brand-100 pt-10">
-        <h2 className="text-[clamp(2.4rem,4vw,3.6rem)] leading-none text-black">
+        <h2 className="text-[clamp(2rem,3.4vw,3rem)] leading-none text-black">
           Core Functionalities
         </h2>
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -71,7 +71,7 @@ export default function HomePage() {
       </section>
 
       <section id="contact" className="space-y-6 border-t border-brand-100 py-12 text-center">
-        <h2 className="text-[clamp(2.4rem,4vw,3.6rem)] leading-none text-black">
+        <h2 className="text-[clamp(2rem,3.4vw,3rem)] leading-none text-black">
           Connect with us
         </h2>
         <p className="mx-auto max-w-3xl text-sm leading-7 text-[var(--app-muted)] sm:text-base">
