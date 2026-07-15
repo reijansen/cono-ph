@@ -1,10 +1,15 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import {
-  speciesExplorerCount,
-  speciesExplorerRecords,
-  speciesFilterOptions,
-} from '@/features/species/data/speciesExplorerData'
+import { loadSpeciesBackupRecords } from '@/features/species/data/speciesBackupData'
+
+const speciesFilterOptions = {
+  project: ['All Projects', 'ConoPH Core', 'Visayas Survey', 'Mindanao Survey'],
+  subgenus: ['All Subgenus', 'Tesseliconus', 'Stephanoconus', 'Rhizoconus'],
+  province: ['All Provinces', 'Cebu', 'Bohol', 'Palawan', 'Samar'],
+  municipality: ['All Municipalities', 'Moalboal', 'Oslob', 'Danao', 'Bantayan'],
+  diet: ['All Diet', 'Molluscivore', 'Piscivore', 'Wormivore'],
+  sequencingPlatform: ['All Platforms', 'Illumina HiSeq', 'Oxford Nanopore', 'PacBio'],
+}
 
 export const speciesExplorerInitialFilters = {
   search: '',
@@ -40,10 +45,34 @@ function rowMatchesFilters(row, filters) {
 
 export function useSpeciesExplorerController() {
   const [filters, setFilters] = useState(speciesExplorerInitialFilters)
+  const [recordsSource, setRecordsSource] = useState([])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadRecords() {
+      try {
+        const backupRecords = await loadSpeciesBackupRecords()
+        if (active && backupRecords.length > 0) {
+          setRecordsSource(backupRecords)
+        }
+      } catch {
+        if (active) {
+          setRecordsSource([])
+        }
+      }
+    }
+
+    loadRecords()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const records = useMemo(
-    () => speciesExplorerRecords.filter((row) => rowMatchesFilters(row, filters)),
-    [filters],
+    () => recordsSource.filter((row) => rowMatchesFilters(row, filters)),
+    [filters, recordsSource],
   )
 
   const handleFilterChange = useCallback((nextFilters) => {
@@ -59,6 +88,6 @@ export function useSpeciesExplorerController() {
     filterOptions: speciesFilterOptions,
     handleFilterChange,
     records,
-    resultCount: records.length === speciesExplorerRecords.length ? speciesExplorerCount : records.length,
+    resultCount: records.length,
   }
 }

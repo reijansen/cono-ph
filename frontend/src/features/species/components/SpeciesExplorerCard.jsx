@@ -49,6 +49,18 @@ export default function SpeciesExplorerCard({ species }) {
 
         <div className="grid gap-1 text-sm text-[var(--app-muted)] sm:grid-cols-2 lg:grid-cols-1">
           <p>
+            <span className="font-semibold text-brand-700">Class:</span> {species.className}
+          </p>
+          <p>
+            <span className="font-semibold text-brand-700">Order:</span> {species.orderName}
+          </p>
+          <p>
+            <span className="font-semibold text-brand-700">Family:</span> {species.familyName}
+          </p>
+          <p>
+            <span className="font-semibold text-brand-700">Genus:</span> {species.genusName}
+          </p>
+          <p>
             <span className="font-semibold text-brand-700">Subgenus:</span> {species.subgenus}
           </p>
           <p>

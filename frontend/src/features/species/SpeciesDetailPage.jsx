@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowUpRight, Download } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 
@@ -10,7 +10,8 @@ import SearchInput from '@/components/ui/SearchInput'
 import SelectWithChevron from '@/components/ui/SelectWithChevron'
 import { cn } from '@/utils/cn'
 
-import { defaultSpeciesDetailId, speciesDetailRecords } from '@/features/species/data/speciesDetailData'
+import { loadSpeciesBackupDetails } from '@/features/species/data/speciesDetailBackupData'
+import speciesShellImage from '@/assets/HomeShell.png'
 
 const tabs = [
   { label: 'Overview', value: 'overview' },
@@ -442,14 +443,39 @@ function PublicationsTab({ species }) {
 
 export default function SpeciesDetailPage() {
   const { speciesId } = useParams()
+  const [speciesSource, setSpeciesSource] = useState([])
   const species = useMemo(() => {
     return (
-      speciesDetailRecords.find((record) => record.speciesId === speciesId) ??
-      speciesDetailRecords.find((record) => record.speciesId === defaultSpeciesDetailId)
+      speciesSource.find((record) => record.speciesId === speciesId) ??
+      speciesSource[0]
     )
-  }, [speciesId])
+  }, [speciesId, speciesSource])
 
   const [activeTab, setActiveTab] = useState('overview')
+
+  useEffect(() => {
+    let active = true
+
+    async function loadSpecies() {
+      try {
+        const backupRecords = await loadSpeciesBackupDetails()
+        if (active && backupRecords.length > 0) {
+          setSpeciesSource(backupRecords)
+          return
+        }
+      } catch {
+        if (active) {
+          setSpeciesSource([])
+        }
+      }
+    }
+
+    loadSpecies()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   if (!species) {
     return null
@@ -468,8 +494,8 @@ export default function SpeciesDetailPage() {
       <section className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)] xl:items-start">
         <div className="overflow-hidden rounded-2xl bg-black">
           <img
-            src={species.species.image}
-            alt={species.species.imageAlt}
+            src={species.species.image ?? speciesShellImage}
+            alt={species.species.imageAlt ?? species.species.scientificName}
             className="h-[265px] w-full object-contain object-center"
           />
         </div>
@@ -525,10 +551,13 @@ export default function SpeciesDetailPage() {
                 items={[
                   { label: 'Scientific Name', value: species.taxonomy.scientificName },
                   { label: 'Common Name', value: species.taxonomy.commonName },
-                  { label: 'Organisms Diet', value: species.taxonomy.organismsDiet },
+                  { label: 'Class', value: species.taxonomy.className },
+                  { label: 'Order', value: species.taxonomy.orderName },
+                  { label: 'Family', value: species.taxonomy.familyName },
+                  { label: 'Genus', value: species.taxonomy.genusName },
                   { label: 'Subgenus', value: species.taxonomy.subgenus },
+                  { label: 'Organisms Diet', value: species.taxonomy.organismsDiet },
                   { label: 'Anatomical Sample', value: species.taxonomy.anatomicalSample },
-                  { label: 'Tissue Source', value: species.taxonomy.tissueSource },
                 ]}
               />
             </SectionCard>
@@ -540,6 +569,7 @@ export default function SpeciesDetailPage() {
                   { label: 'Municipality', value: species.collection.municipality },
                   { label: 'Philippine Standard Geographic Code (PSGC)', value: species.collection.psgc },
                   { label: 'Specimen Repository', value: species.collection.specimenRepository },
+                  { label: 'Tissue Source', value: species.collection.tissueSource },
                 ]}
               />
             </SectionCard>

@@ -1,0 +1,20 @@
+Species ID,Scientific name,Common name,Subgenus,Diet type,Municipality,Province,Region,Shell image,Tissue source,Number of CO1 records,Number of conopeptides,DOI,Specimen Depositories
+856252_CE1,Conus eburneus,Ivory cone,Tesseliconus,Vermivorous,Caw-oy,Cebu,"""0700000000",eburneus.jpg,Venom gland tissues,Unavailable,260,https://doi.org/10.3389/fmars.2025.1616692,The Marine Science Institute (MSI)
+856252_CE2,Conus eburneus,Ivory cone,Tesseliconus,Vermivorous,Caw-oy,Cebu,"""0700000000",eburneus.jpg,Venom gland tissues,Unavailable,149,"https://doi.org/10.3390/md18100503, https://doi.org/10.1002/psc.3179",The Marine Science Institute (MSI)
+853932_CI1,Conus imperialis,Imperial cone,Stephanoconus,Vermivorous,Caw-oy,Cebu,"""0700000000",imperialis.jpg,Venom gland tissues,1,150,Under Review,The Marine Science Institute (MSI)
+856256_CT1,Conus tessulatus,Tesselate cone,Tesseliconus,Vermivorous,Caw-oy,Cebu,"""0700000000",tessulatus.jpg,Venom gland tissues,Unavailable,339,https://doi.org/10.3389/fmars.2025.1616692,The Marine Science Institute (MSI)
+852344_CM1,Conus mustelinus,Weasel cone,Rhizoconus,Vermivorous,Caw-oy,Cebu,"""0700000000",mustelinus.jpg,Venom gland tissues,Unavailable,168,https://doi.org/10.3390/md23070266,The Marine Science Institute (MSI)
+852343_CM1,Conus miles,Soldier cone,Rhizoconus,Vermivorous,Buenavista,Marinduque,"""1700000000",miles.jpg,Venom gland tissues,Unavailable,121,https://doi.org/10.3390/md23070266,The Marine Science Institute (MSI)
+852340_CC1,Conus capitaneus,Captain cone,Rhizoconus,Vermivorous,Caw-oy,Cebu,"""0700000000",capitaneus.jpg,Venom gland tissues,Unavailable,225,https://doi.org/10.3390/md23070266,The Marine Science Institute (MSI)
+215429_CM1,Conus magus,Magician cone,Pionoconus,Piscivorous,Buenavista,Marinduque,"""1700000000",magus-1.jpg,Venom gland tissues,Unavailable,90,Unpublished,The Marine Science Institute (MSI)
+428368_CS1,Conus striolatus,Striolate cone,Pionoconus,Piscivorous,Buenavista,Marinduque,"""1700000000",striolatus--.jpg,Venom gland tissues,Unavailable,56,Unpublished,The Marine Science Institute (MSI)
+428363_CS1,Conus stercusmuscarum,Fly-specked cone,Pionoconus,Piscivorous,Buenavista,Marinduque,"""1700000000",stercusmuscarum.jpg,Venom gland tissues,Unavailable,42,Unpublished,The Marine Science Institute (MSI)
+843072_CR1,Conus rolani,Rolan cone,Asprella,Piscivorous,Sogod,Cebu,"""0700000000",rolani.jpg,Venom gland tissues,Unavailable,70,https://doi.org/10.54645/202417SupQCH-42,The Marine Science Institute (MSI)
+853645_CT1,Conus tribblei,Tribble cone,Splinoconus,Vermivorous,Sogod,Cebu,"""0700000000",tribblei.jpg,Venom gland tissues,Unavailable,69,https://doi.org/10.1093/molbev/msae120,The Marine Science Institute (MSI)
+853642_CL1,Conus lenavati,Unavailable,Splinoconus,Vermivorous,Sogod,Cebu,"""0700000000",lenavati.png,Venom gland tissues,3,132,https://doi.org/10.1093/gbe/evv109,The Marine Science Institute (MSI)
+853645_CT2,Conus tribblei,Tribble cone,Splinoconus,Vermivorous,Sogod,Cebu,"""0700000000",tribblei.jpg,Venom gland tissues,3,100,https://doi.org/10.1093/gbe/evv109,The Marine Science Institute (MSI)
+845894_CG1,Conus geographus,Geographer cone,Gastridium,Piscivorous,Caw-oy,Cebu,"""0700000000",geographus.jpeg,Venom gland tissues,Unavailable,69,https://doi.org/10.1093/molbev/msae120,University of Utah
+843253_CG1,Conus gloriamaris,Glory of the Sea cone,Cylinder,Molluscivorous,Panglao,Bohol,"""0700000000",gloriamaris.jpg,Venom gland tissues,Unavailable,109,https://doi.org/10.3390/md15050145,University of Utah
+836797_CB1,Conus bandanus,Banded Marble cone,Conus,Molluscivorous,Caw-oy,Cebu,"""0700000000",bandanus.jpg,Venom gland tissues,1,173,Unpublished,The Marine Science Institute (MSI)
+428363_CS2,Conus stercusmuscarum,Fly-specked cone,Pionoconus,Piscivorous,Caw-oy,Cebu,"""0700000000",stercusmuscarum.jpg,Venom gland tissues,1,139,Unpublished,The Marine Science Institute (MSI)
+848247_CF1,Conus flavus,Unavailable,Phasmoconus,Piscivorous,Buenavista,Marinduque,"""1700000000",flavus.png,Venom gland tissues,1,226,Unpublished,The Marine Science Institute (MSI)

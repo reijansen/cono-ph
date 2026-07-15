@@ -1,15 +1,46 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import {
-  biomarkerExplorerBreadcrumbs,
-  biomarkerExplorerInitialFilters,
-  biomarkerExplorerMeta,
-  biomarkerExplorerResultCount,
-  biomarkerExplorerRows,
-  biomarkerFilterOptions,
-  biomarkerPagination,
-} from '@/features/biomarkers/data/biomarkerMockData'
+import { loadBiomarkerBackupRows } from '@/features/biomarkers/data/biomarkerBackupData'
+
+const biomarkerExplorerBreadcrumbs = [
+  { label: 'Home', to: '/' },
+  { label: 'Biomarkers' },
+]
+
+const biomarkerExplorerMeta = {
+  title: 'Biomarkers Explorer',
+  subtitle:
+    'Explore biomarker records, marker types, and linked sequence evidence from Philippine cone snails.',
+}
+
+const biomarkerFilterOptions = {
+  project: ['All Projects', 'ConoPH Core', 'Barcode Survey', 'Museum Reference Set'],
+  markerType: ['All Marker Types', 'COI', '16S rRNA', '12S rRNA', 'H3', 'ITS', '28S rRNA'],
+  species: ['All Species', 'Conus eburneus', 'Conus imperialis', 'Conus tessulatus', 'Conus miles'],
+  province: ['All Provinces', 'Cebu', 'Bohol', 'Batangas', 'Palawan', 'Negros Occidental', 'Marinduque'],
+  municipality: ['All Municipalities', 'Caw-oy', 'Sogod', 'Panglao', 'N/A'],
+  status: ['Published', 'Under Review', 'Unpublished'],
+  sequencingPlatform: ['All Platforms', 'Transcriptome-derived', 'PCR-based', 'GenBank', 'In-house database'],
+}
+
+const biomarkerExplorerInitialFilters = {
+  search: '',
+  project: 'All Projects',
+  markerType: 'All Marker Types',
+  species: 'All Species',
+  province: 'All Provinces',
+  municipality: 'All Municipalities',
+  sequencingPlatform: 'All Platforms',
+  status: [],
+  hasAccession: false,
+  hasSequenceData: false,
+}
+
+const biomarkerPagination = {
+  page: 1,
+  totalPages: 24,
+}
 
 const isDefaultOption = (value) => !value || value.startsWith('All ')
 const normalize = (value) => String(value ?? '').toLowerCase()
@@ -33,15 +64,37 @@ export function useBiomarkersExplorerController() {
   const navigate = useNavigate()
   const [filters, setFilters] = useState(biomarkerExplorerInitialFilters)
   const [page, setPage] = useState(biomarkerPagination.page)
+  const [rowsSource, setRowsSource] = useState([])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadRows() {
+      try {
+        const backupRows = await loadBiomarkerBackupRows()
+        if (active && backupRows.length > 0) {
+          setRowsSource(backupRows)
+        }
+      } catch {
+        if (active) {
+          setRowsSource([])
+        }
+      }
+    }
+
+    loadRows()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const rows = useMemo(
-    () => biomarkerExplorerRows.filter((row) => rowMatchesFilters(row, filters)),
-    [filters],
+    () => rowsSource.filter((row) => rowMatchesFilters(row, filters)),
+    [filters, rowsSource],
   )
 
-  const resultCount = rows.length === biomarkerExplorerRows.length
-    ? biomarkerExplorerResultCount
-    : `${rows.length.toLocaleString()} results`
+  const resultCount = `${rows.length.toLocaleString()} results`
 
   const handleFilterChange = useCallback((nextFilters) => {
     setFilters(nextFilters)

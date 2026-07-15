@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowUpRight, Check, Copy, Download } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 
@@ -6,10 +6,9 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { cn } from '@/utils/cn'
-import {
-  biomarkerDetailRecords,
-  defaultBiomarkerDetailId,
-} from '@/features/biomarkers/data/biomarkerMockData'
+import { loadBiomarkerBackupDetails } from '@/features/biomarkers/data/biomarkerDetailBackupData'
+
+const defaultBiomarkerDetailId = ''
 
 function DetailPanel({ title, description, action, children, className }) {
   return (
@@ -114,13 +113,39 @@ function ValueText({ value }) {
 export default function BiomarkerDetailPage() {
   const { id } = useParams()
   const [copiedSection, setCopiedSection] = useState('')
+  const [recordsSource, setRecordsSource] = useState([])
 
   const record = useMemo(() => {
     return (
-      biomarkerDetailRecords.find((item) => item.biomarkerId === id) ??
-      biomarkerDetailRecords.find((item) => item.biomarkerId === defaultBiomarkerDetailId)
+      recordsSource.find((item) => item.biomarkerId === id) ??
+      recordsSource.find((item) => item.biomarkerId === defaultBiomarkerDetailId) ??
+      recordsSource[0]
     )
-  }, [id])
+  }, [id, recordsSource])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadRecords() {
+      try {
+        const backupRecords = await loadBiomarkerBackupDetails()
+        if (active && backupRecords.length > 0) {
+          setRecordsSource(backupRecords)
+          return
+        }
+      } catch {
+        if (active) {
+          setRecordsSource([])
+        }
+      }
+    }
+
+    loadRecords()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const copyToClipboard = async (section, text) => {
     try {

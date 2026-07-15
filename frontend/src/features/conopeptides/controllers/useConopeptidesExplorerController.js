@@ -1,13 +1,31 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import {
-  conopeptideExplorerBreadcrumbs,
-  conopeptideExplorerMeta,
-  conopeptideExplorerRows,
-  conopeptideFilterOptions,
-  conopeptidePagination,
-} from '@/features/conopeptides/data/conopeptideMockData'
+import { loadConopeptideBackupRows } from '@/features/conopeptides/data/conopeptideBackupData'
+
+const conopeptideExplorerBreadcrumbs = [
+  { label: 'Home', to: '/' },
+  { label: 'Conopeptides' },
+]
+
+const conopeptideExplorerMeta = {
+  title: 'Conopeptides Explorer',
+  subtitle: 'Explore conopeptide precursors and predicted mature peptides from Philippine cone snails.',
+}
+
+const conopeptideFilterOptions = {
+  project: ['All Projects', 'ConoPH Core', 'Visayas Survey', 'Mindanao Survey'],
+  superfamily: ['All Superfamilies', 'A', 'M', 'O1', 'O2', 'T', 'I', 'S', 'Unknown'],
+  province: ['All Provinces', 'Cebu', 'Bohol', 'Palawan', 'Samar'],
+  municipality: ['All Municipalities', 'Oslob', 'Moalboal', 'Danao', 'Bantayan'],
+  cysteineFramework: ['All Cysteine Frameworks', 'Framework I', 'Framework II', 'Framework III', 'Framework VI/VII'],
+  status: ['Published', 'Under Review', 'Unpublished'],
+}
+
+const conopeptidePagination = {
+  page: 1,
+  totalPages: 68,
+}
 
 export const conopeptideExplorerInitialFilters = {
   search: '',
@@ -40,15 +58,37 @@ export function useConopeptidesExplorerController() {
   const navigate = useNavigate()
   const [filters, setFilters] = useState(conopeptideExplorerInitialFilters)
   const [page, setPage] = useState(conopeptidePagination.page)
+  const [rowsSource, setRowsSource] = useState([])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadRows() {
+      try {
+        const backupRows = await loadConopeptideBackupRows()
+        if (active && backupRows.length > 0) {
+          setRowsSource(backupRows)
+        }
+      } catch {
+        if (active) {
+          setRowsSource([])
+        }
+      }
+    }
+
+    loadRows()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const rows = useMemo(
-    () => conopeptideExplorerRows.filter((row) => rowMatchesFilters(row, filters)),
-    [filters],
+    () => rowsSource.filter((row) => rowMatchesFilters(row, filters)),
+    [filters, rowsSource],
   )
 
-  const resultCount = rows.length === conopeptideExplorerRows.length
-    ? '3,671 results'
-    : `${rows.length.toLocaleString()} results`
+  const resultCount = `${rows.length.toLocaleString()} results`
 
   const handleFilterChange = useCallback((nextFilters) => {
     setFilters(nextFilters)
