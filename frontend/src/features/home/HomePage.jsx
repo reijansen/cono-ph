@@ -32,7 +32,7 @@ const functionalityItems = [
 export default function HomePage() {
   return (
     <div className="space-y-10 pb-4 pt-0 sm:space-y-12 sm:pt-0">
-      <section className="space-y-4 pt-2 text-center sm:space-y-5">
+      <section className="mx-auto max-w-7xl space-y-4 pt-2 text-center sm:space-y-5">
         <div className="space-y-4">
           <h1 className="text-[clamp(3.45rem,8vw,6.8rem)] leading-[0.92] tracking-tight text-brand-700 sm:text-[clamp(4.4rem,8vw,7.4rem)]">
             ConoPH
@@ -51,9 +51,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <HomeDashboardSection />
+      <div className="mx-auto w-full max-w-7xl">
+        <HomeDashboardSection />
+      </div>
 
-      <section className="space-y-6 border-t border-brand-100 pt-8 sm:space-y-7 sm:pt-10">
+      <section className="mx-auto max-w-7xl space-y-6 border-t border-brand-100 pt-8 sm:space-y-7 sm:pt-10">
         <h2 className="text-[clamp(2rem,3.4vw,3rem)] leading-none text-black">
           Core Functionalities
         </h2>
@@ -70,7 +72,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="contact" className="space-y-6 border-t border-brand-100 py-12 text-center">
+      <section id="contact" className="mx-auto max-w-7xl space-y-6 border-t border-brand-100 py-12 text-center">
         <h2 className="text-[clamp(2rem,3.4vw,3rem)] leading-none text-black">
           Connect with us
         </h2>
