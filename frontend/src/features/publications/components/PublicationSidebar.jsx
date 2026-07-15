@@ -58,23 +58,11 @@ export default function PublicationSidebar({
     setLocalFilters((current) => ({ ...current, ...patch }))
   }
 
-  const handleStatusToggle = (status) => {
-    const currentStatuses = localFilters.status || []
-    const nextStatuses = currentStatuses.includes(status)
-      ? currentStatuses.filter((item) => item !== status)
-      : [...currentStatuses, status]
-
-    updateLocalFilters({ status: nextStatuses })
-  }
-
   const handleResetFilters = () => {
     const resetFilters = {
       search: '',
       year: 'All Years',
       journal: 'All Journals',
-      evidenceType: 'All Evidence Types',
-      province: 'All Provinces',
-      status: [],
       hasDoi: false,
     }
 
@@ -102,27 +90,8 @@ export default function PublicationSidebar({
         </label>
 
         <div className="space-y-4">
-          <SelectField label="Year" value={localFilters.year || 'All Years'} options={options.year} onChange={(value) => updateLocalFilters({ year: value })} />
+          <SelectField label="Year Published" value={localFilters.year || 'All Years'} options={options.year} onChange={(value) => updateLocalFilters({ year: value })} />
           <SelectField label="Journal" value={localFilters.journal || 'All Journals'} options={options.journal} onChange={(value) => updateLocalFilters({ journal: value })} />
-          <SelectField label="Evidence Type" value={localFilters.evidenceType || 'All Evidence Types'} options={options.evidenceType} onChange={(value) => updateLocalFilters({ evidenceType: value })} />
-          <SelectField label="Province" value={localFilters.province || 'All Provinces'} options={options.province} onChange={(value) => updateLocalFilters({ province: value })} />
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Publication Status</label>
-            <div className="space-y-2 rounded-2xl border border-[var(--app-border)] bg-white p-3">
-              {(options.status || []).map((status) => (
-                <label key={status} className="flex cursor-pointer items-center gap-2 text-sm text-[var(--app-text)]">
-                  <input
-                    type="checkbox"
-                    checked={(localFilters.status || []).includes(status)}
-                    onChange={() => handleStatusToggle(status)}
-                    className="h-4 w-4 rounded border-[var(--app-border)] text-brand-700 focus:ring-brand-500"
-                  />
-                  <span>{status}</span>
-                </label>
-              ))}
-            </div>
-          </div>
 
           <TogglePill
             label="Has DOI"

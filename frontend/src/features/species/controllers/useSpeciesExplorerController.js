@@ -2,49 +2,39 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { loadSpeciesBackupRecords } from '@/features/species/data/speciesBackupData'
 
-const speciesFilterOptions = {
-  project: ['All Projects', 'ConoPH Core', 'Visayas Survey', 'Mindanao Survey'],
-  subgenus: ['All Subgenus', 'Tesseliconus', 'Stephanoconus', 'Rhizoconus'],
-  province: ['All Provinces', 'Cebu', 'Bohol', 'Palawan', 'Samar'],
-  municipality: ['All Municipalities', 'Moalboal', 'Oslob', 'Danao', 'Bantayan'],
-  diet: ['All Diet', 'Molluscivore', 'Piscivore', 'Wormivore'],
-  sequencingPlatform: ['All Platforms', 'Illumina HiSeq', 'Oxford Nanopore', 'PacBio'],
-}
+const speciesPageSize = 5
 
 export const speciesExplorerInitialFilters = {
   search: '',
-  project: 'All Projects',
   subgenus: 'All Subgenus',
   province: 'All Provinces',
   municipality: 'All Municipalities',
-  status: [],
   diet: 'All Diet',
-  sequencingPlatform: 'All Platforms',
-  rawDataInNcbiSra: false,
 }
 
 const isDefaultOption = (value) => !value || value.startsWith('All ')
 const normalize = (value) => String(value ?? '').toLowerCase()
+const uniqueOptions = (label, rows, field) => [
+  label,
+  ...Array.from(new Set(rows.map((row) => row[field]).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+]
 
 function rowMatchesFilters(row, filters) {
   const searchTerm = normalize(filters.search).trim()
   const searchableText = normalize(Object.values(row).join(' '))
 
   if (searchTerm && !searchableText.includes(searchTerm)) return false
-  if (!isDefaultOption(filters.project) && row.project !== filters.project) return false
   if (!isDefaultOption(filters.subgenus) && row.subgenus !== filters.subgenus) return false
   if (!isDefaultOption(filters.province) && row.province !== filters.province) return false
   if (!isDefaultOption(filters.municipality) && row.municipality !== filters.municipality) return false
   if (!isDefaultOption(filters.diet) && row.diet !== filters.diet) return false
-  if (!isDefaultOption(filters.sequencingPlatform) && row.sequencingPlatform !== filters.sequencingPlatform) return false
-  if ((filters.status || []).length > 0 && !filters.status.includes(row.status)) return false
-  if (filters.rawDataInNcbiSra && !row.rawDataInNcbiSra) return false
 
   return true
 }
 
 export function useSpeciesExplorerController() {
   const [filters, setFilters] = useState(speciesExplorerInitialFilters)
+  const [page, setPage] = useState(1)
   const [recordsSource, setRecordsSource] = useState([])
 
   useEffect(() => {
@@ -70,14 +60,40 @@ export function useSpeciesExplorerController() {
     }
   }, [])
 
-  const records = useMemo(
+  const filteredRecords = useMemo(
     () => recordsSource.filter((row) => rowMatchesFilters(row, filters)),
     [filters, recordsSource],
   )
 
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / speciesPageSize))
+  const records = useMemo(
+    () => filteredRecords.slice((page - 1) * speciesPageSize, page * speciesPageSize),
+    [filteredRecords, page],
+  )
+  const filterOptions = useMemo(
+    () => ({
+      subgenus: uniqueOptions('All Subgenus', recordsSource, 'subgenus'),
+      province: uniqueOptions('All Provinces', recordsSource, 'province'),
+      municipality: uniqueOptions('All Municipalities', recordsSource, 'municipality'),
+      diet: uniqueOptions('All Diet', recordsSource, 'diet'),
+    }),
+    [recordsSource],
+  )
+
   const handleFilterChange = useCallback((nextFilters) => {
     setFilters(nextFilters)
+    setPage(1)
   }, [])
+
+  const handlePageChange = useCallback((nextPage) => {
+    setPage(nextPage)
+  }, [])
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   return {
     breadcrumbs: [
@@ -85,9 +101,11 @@ export function useSpeciesExplorerController() {
       { label: 'Species' },
     ],
     filters,
-    filterOptions: speciesFilterOptions,
+    filterOptions,
     handleFilterChange,
+    handlePageChange,
+    pagination: { page, totalPages },
     records,
-    resultCount: records.length,
+    resultCount: filteredRecords.length,
   }
 }

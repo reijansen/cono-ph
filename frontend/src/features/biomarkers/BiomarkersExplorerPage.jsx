@@ -48,7 +48,7 @@ export default function BiomarkersExplorerPage() {
         }
       >
         <div className="-mx-4 overflow-x-auto sm:mx-0">
-          <table className="w-full min-w-[760px] border-separate border-spacing-0">
+          <table className="w-full min-w-[620px] border-separate border-spacing-0">
             <thead>
               <tr className="bg-brand-50/45 text-left text-[0.72rem] uppercase tracking-[0.16em] text-[var(--app-muted)]">
                 {[
@@ -56,9 +56,6 @@ export default function BiomarkersExplorerPage() {
                   'Marker Type',
                   'Species',
                   'Accession Number',
-                  'Sequence Length',
-                  'Province',
-                  'Status',
                 ].map((column) => (
                   <th key={column} className="border-b border-[var(--app-border)] px-4 py-3 font-semibold">
                     {column}
@@ -84,9 +81,6 @@ export default function BiomarkersExplorerPage() {
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.markerType}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.species}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.accession}</td>
-                  <td className="border-b border-[var(--app-border)] px-4 py-4">{row.sequenceLength}</td>
-                  <td className="border-b border-[var(--app-border)] px-4 py-4">{row.province}</td>
-                  <td className="border-b border-[var(--app-border)] px-4 py-4">{row.status}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4 text-right">
                     <ChevronRight className="ml-auto h-5 w-5 text-[var(--app-muted)]" />
                   </td>

@@ -6,7 +6,7 @@ function normalizeRecord(record) {
   const linkedBiomarkers = Number(record['Linked Biomarkers'] ?? record.linkedBiomarkers ?? record.linked_biomarkers ?? 0)
 
   return {
-    id: String(record['Publication ID'] ?? record.id ?? record.publication_id ?? record.DOI ?? ''),
+    id: String(record['Publication ID'] ?? record.id ?? record.publication_id ?? record.DOI ?? record.Title ?? ''),
     title: String(record.Title ?? record.title ?? ''),
     authors: String(record.Authors ?? record.authors ?? ''),
     year: String(record['Year Published'] ?? record.Year ?? record.year ?? ''),

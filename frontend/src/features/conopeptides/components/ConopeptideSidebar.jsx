@@ -7,8 +7,6 @@ import Input from '@/components/ui/Input'
 import SelectWithChevron from '@/components/ui/SelectWithChevron'
 import { cn } from '@/utils/cn'
 
-const defaultStatusOptions = ['Published', 'Under Review', 'Unpublished']
-
 function TogglePill({ label, enabled, onClick }) {
   return (
     <button
@@ -41,30 +39,16 @@ export default function ConopeptideSidebar({
 }) {
   const [localFilters, setLocalFilters] = useState(filters)
 
-  const statusOptions = options.status || defaultStatusOptions
-
   const updateLocalFilters = (patch) => {
     setLocalFilters((current) => ({ ...current, ...patch }))
-  }
-
-  const handleStatusToggle = (status) => {
-    const currentStatuses = localFilters.status || []
-    const nextStatuses = currentStatuses.includes(status)
-      ? currentStatuses.filter((item) => item !== status)
-      : [...currentStatuses, status]
-
-    updateLocalFilters({ status: nextStatuses })
   }
 
   const handleResetFilters = () => {
     const resetFilters = {
       search: '',
-      project: 'All Projects',
+      species: 'All Species',
       superfamily: 'All Superfamilies',
-      province: 'All Provinces',
-      municipality: 'All Municipalities',
       cysteineFramework: 'All Cysteine Frameworks',
-      status: [],
       hasPredictedPeptide: 'all',
     }
 
@@ -93,13 +77,13 @@ export default function ConopeptideSidebar({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Project</label>
+            <label className="text-sm font-semibold text-black">Scientific Name</label>
             <SelectWithChevron
-              value={localFilters.project || 'All Projects'}
-              onChange={(e) => updateLocalFilters({ project: e.target.value })}
+              value={localFilters.species || 'All Species'}
+              onChange={(e) => updateLocalFilters({ species: e.target.value })}
               selectClassName="pr-12"
             >
-              {(options.project || []).map((option) => (
+              {(options.species || []).map((option) => (
                 <option key={option} value={option}>
                   {option}
                 </option>
@@ -108,43 +92,13 @@ export default function ConopeptideSidebar({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Superfamily</label>
+            <label className="text-sm font-semibold text-black">Gene Superfamily</label>
             <SelectWithChevron
               value={localFilters.superfamily || 'All Superfamilies'}
               onChange={(e) => updateLocalFilters({ superfamily: e.target.value })}
               selectClassName="pr-12"
             >
               {(options.superfamily || []).map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Province</label>
-            <SelectWithChevron
-              value={localFilters.province || 'All Provinces'}
-              onChange={(e) => updateLocalFilters({ province: e.target.value })}
-              selectClassName="pr-12"
-            >
-              {(options.province || []).map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Municipality</label>
-            <SelectWithChevron
-              value={localFilters.municipality || 'All Municipalities'}
-              onChange={(e) => updateLocalFilters({ municipality: e.target.value })}
-              selectClassName="pr-12"
-            >
-              {(options.municipality || []).map((option) => (
                 <option key={option} value={option}>
                   {option}
                 </option>
@@ -168,28 +122,8 @@ export default function ConopeptideSidebar({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Status of Data</label>
-            <div className="space-y-2 rounded-2xl border border-[var(--app-border)] bg-white p-3">
-              {statusOptions.map((status) => (
-                <label
-                  key={status}
-                  className="flex cursor-pointer items-center gap-2 text-sm text-[var(--app-text)]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={(localFilters.status || []).includes(status)}
-                    onChange={() => handleStatusToggle(status)}
-                    className="h-4 w-4 rounded border-[var(--app-border)] text-brand-700 focus:ring-brand-500"
-                  />
-                  <span>{status}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
             <TogglePill
-              label="Has Predicted Peptide"
+              label="Has Mature Peptide Sequence"
               enabled={localFilters.hasPredictedPeptide === 'yes'}
               onClick={() =>
                 updateLocalFilters({

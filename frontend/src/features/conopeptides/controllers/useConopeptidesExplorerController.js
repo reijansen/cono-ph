@@ -13,41 +13,34 @@ const conopeptideExplorerMeta = {
   subtitle: 'Explore conopeptide precursors and predicted mature peptides from Philippine cone snails.',
 }
 
-const conopeptideFilterOptions = {
-  project: ['All Projects', 'ConoPH Core', 'Visayas Survey', 'Mindanao Survey'],
-  superfamily: ['All Superfamilies', 'A', 'M', 'O1', 'O2', 'T', 'I', 'S', 'Unknown'],
-  province: ['All Provinces', 'Cebu', 'Bohol', 'Palawan', 'Samar'],
-  municipality: ['All Municipalities', 'Oslob', 'Moalboal', 'Danao', 'Bantayan'],
-  cysteineFramework: ['All Cysteine Frameworks', 'Framework I', 'Framework II', 'Framework III', 'Framework VI/VII'],
-  status: ['Published', 'Under Review', 'Unpublished'],
-}
-
+const conopeptidePageSize = 10
 const conopeptidePagination = {
   page: 1,
-  totalPages: 68,
+  totalPages: 1,
 }
 
 export const conopeptideExplorerInitialFilters = {
   search: '',
-  project: 'All Projects',
+  species: 'All Species',
   superfamily: 'All Superfamilies',
-  province: 'All Provinces',
-  municipality: 'All Municipalities',
   cysteineFramework: 'All Cysteine Frameworks',
-  status: [],
   hasPredictedPeptide: 'all',
 }
 
 const isDefaultOption = (value) => !value || value.startsWith('All ')
 const normalize = (value) => String(value ?? '').toLowerCase()
+const uniqueOptions = (label, rows, field) => [
+  label,
+  ...Array.from(new Set(rows.map((row) => row[field]).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+]
 
 function rowMatchesFilters(row, filters) {
   const searchTerm = normalize(filters.search).trim()
   const searchableText = normalize(Object.values(row).join(' '))
 
   if (searchTerm && !searchableText.includes(searchTerm)) return false
+  if (!isDefaultOption(filters.species) && row.species !== filters.species) return false
   if (!isDefaultOption(filters.superfamily) && row.superfamily !== filters.superfamily) return false
-  if (!isDefaultOption(filters.province) && row.province !== filters.province) return false
   if (!isDefaultOption(filters.cysteineFramework) && row.framework !== filters.cysteineFramework) return false
   if (filters.hasPredictedPeptide === 'yes' && !row.predictedPeptide) return false
 
@@ -83,12 +76,32 @@ export function useConopeptidesExplorerController() {
     }
   }, [])
 
-  const rows = useMemo(
+  const filteredRows = useMemo(
     () => rowsSource.filter((row) => rowMatchesFilters(row, filters)),
     [filters, rowsSource],
   )
 
-  const resultCount = `${rows.length.toLocaleString()} results`
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / conopeptidePageSize))
+  const rows = useMemo(
+    () => filteredRows.slice((page - 1) * conopeptidePageSize, page * conopeptidePageSize),
+    [filteredRows, page],
+  )
+  const filterOptions = useMemo(
+    () => ({
+      species: uniqueOptions('All Species', rowsSource, 'species'),
+      superfamily: uniqueOptions('All Superfamilies', rowsSource, 'superfamily'),
+      cysteineFramework: uniqueOptions('All Cysteine Frameworks', rowsSource, 'framework'),
+    }),
+    [rowsSource],
+  )
+
+  const resultCount = `${filteredRows.length.toLocaleString()} results`
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   const handleFilterChange = useCallback((nextFilters) => {
     setFilters(nextFilters)
@@ -119,13 +132,13 @@ export function useConopeptidesExplorerController() {
   return {
     breadcrumbs: conopeptideExplorerBreadcrumbs,
     filters,
-    filterOptions: conopeptideFilterOptions,
+    filterOptions,
     handleFilterChange,
     handlePageChange,
     handleRowKeyDown,
     meta: conopeptideExplorerMeta,
     openConopeptide,
-    pagination: { ...conopeptidePagination, page },
+    pagination: { ...conopeptidePagination, page, totalPages },
     resultCount,
     rows,
   }

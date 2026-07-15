@@ -12,31 +12,25 @@ const publicationExplorerMeta = {
   subtitle: 'Browse publications linked to Philippine cone snail, conopeptide, and biomarker evidence.',
 }
 
-const publicationFilterOptions = {
-  year: ['All Years', '2026', '2025', '2024', '2023', '2022'],
-  journal: ['All Journals', 'Frontiers in Marine Science', 'Marine Drugs', 'Toxins', 'Molecular Ecology Resources'],
-  evidenceType: ['All Evidence Types', 'Species record', 'Conopeptide evidence', 'Biomarker evidence', 'Transcriptome'],
-  province: ['All Provinces', 'Cebu', 'Bohol', 'Palawan', 'Marinduque', 'Samar'],
-  status: ['Published', 'Under Review', 'Preprint'],
-}
-
 const publicationExplorerInitialFilters = {
   search: '',
   year: 'All Years',
   journal: 'All Journals',
-  evidenceType: 'All Evidence Types',
-  province: 'All Provinces',
-  status: [],
   hasDoi: false,
 }
 
+const publicationPageSize = 5
 const publicationPagination = {
   page: 1,
-  totalPages: 8,
+  totalPages: 1,
 }
 
 const isDefaultOption = (value) => !value || value.startsWith('All ')
 const normalize = (value) => String(value ?? '').toLowerCase()
+const uniqueOptions = (label, rows, field) => [
+  label,
+  ...Array.from(new Set(rows.map((row) => row[field]).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+]
 
 function rowMatchesFilters(row, filters) {
   const searchTerm = normalize(filters.search).trim()
@@ -45,9 +39,6 @@ function rowMatchesFilters(row, filters) {
   if (searchTerm && !searchableText.includes(searchTerm)) return false
   if (!isDefaultOption(filters.year) && row.year !== filters.year) return false
   if (!isDefaultOption(filters.journal) && row.journal !== filters.journal) return false
-  if (!isDefaultOption(filters.evidenceType) && row.evidenceType !== filters.evidenceType) return false
-  if (!isDefaultOption(filters.province) && row.province !== filters.province) return false
-  if ((filters.status || []).length > 0 && !filters.status.includes(row.status)) return false
   if (filters.hasDoi && row.doi === 'Unavailable') return false
 
   return true
@@ -86,10 +77,29 @@ export function usePublicationsExplorerController() {
     }
   }, [])
 
-  const rows = useMemo(
+  const filteredRows = useMemo(
     () => rowsSource.filter((row) => rowMatchesFilters(row, filters)),
     [filters, rowsSource],
   )
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / publicationPageSize))
+  const rows = useMemo(
+    () => filteredRows.slice((page - 1) * publicationPageSize, page * publicationPageSize),
+    [filteredRows, page],
+  )
+  const filterOptions = useMemo(
+    () => ({
+      year: uniqueOptions('All Years', rowsSource, 'year'),
+      journal: uniqueOptions('All Journals', rowsSource, 'journal'),
+    }),
+    [rowsSource],
+  )
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   const handleFilterChange = useCallback((nextFilters) => {
     setFilters(nextFilters)
@@ -103,12 +113,12 @@ export function usePublicationsExplorerController() {
   return {
     breadcrumbs: publicationExplorerBreadcrumbs,
     filters,
-    filterOptions: publicationFilterOptions,
+    filterOptions,
     handleFilterChange,
     handlePageChange,
     meta: publicationExplorerMeta,
-    pagination: { ...publicationPagination, page },
-    resultCount: rowsStatus === 'loading' ? 'Loading backup data...' : `${rows.length.toLocaleString()} results`,
+    pagination: { ...publicationPagination, page, totalPages },
+    resultCount: rowsStatus === 'loading' ? 'Loading backup data...' : `${filteredRows.length.toLocaleString()} results`,
     rows,
   }
 }

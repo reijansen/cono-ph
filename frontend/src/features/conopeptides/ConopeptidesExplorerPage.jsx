@@ -52,17 +52,15 @@ export default function ConopeptidesExplorerPage() {
         }
       >
         <div className="-mx-4 overflow-x-auto sm:mx-0">
-          <table className="w-full min-w-[760px] border-separate border-spacing-0">
+          <table className="w-full min-w-[680px] border-separate border-spacing-0">
             <thead>
               <tr className="bg-brand-50/45 text-left text-[0.72rem] uppercase tracking-[0.16em] text-[var(--app-muted)]">
                 {[
                   'Accession',
-                  'Gene Superfamily',
-                  'Cysteine Framework',
-                  'Predicted Peptide',
-                  'Matched Toxin',
                   'Species',
-                  'Province',
+                  'Gene Superfamily',
+                  'Framework',
+                  'Matched Toxin',
                   '',
                 ].map((column) => (
                   <th
@@ -87,12 +85,10 @@ export default function ConopeptidesExplorerPage() {
                   <td className="border-b border-[var(--app-border)] px-4 py-4 font-semibold text-brand-700">
                     {row.accession}
                   </td>
+                  <td className="border-b border-[var(--app-border)] px-4 py-4 italic">{row.species}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.superfamily}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.framework}</td>
-                  <td className="border-b border-[var(--app-border)] px-4 py-4">{row.predictedPeptide}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.matchedToxin}</td>
-                  <td className="border-b border-[var(--app-border)] px-4 py-4">{row.species}</td>
-                  <td className="border-b border-[var(--app-border)] px-4 py-4">{row.province}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4 text-right">
                     <ChevronRight className="ml-auto h-5 w-5 text-[var(--app-muted)]" />
                   </td>

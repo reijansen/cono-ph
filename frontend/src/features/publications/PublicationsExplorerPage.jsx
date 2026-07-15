@@ -47,7 +47,7 @@ export default function PublicationsExplorerPage() {
         }
       >
         <div className="-mx-4 overflow-x-auto sm:mx-0">
-          <table className="w-full min-w-[980px] border-separate border-spacing-0">
+          <table className="w-full min-w-[820px] border-separate border-spacing-0">
             <thead>
               <tr className="bg-brand-50/45 text-left text-[0.72rem] uppercase tracking-[0.16em] text-[var(--app-muted)]">
                 {[
@@ -56,8 +56,6 @@ export default function PublicationsExplorerPage() {
                   'Journal',
                   'Evidence',
                   'Linked Records',
-                  'Province',
-                  'Status',
                   '',
                 ].map((column) => (
                   <th key={column || 'action'} className="border-b border-[var(--app-border)] px-4 py-3 font-semibold">
@@ -86,8 +84,6 @@ export default function PublicationsExplorerPage() {
                       <p>{row.linkedBiomarkers} biomarkers</p>
                     </div>
                   </td>
-                  <td className="border-b border-[var(--app-border)] px-4 py-4">{row.province}</td>
-                  <td className="border-b border-[var(--app-border)] px-4 py-4">{row.status}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4 text-right">
                     {row.doi !== 'Unavailable' ? (
                       <a

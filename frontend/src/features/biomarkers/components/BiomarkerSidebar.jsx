@@ -7,8 +7,6 @@ import Input from '@/components/ui/Input'
 import SelectWithChevron from '@/components/ui/SelectWithChevron'
 import { cn } from '@/utils/cn'
 
-const defaultStatusOptions = ['Published', 'Under Review', 'Unpublished']
-
 function TogglePill({ label, enabled, onClick }) {
   return (
     <button
@@ -41,7 +39,7 @@ export default function BiomarkerSidebar({
 }) {
   const [localFilters, setLocalFilters] = useState(filters)
 
-  const statusOptions = options.status || defaultStatusOptions
+  const statusOptions = options.status || []
 
   const updateLocalFilters = (patch) => {
     setLocalFilters((current) => ({ ...current, ...patch }))
@@ -59,12 +57,9 @@ export default function BiomarkerSidebar({
   const handleResetFilters = () => {
     const resetFilters = {
       search: '',
-      project: 'All Projects',
       markerType: 'All Marker Types',
       species: 'All Species',
       province: 'All Provinces',
-      municipality: 'All Municipalities',
-      sequencingPlatform: 'All Platforms',
       status: [],
       hasAccession: false,
       hasSequenceData: false,
@@ -95,22 +90,7 @@ export default function BiomarkerSidebar({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Project</label>
-            <SelectWithChevron
-              value={localFilters.project || 'All Projects'}
-              onChange={(e) => updateLocalFilters({ project: e.target.value })}
-              selectClassName="pr-12"
-            >
-              {(options.project || []).map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Marker Type</label>
+            <label className="text-sm font-semibold text-black">Gene Marker</label>
             <SelectWithChevron
               value={localFilters.markerType || 'All Marker Types'}
               onChange={(e) => updateLocalFilters({ markerType: e.target.value })}
@@ -125,7 +105,7 @@ export default function BiomarkerSidebar({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Species</label>
+            <label className="text-sm font-semibold text-black">Species Name</label>
             <SelectWithChevron
               value={localFilters.species || 'All Species'}
               onChange={(e) => updateLocalFilters({ species: e.target.value })}
@@ -154,23 +134,9 @@ export default function BiomarkerSidebar({
             </SelectWithChevron>
           </div>
 
+          {statusOptions.length > 0 ? (
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Municipality</label>
-            <SelectWithChevron
-              value={localFilters.municipality || 'All Municipalities'}
-              onChange={(e) => updateLocalFilters({ municipality: e.target.value })}
-              selectClassName="pr-12"
-            >
-              {(options.municipality || []).map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Status of Data</label>
+            <label className="text-sm font-semibold text-black">Validation Status of CO1 Sequences</label>
             <div className="space-y-2">
               {statusOptions.map((status) => {
                 const checked = (localFilters.status || []).includes(status)
@@ -192,30 +158,16 @@ export default function BiomarkerSidebar({
               })}
             </div>
           </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Sequencing Platform</label>
-            <SelectWithChevron
-              value={localFilters.sequencingPlatform || 'All Platforms'}
-              onChange={(e) => updateLocalFilters({ sequencingPlatform: e.target.value })}
-              selectClassName="pr-12"
-            >
-              {(options.sequencingPlatform || []).map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-          </div>
+          ) : null}
 
           <div className="space-y-3 pt-1">
             <TogglePill
-              label="Has Accession"
+              label="Has External Accession"
               enabled={Boolean(localFilters.hasAccession)}
               onClick={() => updateLocalFilters({ hasAccession: !localFilters.hasAccession })}
             />
             <TogglePill
-              label="Has Sequence Data"
+              label="Has Sequence Length (bp)"
               enabled={Boolean(localFilters.hasSequenceData)}
               onClick={() => updateLocalFilters({ hasSequenceData: !localFilters.hasSequenceData })}
             />

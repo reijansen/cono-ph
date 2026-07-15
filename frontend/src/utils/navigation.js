@@ -3,7 +3,7 @@ export const navigationLinks = [
   { label: 'Species', path: '/species' },
   { label: 'Conopeptides', path: '/conopeptides' },
   { label: 'Biomarkers', path: '/biomarkers' },
-  { label: 'Visualization', path: '/visualization' },
   { label: 'Publications', path: '/publications' },
+  { label: 'Visualization', path: '/visualization' },
   { label: 'About', path: '/about' },
 ]

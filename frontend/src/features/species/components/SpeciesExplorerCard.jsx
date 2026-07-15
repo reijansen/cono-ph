@@ -1,15 +1,8 @@
 import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-import Badge from '@/components/ui/Badge'
 import Card from '@/components/ui/Card'
 import { cn } from '@/utils/cn'
-
-const statusStyles = {
-  Published: 'bg-brand-700 text-white ring-0',
-  'Under Review': 'bg-[#c2bf1f] text-white ring-0',
-  Unpublished: 'bg-slate-400 text-white ring-0',
-}
 
 export default function SpeciesExplorerCard({ species }) {
   return (
@@ -41,30 +34,14 @@ export default function SpeciesExplorerCard({ species }) {
             </h3>
             <p className="text-sm text-brand-700">{species.commonName}</p>
           </div>
-
-          <Badge className={cn('shrink-0 px-4 py-1.5 text-sm font-semibold', statusStyles[species.status])}>
-            {species.status}
-          </Badge>
         </div>
 
         <div className="grid gap-1 text-sm text-[var(--app-muted)] sm:grid-cols-2 lg:grid-cols-1">
           <p>
-            <span className="font-semibold text-brand-700">Class:</span> {species.className}
-          </p>
-          <p>
-            <span className="font-semibold text-brand-700">Order:</span> {species.orderName}
-          </p>
-          <p>
-            <span className="font-semibold text-brand-700">Family:</span> {species.familyName}
-          </p>
-          <p>
-            <span className="font-semibold text-brand-700">Genus:</span> {species.genusName}
+            <span className="font-semibold text-brand-700">Species ID:</span> {species.speciesId}
           </p>
           <p>
             <span className="font-semibold text-brand-700">Subgenus:</span> {species.subgenus}
-          </p>
-          <p>
-            <span className="font-semibold text-brand-700">Province:</span> {species.province}
           </p>
           <p>
             <span className="font-semibold text-brand-700">Conopeptide precursors:</span>{' '}

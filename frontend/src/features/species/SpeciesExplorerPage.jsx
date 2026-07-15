@@ -11,6 +11,8 @@ export default function SpeciesExplorerPage() {
     filters,
     filterOptions,
     handleFilterChange,
+    handlePageChange,
+    pagination,
     records,
     resultCount,
   } = useSpeciesExplorerController()
@@ -46,7 +48,7 @@ export default function SpeciesExplorerPage() {
 
           </Card>
 
-          <SpeciesExplorerPagination />
+          <SpeciesExplorerPagination pagination={pagination} onPageChange={handlePageChange} />
         </section>
       </div>
     </div>

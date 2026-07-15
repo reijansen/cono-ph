@@ -14,36 +14,28 @@ const biomarkerExplorerMeta = {
     'Explore biomarker records, marker types, and linked sequence evidence from Philippine cone snails.',
 }
 
-const biomarkerFilterOptions = {
-  project: ['All Projects', 'ConoPH Core', 'Barcode Survey', 'Museum Reference Set'],
-  markerType: ['All Marker Types', 'COI', '16S rRNA', '12S rRNA', 'H3', 'ITS', '28S rRNA'],
-  species: ['All Species', 'Conus eburneus', 'Conus imperialis', 'Conus tessulatus', 'Conus miles'],
-  province: ['All Provinces', 'Cebu', 'Bohol', 'Batangas', 'Palawan', 'Negros Occidental', 'Marinduque'],
-  municipality: ['All Municipalities', 'Caw-oy', 'Sogod', 'Panglao', 'N/A'],
-  status: ['Published', 'Under Review', 'Unpublished'],
-  sequencingPlatform: ['All Platforms', 'Transcriptome-derived', 'PCR-based', 'GenBank', 'In-house database'],
-}
-
 const biomarkerExplorerInitialFilters = {
   search: '',
-  project: 'All Projects',
   markerType: 'All Marker Types',
   species: 'All Species',
   province: 'All Provinces',
-  municipality: 'All Municipalities',
-  sequencingPlatform: 'All Platforms',
   status: [],
   hasAccession: false,
   hasSequenceData: false,
 }
 
+const biomarkerPageSize = 10
 const biomarkerPagination = {
   page: 1,
-  totalPages: 24,
+  totalPages: 1,
 }
 
 const isDefaultOption = (value) => !value || value.startsWith('All ')
 const normalize = (value) => String(value ?? '').toLowerCase()
+const uniqueOptions = (label, rows, field) => [
+  label,
+  ...Array.from(new Set(rows.map((row) => row[field]).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+]
 
 function rowMatchesFilters(row, filters) {
   const searchTerm = normalize(filters.search).trim()
@@ -89,12 +81,33 @@ export function useBiomarkersExplorerController() {
     }
   }, [])
 
-  const rows = useMemo(
+  const filteredRows = useMemo(
     () => rowsSource.filter((row) => rowMatchesFilters(row, filters)),
     [filters, rowsSource],
   )
 
-  const resultCount = `${rows.length.toLocaleString()} results`
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / biomarkerPageSize))
+  const rows = useMemo(
+    () => filteredRows.slice((page - 1) * biomarkerPageSize, page * biomarkerPageSize),
+    [filteredRows, page],
+  )
+  const filterOptions = useMemo(
+    () => ({
+      markerType: uniqueOptions('All Marker Types', rowsSource, 'markerType'),
+      species: uniqueOptions('All Species', rowsSource, 'species'),
+      province: uniqueOptions('All Provinces', rowsSource, 'province'),
+      status: Array.from(new Set(rowsSource.map((row) => row.status).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    }),
+    [rowsSource],
+  )
+
+  const resultCount = `${filteredRows.length.toLocaleString()} results`
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   const handleFilterChange = useCallback((nextFilters) => {
     setFilters(nextFilters)
@@ -125,13 +138,13 @@ export function useBiomarkersExplorerController() {
   return {
     breadcrumbs: biomarkerExplorerBreadcrumbs,
     filters,
-    filterOptions: biomarkerFilterOptions,
+    filterOptions,
     handleFilterChange,
     handlePageChange,
     handleRowKeyDown,
     meta: biomarkerExplorerMeta,
     openBiomarker,
-    pagination: { ...biomarkerPagination, page },
+    pagination: { ...biomarkerPagination, page, totalPages },
     resultCount,
     rows,
   }

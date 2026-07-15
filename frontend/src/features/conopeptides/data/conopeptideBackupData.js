@@ -8,7 +8,6 @@ function normalizeRecord(record) {
     predictedPeptide: String(record['Mature Peptide Sequence'] ?? record.predictedPeptide ?? record.predicted_peptide ?? ''),
     matchedToxin: String(record['Matched Toxin'] ?? record.matchedToxin ?? record.matched_toxin ?? ''),
     species: String(record['Scientific name'] ?? record.species ?? ''),
-    province: String(record.Province ?? record.province ?? ''),
   }
 }
 

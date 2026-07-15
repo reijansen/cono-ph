@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { navigationLinks } from '@/utils/navigation'
 import { cn } from '@/utils/cn'
 
-const primaryLinkOrder = ['Home', 'Conopeptides', 'Species', 'Biomarkers', 'Visualization', 'Publications', 'About']
+const primaryLinkOrder = ['Home', 'Conopeptides', 'Species', 'Biomarkers', 'Publications', 'Visualization', 'About']
 const primaryLinks = primaryLinkOrder
   .map((label) => navigationLinks.find((link) => link.label === label))
   .filter(Boolean)
