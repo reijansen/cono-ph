@@ -59,6 +59,6 @@ h4 {
 
 @layer components {
   .app-container {
-    @apply w-full px-4 sm:px-6 lg:px-8 xl:px-12;
+    @apply w-full px-4 sm:px-6 lg:px-10 xl:px-14 2xl:px-20;
   }
 }
