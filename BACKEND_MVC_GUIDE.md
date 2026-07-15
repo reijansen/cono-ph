@@ -1,178 +1,35 @@
-# Backend MVC Implementation Guide
-## For Backend Developer
+# Backend API Contract Guide
 
----
+## Scope
 
-## Overview
+This document is for frontend/backend coordination. The frontend owns the React MVC-style structure, while the backend owns its internal architecture.
 
-Your frontend is adopting an **MVC-style component-based architecture**. This guide ensures your backend provides the correct API contracts, error handling, and response formats.
+The frontend does not require the backend to implement MVC specifically. It only requires stable endpoints, consistent response shapes, predictable field names, pagination metadata, and useful error responses.
 
-Your tech stack: **Node.js + Express + PostgreSQL (Neon)**
+## Frontend Architecture Assumption
 
----
+The frontend now follows a React-friendly MVC split:
 
-## Recommended Backend Architecture
-
-```
-Request Flow:
-Route → Auth Middleware → Validation Middleware → Controller 
-  ↓
-Service Layer (Business Logic)
-  ↓
-Repository Layer (Data Access)
-  ↓
-PostgreSQL (Neon)
-  ↓ Response
-JSON → Frontend
+```text
+Model      feature data modules, API services, response contracts
+View       page and component JSX
+Controller feature controller hooks that own filters, routing actions, and view state
 ```
 
-**Directory Structure:**
-```
-backend/
-├── config/
-│   ├── db.js              # Database connection (existing)
-│   └── env.js             # Environment variables
-├── middleware/            # (NEW) Cross-cutting concerns
-│   ├── validation.js      # Input validation (Zod)
-│   ├── errorHandler.js    # Global error handling
-│   ├── auth.js            # JWT auth (future)
-│   └── asyncHandler.js    # Async wrapper
-├── models/                # (NEW) Database schemas
-│   └── species.model.js   # Zod schemas for validation
-├── repositories/          # (NEW) Data access layer
-│   └── speciesRepository.js
-├── services/              # (NEW) Business logic
-│   └── speciesService.js
-├── controllers/           # (EXISTING) HTTP handlers
-│   └── speciesControllers.js (refactor to use services)
-├── routes/                # (EXISTING) Route definitions
-│   └── speciesRoutes.js
-├── utils/                 # (NEW) Helpers
-│   ├── response.js        # Standardized response format
-│   ├── errors.js          # Custom error classes
-│   └── validators.js      # Validation schemas
-├── lib/                   # (EXISTING) External integrations
-│   └── arcjet.js
-└── server.js              # (EXISTING) Main entry
+Example frontend flow:
+
+```text
+Page View -> Controller Hook -> Service/API Client -> Backend Endpoint
 ```
 
----
+Backend responses should be designed so controllers can transform data once and views can stay mostly presentational.
 
-## Implementation Layers (Suggested Order)
+## Required Response Format
 
-### **Layer 1: Validation & Error Handling Middleware**
+All API responses should follow this shape.
 
-**Files to create:**
-- `utils/response.js` - Standardized response format
-- `utils/errors.js` - Custom error classes
-- `middleware/errorHandler.js` - Global error handler
-- `middleware/asyncHandler.js` - Wrapper for async routes
+Success:
 
-**Key functions:**
-```javascript
-// response.js
-export const sendResponse = (res, statusCode, success, data, message) => {
-  res.status(statusCode).json({ success, data, message });
-};
-
-// errors.js
-export class AppError extends Error {
-  constructor(message, statusCode) {
-    super(message);
-    this.statusCode = statusCode;
-  }
-}
-
-// errorHandler.js (middleware)
-app.use((err, req, res, next) => {
-  // Handle all errors uniformly
-});
-```
-
----
-
-### **Layer 2: Models & Validation Schemas**
-**Why second:** Define data contracts before using them
-
-**Files to create:**
-- `models/species.model.js` - Zod schemas for validation
-- `utils/validators.js` - Reusable validators
-
-**Package to install:** `npm install zod`
-
-**Key schemas:**
-```javascript
-export const speciesCreateSchema = z.object({
-  scientific_name: z.string().min(1).max(255),
-  common_name: z.string().min(1).max(255),
-  num_related_publications: z.number().int().min(0)
-});
-
-export const speciesUpdateSchema = speciesCreateSchema.partial();
-```
-
----
-
-### **Layer 3: Repository Layer (Data Access)**
-**Why third:** Isolate database logic from business logic
-
-**Files to create:**
-- `repositories/speciesRepository.js` - All database queries
-
-**Key methods:**
-```javascript
-export class SpeciesRepository {
-  static async getAll(filters = {}) { }
-  static async getById(id) { }
-  static async create(data) { }
-  static async update(id, data) { }
-  static async delete(id) { }
-}
-```
-
----
-
-### **Layer 4: Service Layer (Business Logic)**
-**Why fourth:** Orchestrate repositories, apply business rules
-
-**Files to create:**
-- `services/speciesService.js` - Business logic
-
-**Key methods:**
-```javascript
-export class SpeciesService {
-  static async getAllSpecies(filters) {
-    // Validate filters
-    // Call repository
-    // Transform data
-    // Return to controller
-  }
-}
-```
-
----
-
-### **Layer 5: Refactor Controllers**
-**Why last:** Now controllers are thin, just handle HTTP
-
-**File to update:**
-- `controllers/speciesControllers.js` - Refactor to use services
-
-**Pattern:**
-```javascript
-export const getAllSpecies = asyncHandler(async (req, res) => {
-  const data = await SpeciesService.getAllSpecies(req.query);
-  sendResponse(res, 200, true, data, 'Fetched successfully');
-});
-```
-
----
-
-## API Response Format (CRITICAL)
-
-**All responses must follow this format:**
-
-### Success Response
 ```json
 {
   "success": true,
@@ -187,7 +44,8 @@ export const getAllSpecies = asyncHandler(async (req, res) => {
 }
 ```
 
-### Error Response
+Error:
+
 ```json
 {
   "success": false,
@@ -197,258 +55,212 @@ export const getAllSpecies = asyncHandler(async (req, res) => {
 }
 ```
 
----
+For non-list endpoints, `pagination` can be omitted.
 
-## Endpoint Specifications
+## Field Naming
 
-All endpoints return the response format above. HTTP status codes:
-- `200 OK` - Success
-- `201 Created` - Resource created
-- `400 Bad Request` - Validation failed
-- `404 Not Found` - Resource not found
-- `500 Internal Server Error` - Server error
+Use `snake_case` in API responses for now because the current database and frontend mock data already use it in several API-facing places.
 
-### **GET /api/species** (List all)
-```javascript
-Query params: ?page=1&limit=10&search=&sortBy=created_at&order=DESC
+Rules:
 
-Response:
+- Use one canonical ID field per resource.
+- Species should use `id`, not mixed `id` and `species_id`.
+- Keep timestamps as ISO-8601 strings.
+- Do not return placeholder product fields such as `name`, `price`, or `image` for species.
+
+## Endpoints Needed By Frontend
+
+### Species
+
+`GET /api/species`
+
+Query params:
+
+```text
+page
+limit
+search
+sortBy
+order
+project
+subgenus
+province
+municipality
+status
+diet
+sequencingPlatform
+rawDataInNcbiSra
+```
+
+Expected item shape:
+
+```json
 {
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "scientific_name": "Conus geographus",
-      "common_name": "Geography cone",
-      "num_related_publications": 45,
-      "created_at": "2026-01-15T10:30:00Z",
-      "updated_at": "2026-01-15T10:30:00Z"
-    }
-  ],
-  "message": "Species retrieved successfully",
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 50,
-    "totalPages": 5
-  }
+  "id": "SPC-001",
+  "scientific_name": "Conus eburneus",
+  "common_name": "Ivory Cone",
+  "subgenus": "Tesseliconus",
+  "province": "Cebu",
+  "municipality": "Oslob",
+  "precursors_count": 149,
+  "status": "Published",
+  "project": "ConoPH Core",
+  "diet": "Molluscivore",
+  "sequencing_platform": "Illumina HiSeq",
+  "raw_data_in_ncbi_sra": true,
+  "shell_image": "https://example.com/image.png"
 }
 ```
 
-### **GET /api/species/:id** (Get single)
-```javascript
-Response:
+`GET /api/species/:id`
+
+Returns one species detail record with related conopeptides, biomarkers, publications, taxonomy, and locality fields when available.
+
+### Conopeptides
+
+`GET /api/conopeptides`
+
+Query params:
+
+```text
+page
+limit
+search
+project
+superfamily
+province
+municipality
+cysteineFramework
+status
+hasPredictedPeptide
+```
+
+Expected item shape:
+
+```json
 {
-  "success": true,
-  "data": {
-    "id": 1,
-    "scientific_name": "Conus geographus",
-    "common_name": "Geography cone",
-    "num_related_publications": 45,
-    "created_at": "2026-01-15T10:30:00Z",
-    "updated_at": "2026-01-15T10:30:00Z"
-  },
-  "message": "Species retrieved successfully"
+  "accession": "ConoPH0001",
+  "species_id": "SPC-001",
+  "species": "Conus magus",
+  "superfamily": "M",
+  "framework": "MII",
+  "predicted_peptide": "GCCSHPACG...",
+  "matched_toxin": "Conotoxin KIIIA",
+  "province": "Cebu",
+  "status": "Published"
 }
 ```
 
-### **POST /api/species** (Create)
-```javascript
-Request body:
+`GET /api/conopeptides/:accession`
+
+Returns one conopeptide detail record including precursor, signal, propeptide, mature peptide, post peptide, annotations, references, and species linkage.
+
+### Biomarkers
+
+`GET /api/biomarkers`
+
+Query params:
+
+```text
+page
+limit
+search
+project
+markerType
+species
+province
+municipality
+sequencingPlatform
+status
+hasAccession
+hasSequenceData
+```
+
+Expected item shape:
+
+```json
 {
-  "scientific_name": "Conus textile",
-  "common_name": "Cloth cone",
-  "num_related_publications": 32
+  "biomarker_id": "BMK0002",
+  "marker_type": "COI",
+  "species": "Conus imperialis",
+  "accession": "ABC123456",
+  "sequence_length": "598 bp",
+  "province": "Cebu",
+  "status": "Putative"
 }
+```
 
-Response: 201
+`GET /api/biomarkers/:id`
+
+Returns one biomarker detail record grouped into:
+
+- General information
+- Annotation information
+- Sequence
+- References
+
+The sequence field must be copyable on the frontend, so return the raw sequence string separately from formatted display text.
+
+### Visualization
+
+The visualization pages need aggregate endpoints eventually:
+
+```text
+GET /api/visualization/summary
+GET /api/visualization/species
+GET /api/visualization/conopeptides
+GET /api/visualization/biomarkers
+```
+
+Each endpoint should return metric arrays, chart series, legends, and ranked rows in stable structures.
+
+## Error Handling Requirements
+
+Frontend controllers expect errors to be machine-readable and user-readable.
+
+Use:
+
+```json
 {
-  "success": true,
-  "data": { ...species object with id },
-  "message": "Species created successfully"
+  "success": false,
+  "data": null,
+  "message": "Species not found",
+  "error": "species_not_found"
 }
 ```
 
-### **PUT /api/species/:id** (Update)
-```javascript
-Request body (all optional):
+Avoid:
+
+```json
 {
-  "scientific_name": "Updated name",
-  "common_name": "Updated common",
-  "num_related_publications": 40
+  "error": "raw database exception"
 }
+```
 
-Response: 200
+## Pagination Requirements
+
+Every list endpoint should support pagination and return:
+
+```json
 {
-  "success": true,
-  "data": { ...updated species object },
-  "message": "Species updated successfully"
+  "page": 1,
+  "limit": 10,
+  "total": 312,
+  "totalPages": 32
 }
 ```
 
-### **DELETE /api/species/:id** (Delete)
-```javascript
-Response: 200
-{
-  "success": true,
-  "data": { "id": 1 },
-  "message": "Species deleted successfully"
-}
-```
+The frontend pagination components rely on `page` and `totalPages`.
 
----
+## Current Backend Issues To Resolve
 
-## Key Implementation Details
+These are backend-side contract issues visible from the frontend:
 
-### **Error Handling**
-```javascript
-// Don't do this:
-catch (error) {
-  res.status(500).json({ error: error.message });
-}
+- `GET /api/species/:id` should query `id`, not `species_id`, unless the schema changes.
+- `PUT /api/species/:id` should accept real species fields, not `name`, `price`, and `image`.
+- Species creation currently expects `num_related_publications`, but the actual species schema does not define that column.
+- Database initialization should eventually move out of `server.js`, but this is not a frontend blocker.
 
-// Do this:
-catch (error) {
-  if (error instanceof ValidationError) {
-    throw new AppError(error.message, 400);
-  }
-  throw new AppError('Internal server error', 500);
-}
+## Coordination Rule
 
-// Handler catches and formats uniformly
-```
-
-### **Validation**
-```javascript
-// Don't do this:
-if (!scientific_name) {
-  return res.status(400).json({ error: 'Name required' });
-}
-
-// Do this:
-const schema = speciesCreateSchema;
-const { data, error } = schema.safeParse(req.body);
-if (error) throw new AppError(error.message, 400);
-```
-
-### **Async/Await**
-```javascript
-// Don't do this:
-app.post('/species', (req, res) => {
-  // If error throws, server crashes
-  await db.query(...);
-});
-
-// Do this:
-app.post('/species', asyncHandler(async (req, res) => {
-  // asyncHandler catches and passes to error middleware
-  await db.query(...);
-}));
-```
-
----
-
-## Dependencies to Install
-
-```bash
-npm install zod      # Validation
-npm install express  # Already have
-npm install dotenv   # Already have
-```
-
-**Optional (for production):**
-```bash
-npm install winston  # Better logging
-npm install @joi/joi # Alternative validation
-```
-
----
-
-## Data Flow Example
-
-**Request:** `GET /api/species?page=1&limit=5`
-
-```
-1. Route matches → speciesRoutes.js
-2. Middleware runs:
-   - Validation (check query params)
-   - Auth (if needed)
-3. Controller: getAllSpecies
-   ↓
-4. Service: SpeciesService.getAllSpecies()
-   - Validates filters
-   - Calls repository
-   - Formats response
-   ↓
-5. Repository: SpeciesRepository.getAll()
-   - Executes SQL: SELECT * FROM species...
-   - Returns raw data
-   ↓
-6. Database: PostgreSQL (Neon)
-   - Returns rows
-   ↓
-7. Response travels back up
-8. sendResponse() formats it
-9. Returns to frontend
-```
-
----
-
-## Implementation Checklist
-
-- [ ] Install `zod`
-- [ ] Create `utils/response.js` - Standardized responses
-- [ ] Create `utils/errors.js` - Custom error class
-- [ ] Create `middleware/errorHandler.js` - Global error handler
-- [ ] Create `middleware/asyncHandler.js` - Async wrapper
-- [ ] Create `models/species.model.js` - Validation schemas
-- [ ] Create `repositories/speciesRepository.js` - Data access
-- [ ] Create `services/speciesService.js` - Business logic
-- [ ] Refactor `controllers/speciesControllers.js` - Use services
-- [ ] Update `routes/speciesRoutes.js` - Use asyncHandler
-- [ ] Update `server.js` - Register error middleware
-- [ ] Test all endpoints with postman/insomnia
-- [ ] Document API in README
-
----
-
-## Tips for Success
-
-1. **Keep layers independent** - Each layer should only know about the layer below it
-2. **Test each layer separately** - Repository tests, then service tests, etc.
-3. **Use try-catch in services, not controllers** - Controllers use asyncHandler
-4. **Validate early** - Validate at middleware, not in controller
-5. **Document your schemas** - Zod schemas are your API contract with frontend
-6. **Use consistent field naming** - snake_case in DB, camelCase in API? Decide and document
-
----
-
-## Coordination with Frontend
-
-- **Frontend** is building Zustand store + hooks
-- **Backend** provides these exact endpoints/formats
-- **No surprises** - If either side deviates, let each other know immediately
-- **Frontend checks:** Use `/FRONTEND_MVC_GUIDE.md` for response format expectations
-
----
-
-## Questions to Answer Together
-
-1. Should API return `camelCase` or `snake_case`? (Decide now)
-2. Should timestamps be ISO-8601 or Unix? (ISO-8601 recommended)
-3. Should IDs be UUIDs or auto-increment? (Keep current for now)
-4. Do we need JWT auth? (Plan for Phase 2)
-5. Do we need pagination for all list endpoints? (Yes)
-6. Should we implement soft-deletes? (Discuss with team)
-
----
-
-## Resources
-
-- Zod Docs: https://zod.dev
-- Express Best Practices: https://expressjs.com/en/advanced/best-practice-performance.html
-- RESTful API Design: https://restfulapi.net
-
----
-
-**Next:** Once you have these layers implemented, notify frontend so they can finalize the API service contracts.
+The backend can use MVC, service/repository layers, or another internal structure. The frontend only depends on the public API contract in this document.

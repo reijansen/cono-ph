@@ -1,39 +1,42 @@
 import { ChevronRight, Download } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 
 import BiomarkerLayout from '@/features/biomarkers/components/BiomarkerLayout'
 import BiomarkerPagination from '@/features/biomarkers/components/BiomarkerPagination'
 import BiomarkerSidebar from '@/features/biomarkers/components/BiomarkerSidebar'
 import BiomarkerTableCard from '@/features/biomarkers/components/BiomarkerTableCard'
-import {
-  biomarkerExplorerBreadcrumbs,
-  biomarkerExplorerInitialFilters,
-  biomarkerExplorerMeta,
-  biomarkerExplorerResultCount,
-  biomarkerExplorerRows,
-  biomarkerFilterOptions,
-  biomarkerPagination,
-} from '@/features/biomarkers/data/biomarkerMockData'
+import { useBiomarkersExplorerController } from '@/features/biomarkers/controllers/useBiomarkersExplorerController'
 
 export default function BiomarkersExplorerPage() {
-  const navigate = useNavigate()
+  const {
+    breadcrumbs,
+    filters,
+    filterOptions,
+    handleFilterChange,
+    handlePageChange,
+    handleRowKeyDown,
+    meta,
+    openBiomarker,
+    pagination,
+    resultCount,
+    rows,
+  } = useBiomarkersExplorerController()
 
   return (
     <BiomarkerLayout
-      breadcrumbs={biomarkerExplorerBreadcrumbs}
-      title={biomarkerExplorerMeta.title}
-      subtitle={biomarkerExplorerMeta.subtitle}
+      breadcrumbs={breadcrumbs}
+      title={meta.title}
+      subtitle={meta.subtitle}
       sidebar={
         <BiomarkerSidebar
-          filters={biomarkerExplorerInitialFilters}
-          options={biomarkerFilterOptions}
-          onFilterChange={() => {}}
+          filters={filters}
+          options={filterOptions}
+          onFilterChange={handleFilterChange}
         />
       }
     >
       <BiomarkerTableCard
         title="Biomarker Records"
-        resultCount={biomarkerExplorerResultCount}
+        resultCount={resultCount}
         action={
           <button
             type="button"
@@ -66,18 +69,13 @@ export default function BiomarkersExplorerPage() {
             </thead>
 
             <tbody className="text-sm text-[var(--app-text)]">
-              {biomarkerExplorerRows.map((row) => (
+              {rows.map((row) => (
                 <tr
                   key={row.biomarkerId}
                   role="button"
                   tabIndex={0}
-                  onClick={() => navigate(`/biomarkers/${row.biomarkerId}`)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      navigate(`/biomarkers/${row.biomarkerId}`)
-                    }
-                  }}
+                  onClick={() => openBiomarker(row.biomarkerId)}
+                  onKeyDown={(event) => handleRowKeyDown(event, row.biomarkerId)}
                   className="cursor-pointer transition even:bg-[#fcfcf8] hover:bg-brand-50/50 focus:outline-none focus-visible:bg-brand-50/50"
                 >
                   <td className="border-b border-[var(--app-border)] px-4 py-4 font-semibold text-brand-700">
@@ -100,7 +98,7 @@ export default function BiomarkersExplorerPage() {
       </BiomarkerTableCard>
 
       <div className="pt-2">
-        <BiomarkerPagination pagination={biomarkerPagination} onPageChange={() => {}} loading={false} />
+        <BiomarkerPagination pagination={pagination} onPageChange={handlePageChange} loading={false} />
       </div>
     </BiomarkerLayout>
   )

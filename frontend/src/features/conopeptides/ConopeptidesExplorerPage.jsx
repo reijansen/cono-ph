@@ -1,40 +1,36 @@
 import { ChevronRight, Download } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 
 import ConopeptideLayout from '@/features/conopeptides/components/ConopeptideLayout'
 import ConopeptidePagination from '@/features/conopeptides/components/ConopeptidePagination'
 import ConopeptideSidebar from '@/features/conopeptides/components/ConopeptideSidebar'
 import ConopeptideTableCard from '@/features/conopeptides/components/ConopeptideTableCard'
-import {
-  conopeptideExplorerBreadcrumbs,
-  conopeptideExplorerMeta,
-  conopeptideExplorerRows,
-  conopeptideFilterOptions,
-  conopeptidePagination,
-} from '@/features/conopeptides/data/conopeptideMockData'
+import { useConopeptidesExplorerController } from '@/features/conopeptides/controllers/useConopeptidesExplorerController'
 
 export default function ConopeptidesExplorerPage() {
-  const navigate = useNavigate()
+  const {
+    breadcrumbs,
+    filters,
+    filterOptions,
+    handleFilterChange,
+    handlePageChange,
+    handleRowKeyDown,
+    meta,
+    openConopeptide,
+    pagination,
+    resultCount,
+    rows,
+  } = useConopeptidesExplorerController()
 
   return (
     <ConopeptideLayout
-      breadcrumbs={conopeptideExplorerBreadcrumbs}
-      title={conopeptideExplorerMeta.title}
-      subtitle={conopeptideExplorerMeta.subtitle}
+      breadcrumbs={breadcrumbs}
+      title={meta.title}
+      subtitle={meta.subtitle}
       sidebar={
         <ConopeptideSidebar
-          filters={{
-            search: '',
-            project: 'All Projects',
-            superfamily: 'All Superfamilies',
-            province: 'All Provinces',
-            municipality: 'All Municipalities',
-            cysteineFramework: 'All Cysteine Frameworks',
-            status: [],
-            hasPredictedPeptide: 'all',
-          }}
-          options={conopeptideFilterOptions}
-          onFilterChange={() => {}}
+          filters={filters}
+          options={filterOptions}
+          onFilterChange={handleFilterChange}
         />
       }
     >
@@ -43,7 +39,7 @@ export default function ConopeptidesExplorerPage() {
         action={
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-end">
             <span className="rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700">
-              3,671 results
+              {resultCount}
             </span>
             <button
               type="button"
@@ -79,18 +75,13 @@ export default function ConopeptidesExplorerPage() {
               </tr>
             </thead>
             <tbody className="text-sm text-[var(--app-text)]">
-              {conopeptideExplorerRows.map((row) => (
+              {rows.map((row) => (
                 <tr
                   key={row.accession}
                   role="button"
                   tabIndex={0}
-                  onClick={() => navigate(`/conopeptides/${row.accession}`)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      navigate(`/conopeptides/${row.accession}`)
-                    }
-                  }}
+                  onClick={() => openConopeptide(row.accession)}
+                  onKeyDown={(event) => handleRowKeyDown(event, row.accession)}
                   className="cursor-pointer transition even:bg-[#fcfcf8] hover:bg-brand-50/60 focus:outline-none focus-visible:bg-brand-50/60"
                 >
                   <td className="border-b border-[var(--app-border)] px-4 py-4 font-semibold text-brand-700">
@@ -113,7 +104,7 @@ export default function ConopeptidesExplorerPage() {
       </ConopeptideTableCard>
 
       <div className="pt-2">
-        <ConopeptidePagination pagination={conopeptidePagination} onPageChange={() => {}} loading={false} />
+        <ConopeptidePagination pagination={pagination} onPageChange={handlePageChange} loading={false} />
       </div>
     </ConopeptideLayout>
   )
