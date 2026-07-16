@@ -1,6 +1,29 @@
 const SPECIES_DETAIL_BACKUP_PATH = '/backup-data/json/species/latest.json'
 const TAXONOMIC_DETAIL_BACKUP_PATH = '/backup-data/json/taxonomic/latest.json'
 
+function toDirectImageUrl(value) {
+  const link = String(value ?? '').trim()
+
+  if (!link) {
+    return ''
+  }
+
+  if (link.startsWith('species-image/') || link.startsWith('/species-image/')) {
+    return link.startsWith('/') ? link : `/${link}`
+  }
+
+  if (link.startsWith('species-images/') || link.startsWith('/species-images/')) {
+    return link.startsWith('/') ? link : `/${link}`
+  }
+
+  const driveMatch = link.match(/drive\.google\.com\/file\/d\/([^/]+)/i)
+  if (driveMatch?.[1]) {
+    return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`
+  }
+
+  return link
+}
+
 function normalizeTaxonomicRecord(record) {
   return {
     speciesId: String(record['Species ID'] ?? record.speciesId ?? ''),
@@ -23,6 +46,7 @@ function normalizeRecord(record, taxonomic = {}) {
       orderName: taxonomic.orderName || String(record.Order ?? record.orderName ?? ''),
       familyName: taxonomic.familyName || String(record.Family ?? record.familyName ?? ''),
       genusName: taxonomic.genusName || String(record.Genus ?? record.genusName ?? ''),
+      image: toDirectImageUrl(record['Shell image'] ?? record.image ?? record.imageUrl ?? record.image_url),
     },
     taxonomy: {
       scientificName: String(record['Scientific name'] ?? record.scientificName ?? ''),
