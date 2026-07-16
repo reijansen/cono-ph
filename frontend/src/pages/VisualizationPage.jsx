@@ -1,40 +1,33 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 
 import VisualizationLayout from '@/features/visualization/components/VisualizationLayout'
+import { loadVisualizationBackupData } from '@/features/visualization/data/visualizationBackupData'
 import {
   visualizationBreadcrumbs,
-  visualizationInsights,
   visualizationMeta,
-  visualizationMetrics,
-  visualizationOverviewCards,
-  biomarkerCoverageData,
-  biomarkerDensityByProvince,
-  conopeptideLengthBins,
-  speciesProvinceCoverage,
-  speciesTopSequencedSpecies,
 } from '@/features/visualization/data/visualizationMockData'
 
 const MetricsSection = lazy(() =>
   import('@/features/visualization/components/VisualizationMetricsSection').then((module) => ({
-    default: module.MetricsSection,
+    default: module.default,
   })),
 )
 
 const OverviewCardsSection = lazy(() =>
   import('@/features/visualization/components/VisualizationOverviewCardsSection').then((module) => ({
-    default: module.OverviewCardsSection,
+    default: module.default,
   })),
 )
 
 const TrendsSection = lazy(() =>
   import('@/features/visualization/components/VisualizationTrendsSection').then((module) => ({
-    default: module.TrendsSection,
+    default: module.default,
   })),
 )
 
 const InsightsSection = lazy(() =>
   import('@/features/visualization/components/VisualizationInsightsSection').then((module) => ({
-    default: module.InsightsSection,
+    default: module.default,
   })),
 )
 
@@ -43,54 +36,30 @@ function SectionFallback({ className = 'h-64' }) {
 }
 
 export default function VisualizationPage() {
-  const speciesAreaData = speciesProvinceCoverage.map((value, index) => ({
-    province: `Province ${index + 1}`,
-    Species: value.value,
-  }))
+  const [visualizationData, setVisualizationData] = useState(null)
 
-  const biomarkerBarData = biomarkerDensityByProvince.map((item) => ({
-    name: item.label,
-    biomarker: item.value,
-  }))
+  useEffect(() => {
+    let active = true
 
-  const conopeptideLineData = conopeptideLengthBins.map((item) => ({
-    range: item.label,
-    count: item.value,
-  }))
-
-  const overviewCards = visualizationOverviewCards.map((card) => {
-    if (card.id === 'species') {
-      return {
-        ...card,
-        chartData: speciesTopSequencedSpecies.map((item) => ({
-          name: item.name,
-          value: item.value,
-        })),
+    async function loadData() {
+      try {
+        const backupData = await loadVisualizationBackupData()
+        if (active) {
+          setVisualizationData(backupData)
+        }
+      } catch {
+        if (active) {
+          setVisualizationData(null)
+        }
       }
     }
 
-    if (card.id === 'conopeptides') {
-      return {
-        ...card,
-        chartData: [
-          { name: 'A', value: 648 },
-          { name: 'M', value: 284 },
-          { name: 'O1', value: 173 },
-          { name: 'O2', value: 72 },
-          { name: 'T', value: 39 },
-          { name: 'Unknown', value: 32 },
-        ],
-      }
-    }
+    loadData()
 
-    return {
-      ...card,
-      chartData: biomarkerCoverageData.map((item) => ({
-        name: item.label,
-        value: item.value,
-      })),
+    return () => {
+      active = false
     }
-  })
+  }, [])
 
   return (
     <VisualizationLayout
@@ -99,24 +68,24 @@ export default function VisualizationPage() {
       subtitle={visualizationMeta.subtitle}
     >
       <Suspense fallback={<SectionFallback className="h-28" />}>
-        <MetricsSection metrics={visualizationMetrics} />
+        <MetricsSection metrics={visualizationData?.metrics ?? []} />
       </Suspense>
 
       <Suspense fallback={<SectionFallback className="h-[420px]" />}>
-        <OverviewCardsSection cards={overviewCards} />
+        <OverviewCardsSection cards={visualizationData?.overviewCards ?? []} />
       </Suspense>
 
       <Suspense fallback={<SectionFallback className="h-[360px]" />}>
         <TrendsSection
-          speciesAreaData={speciesAreaData}
-          biomarkerBarData={biomarkerBarData}
-          conopeptideLineData={conopeptideLineData}
-          biomarkerCoverageData={biomarkerCoverageData}
+          speciesAreaData={visualizationData?.speciesAreaData ?? []}
+          biomarkerBarData={visualizationData?.biomarkerBarData ?? []}
+          conopeptideLineData={visualizationData?.conopeptideLineData ?? []}
+          biomarkerCoverageData={visualizationData?.biomarkerCoverageData ?? []}
         />
       </Suspense>
 
       <Suspense fallback={<SectionFallback className="h-64" />}>
-        <InsightsSection insights={visualizationInsights} />
+        <InsightsSection insights={visualizationData?.insights ?? []} />
       </Suspense>
     </VisualizationLayout>
   )

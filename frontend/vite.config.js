@@ -10,6 +10,17 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/@tremor/react')) return 'tremor'
+          if (id.includes('node_modules/recharts')) return 'recharts'
+          if (id.includes('node_modules/react-router-dom')) return 'router'
+        },
+      },
+    },
+  },
   server: {
     host: true,
     port: 5173
