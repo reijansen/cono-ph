@@ -16,7 +16,6 @@ const publicationExplorerInitialFilters = {
   search: '',
   year: 'All Years',
   journal: 'All Journals',
-  hasDoi: false,
 }
 
 const publicationPageSize = 5
@@ -39,7 +38,6 @@ function rowMatchesFilters(row, filters) {
   if (searchTerm && !searchableText.includes(searchTerm)) return false
   if (!isDefaultOption(filters.year) && row.year !== filters.year) return false
   if (!isDefaultOption(filters.journal) && row.journal !== filters.journal) return false
-  if (filters.hasDoi && row.doi === 'Unavailable') return false
 
   return true
 }

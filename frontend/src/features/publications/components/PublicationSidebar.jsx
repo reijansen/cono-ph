@@ -63,7 +63,6 @@ export default function PublicationSidebar({
       search: '',
       year: 'All Years',
       journal: 'All Journals',
-      hasDoi: false,
     }
 
     setLocalFilters(resetFilters)
@@ -92,12 +91,6 @@ export default function PublicationSidebar({
         <div className="space-y-4">
           <SelectField label="Year Published" value={localFilters.year || 'All Years'} options={options.year} onChange={(value) => updateLocalFilters({ year: value })} />
           <SelectField label="Journal" value={localFilters.journal || 'All Journals'} options={options.journal} onChange={(value) => updateLocalFilters({ journal: value })} />
-
-          <TogglePill
-            label="Has DOI"
-            enabled={Boolean(localFilters.hasDoi)}
-            onClick={() => updateLocalFilters({ hasDoi: !localFilters.hasDoi })}
-          />
         </div>
       </div>
 

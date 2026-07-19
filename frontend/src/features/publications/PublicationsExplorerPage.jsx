@@ -54,7 +54,6 @@ export default function PublicationsExplorerPage() {
                   'Publication',
                   'Year',
                   'Journal',
-                  'Evidence',
                   'Linked Records',
                   '',
                 ].map((column) => (
@@ -76,7 +75,6 @@ export default function PublicationsExplorerPage() {
                   </td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.year}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4">{row.journal}</td>
-                  <td className="border-b border-[var(--app-border)] px-4 py-4">{row.evidenceType}</td>
                   <td className="border-b border-[var(--app-border)] px-4 py-4">
                     <div className="space-y-1 text-xs text-[var(--app-muted)]">
                       <p>{row.linkedSpecies} species</p>
