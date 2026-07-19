@@ -2,17 +2,13 @@ import { loadBiomarkerBackupRows } from '@/features/biomarkers/data/biomarkerBac
 import { loadConopeptideBackupRows } from '@/features/conopeptides/data/conopeptideBackupData'
 import { loadPublicationBackupRows } from '@/features/publications/data/publicationBackupData'
 import { loadSpeciesBackupRecords } from '@/features/species/data/speciesBackupData'
-
-const provinceOrder = [
-  'Cebu',
-  'Bohol',
-  'Palawan',
-  'Marinduque',
-  'Samar',
-  'Batangas',
-  'Negros Occidental',
-  'Other',
-]
+import {
+  FiBarChart2,
+  FiBookOpen,
+  FiDatabase,
+  FiFeather,
+  FiPieChart,
+} from 'react-icons/fi'
 
 function countBy(items, getter) {
   const counts = new Map()
@@ -31,30 +27,60 @@ function topEntriesFromCountMap(counts, limit = 5) {
     .slice(0, limit)
 }
 
+function entriesFromCountMap(counts) {
+  return Array.from(counts.entries())
+    .map(([name, value]) => ({ name, value }))
+    .sort((left, right) => right.value - left.value || left.name.localeCompare(right.name))
+}
+
 function buildSpeciesProvinceCoverage(speciesRows) {
-  const counts = countBy(speciesRows, (row) => row.province || 'Other')
-  return provinceOrder.map((label) => ({ label, value: counts.get(label) || 0 }))
+  return entriesFromCountMap(countBy(speciesRows, (row) => row.province || 'Unknown')).map((item) => ({
+    label: item.name,
+    value: item.value,
+  }))
 }
 
 function buildConopeptideLengthBins(conopeptideRows) {
-  const bins = [
-    { label: '40-60 aa', min: 40, max: 60, value: 0 },
-    { label: '61-80 aa', min: 61, max: 80, value: 0 },
-    { label: '81-100 aa', min: 81, max: 100, value: 0 },
-    { label: '101-120 aa', min: 101, max: 120, value: 0 },
-    { label: '121-140 aa', min: 121, max: 140, value: 0 },
-    { label: '141+ aa', min: 141, max: Number.POSITIVE_INFINITY, value: 0 },
-  ]
+  const lengths = conopeptideRows
+    .map((row) => (row.predictedPeptide ? row.predictedPeptide.length : 0))
+    .filter((length) => length > 0)
 
-  for (const row of conopeptideRows) {
-    const length = (row.predictedPeptide || '').length
+  if (!lengths.length) {
+    return []
+  }
+
+  const minLength = Math.min(...lengths)
+  const maxLength = Math.max(...lengths)
+  const binSize = 20
+  const start = Math.floor(minLength / binSize) * binSize
+  const end = Math.ceil(maxLength / binSize) * binSize
+  const bins = []
+
+  for (let lower = start; lower <= end; lower += binSize) {
+    const upper = lower + binSize - 1
+    bins.push({ label: `${lower}-${upper} aa`, min: lower, max: upper, value: 0 })
+  }
+
+  for (const length of lengths) {
     const bin = bins.find((item) => length >= item.min && length <= item.max)
     if (bin) {
       bin.value += 1
     }
   }
 
-  return bins.map(({ label, value }) => ({ label, value }))
+  return bins.filter((bin) => bin.value > 0).map(({ label, value }) => ({ label, value }))
+}
+
+function safeTopLabel(entries, fallback = 'Unavailable') {
+  return entries[0]?.name ?? fallback
+}
+
+function safeTopValue(entries, fallback = 0) {
+  return entries[0]?.value ?? fallback
+}
+
+function countNonEmpty(rows, getter) {
+  return rows.reduce((total, row) => total + (String(getter(row) || '').trim() ? 1 : 0), 0)
 }
 
 export async function loadVisualizationBackupData() {
@@ -70,32 +96,50 @@ export async function loadVisualizationBackupData() {
   const biomarkerCount = biomarkerRows.length
   const speciesWithBiomarkerData = new Set(biomarkerRows.map((row) => row.species).filter(Boolean)).size
   const speciesWithConopeptides = new Set(conopeptideRows.map((row) => row.species).filter(Boolean)).size
+  const publicationCount = publicationRows.length
 
   const speciesCountsByName = topEntriesFromCountMap(countBy(speciesRows, (row) => row.scientificName), 5)
   const conopeptideCountsBySpecies = topEntriesFromCountMap(countBy(conopeptideRows, (row) => row.species), 5)
   const biomarkerCountsBySpecies = topEntriesFromCountMap(countBy(biomarkerRows, (row) => row.species), 5)
+  const provinceCounts = entriesFromCountMap(countBy([...speciesRows, ...biomarkerRows], (row) => row.province || 'Unknown'))
+  const superfamilyCounts = entriesFromCountMap(countBy(conopeptideRows, (row) => row.superfamily || 'Unknown')).slice(0, 6)
+  const markerTypeCounts = entriesFromCountMap(countBy(biomarkerRows, (row) => row.markerType || 'Unknown')).slice(0, 6)
+  const linkedSpeciesCoverage = countNonEmpty(publicationRows, (row) => row.linkedSpecies)
+  const linkedConopeptideCoverage = countNonEmpty(publicationRows, (row) => row.linkedConopeptides)
+  const linkedBiomarkerCoverage = countNonEmpty(publicationRows, (row) => row.linkedBiomarkers)
+  const topSpeciesName = safeTopLabel(speciesCountsByName)
+  const topConopeptideSpecies = safeTopLabel(conopeptideCountsBySpecies)
+  const topBiomarkerSpecies = safeTopLabel(biomarkerCountsBySpecies)
+  const topSpeciesCount = safeTopValue(speciesCountsByName)
+  const topConopeptideCount = safeTopValue(conopeptideCountsBySpecies)
+  const topBiomarkerCount = safeTopValue(biomarkerCountsBySpecies)
 
   return {
     metrics: [
       {
+        icon: FiDatabase,
         label: 'Total Species',
         value: String(speciesCount),
-        description: 'Across the loaded species backup records.',
       },
       {
+        icon: FiFeather,
         label: 'Conopeptide Precursors',
         value: String(conopeptideCount),
-        description: 'From the conopeptide backup JSON.',
       },
       {
+        icon: FiBarChart2,
         label: 'Biomarkers',
         value: String(biomarkerCount),
-        description: 'From the barcode/biomarker backup JSON.',
       },
       {
+        icon: FiBookOpen,
+        label: 'Publications',
+        value: String(publicationCount),
+      },
+      {
+        icon: FiPieChart,
         label: 'Biomarker Coverage',
         value: speciesCount > 0 ? `${Math.round((speciesWithBiomarkerData / speciesCount) * 100)}%` : '0%',
-        description: 'Species with at least one biomarker record.',
       },
     ],
     overviewCards: [
@@ -111,10 +155,9 @@ export async function loadVisualizationBackupData() {
         ctaLabel: 'Explore Species',
         ctaTo: '/visualization/species',
         icon: null,
-        chartData: buildSpeciesProvinceCoverage(speciesRows).map((item) => ({
-          name: item.label,
-          value: item.value,
-        })),
+        metricValue: String(topSpeciesCount),
+        metricDescription: topSpeciesName,
+        chartData: buildSpeciesProvinceCoverage(speciesRows).map((item) => ({ name: item.label, value: item.value })),
       },
       {
         id: 'conopeptides',
@@ -128,10 +171,9 @@ export async function loadVisualizationBackupData() {
         ctaLabel: 'Explore Conopeptides',
         ctaTo: '/visualization/conopeptides',
         icon: null,
-        chartData: topEntriesFromCountMap(countBy(conopeptideRows, (row) => row.superfamily), 6).map((item) => ({
-          name: item.name,
-          value: item.value,
-        })),
+        metricValue: String(topConopeptideCount),
+        metricDescription: topConopeptideSpecies,
+        chartData: superfamilyCounts.map((item) => ({ name: item.name, value: item.value })),
       },
       {
         id: 'biomarkers',
@@ -145,24 +187,18 @@ export async function loadVisualizationBackupData() {
         ctaLabel: 'Explore Biomarkers',
         ctaTo: '/visualization/biomarkers',
         icon: null,
-        chartData: topEntriesFromCountMap(countBy(biomarkerRows, (row) => row.markerType), 6).map((item) => ({
-          name: item.name,
-          value: item.value,
-        })),
+        metricValue: String(topBiomarkerCount),
+        metricDescription: topBiomarkerSpecies,
+        chartData: markerTypeCounts.map((item) => ({ name: item.name, value: item.value })),
       },
-    ],
-    insights: [
-      `Loaded ${speciesCount} species, ${conopeptideCount} conopeptides, and ${biomarkerCount} biomarkers from backup JSON.`,
-      `Species with biomarker records: ${speciesWithBiomarkerData}. Species with conopeptides: ${speciesWithConopeptides}.`,
-      `Most common species in the data snapshot: ${speciesCountsByName[0]?.name ?? 'Unavailable'}.`,
     ],
     speciesAreaData: buildSpeciesProvinceCoverage(speciesRows).map((item) => ({
       province: item.label,
       Species: item.value,
     })),
-    biomarkerBarData: topEntriesFromCountMap(countBy(biomarkerRows, (row) => row.province || 'Other'), 5).map((item) => ({
+    biomarkerBarData: provinceCounts.slice(0, 5).map((item) => ({
       name: item.name,
-      biomarker: item.value,
+      value: item.value,
     })),
     conopeptideLineData: buildConopeptideLengthBins(conopeptideRows).map((item) => ({
       range: item.label,
@@ -172,5 +208,38 @@ export async function loadVisualizationBackupData() {
       { label: 'Species with biomarker data', value: speciesWithBiomarkerData },
       { label: 'Species without biomarker data', value: Math.max(speciesCount - speciesWithBiomarkerData, 0) },
     ],
+    crossDataInsights: {
+      summary: [
+        {
+          label: 'Species with biomarkers',
+          value: String(speciesWithBiomarkerData),
+          hint: speciesCount > 0 ? `${Math.round((speciesWithBiomarkerData / speciesCount) * 100)}% of the species set` : 'No species loaded',
+        },
+        {
+          label: 'Species with conopeptides',
+          value: String(speciesWithConopeptides),
+          hint: `${publicationCount} publication records in the same snapshot`,
+        },
+        {
+          label: 'Linked publications',
+          value: String(linkedSpeciesCoverage + linkedConopeptideCoverage + linkedBiomarkerCoverage),
+          hint: 'Cross-links captured across the loaded records',
+        },
+      ],
+      highlights: [
+        {
+          title: 'Coverage focus',
+          body: `Biomarker records span ${speciesWithBiomarkerData} species and ${linkedBiomarkerCoverage} linked publication entries.`,
+        },
+        {
+          title: 'Species signal',
+          body: `Top species leaders are ${topSpeciesName}, ${topConopeptideSpecies}, and ${topBiomarkerSpecies}.`,
+        },
+        {
+          title: 'Evidence links',
+          body: `Cross-record links captured: species ${linkedSpeciesCoverage}, conopeptides ${linkedConopeptideCoverage}, biomarkers ${linkedBiomarkerCoverage}.`,
+        },
+      ],
+    },
   }
 }

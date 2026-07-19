@@ -1,9 +1,6 @@
+import { BarChart, BarList, DonutChart } from '@tremor/react'
+
 import ChartCard from '@/features/visualization/components/ChartCard'
-import {
-  BarChartPlaceholder,
-  DonutChartPlaceholder,
-  RankedListPlaceholder,
-} from '@/features/visualization/components/ChartPlaceholders'
 import VisualizationLayout from '@/features/visualization/components/VisualizationLayout'
 import {
   speciesOverviewBreadcrumbs,
@@ -12,6 +9,7 @@ import {
   speciesProvinceCoverage,
   speciesProvinceLegend,
   speciesSubgenusLegend,
+  speciesSubgenusChartData,
   speciesTopSequencedSpecies,
   visualizationMapPreview,
 } from '@/features/visualization/data/visualizationMockData'
@@ -125,11 +123,9 @@ export default function SpeciesOverviewPage() {
           viewAllTo="/visualization/species"
           className="h-full"
         >
-          <RankedListPlaceholder
-            items={speciesTopSequencedSpecies.map((item) => ({ label: item.name, value: item.value }))}
-            leftHeader="Species"
-            rightHeader="Number of Sequences"
-            className="h-full"
+          <BarList
+            data={speciesTopSequencedSpecies.map((item) => ({ name: item.name, value: item.value }))}
+            valueFormatter={(value) => `${value}`}
           />
         </ChartCard>
 
@@ -141,7 +137,13 @@ export default function SpeciesOverviewPage() {
         >
           <div className="flex h-full flex-col gap-5">
             <div className="grid place-items-center">
-              <DonutChartPlaceholder className="min-h-[240px] w-full" />
+              <DonutChart
+                data={speciesSubgenusChartData}
+                category="name"
+                value="value"
+                variant="donut"
+                className="h-[260px] w-full"
+              />
             </div>
 
             <div className="space-y-3">
@@ -159,13 +161,19 @@ export default function SpeciesOverviewPage() {
         title="Sequencing Coverage Across Provinces"
         subtitle="A lightweight support chart for province-level sequencing spread."
       >
-        <BarChartPlaceholder
-          items={speciesProvinceCoverage}
-          yAxisLabel="Number of Species"
-          xAxisLabel="Province"
-          className="min-h-[340px]"
+        <BarChart
+          data={speciesProvinceCoverage.map((item) => ({
+            province: item.label,
+            Species: item.value,
+          }))}
+          index="province"
+          categories={['Species']}
+          colors={['indigo']}
+          yAxisWidth={40}
+          showLegend={false}
+          className="h-[340px]"
         />
       </ChartCard>
-    </VisualizationLayout>
+      </VisualizationLayout>
   )
 }

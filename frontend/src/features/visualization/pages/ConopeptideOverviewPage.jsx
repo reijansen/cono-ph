@@ -1,8 +1,6 @@
+import { BarChart, DonutChart } from '@tremor/react'
+
 import ChartCard from '@/features/visualization/components/ChartCard'
-import {
-  BarChartPlaceholder,
-  DonutChartPlaceholder,
-} from '@/features/visualization/components/ChartPlaceholders'
 import VisualizationLayout from '@/features/visualization/components/VisualizationLayout'
 import Table from '@/components/ui/Table'
 import {
@@ -73,7 +71,16 @@ export default function ConopeptideOverviewPage() {
         >
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-center">
             <div className="grid place-items-center">
-              <DonutChartPlaceholder className="min-h-[340px] w-full max-w-[430px]" />
+              <DonutChart
+                data={conopeptideSuperfamilyLegend.map((item) => ({
+                  name: item.label,
+                  value: item.count,
+                }))}
+                category="name"
+                value="value"
+                variant="donut"
+                className="h-[340px] w-full max-w-[430px]"
+              />
             </div>
 
             <div className="space-y-3 rounded-3xl border border-[var(--app-border)] bg-brand-50/40 p-4 sm:p-5">
@@ -97,11 +104,17 @@ export default function ConopeptideOverviewPage() {
           viewAllTo="/visualization/conopeptides"
           className="h-full"
         >
-          <BarChartPlaceholder
-            items={conopeptideLengthBins}
-            yAxisLabel="Number of Precursors"
-            xAxisLabel="Length (Amino Acids)"
-            className="min-h-[420px]"
+          <BarChart
+            data={conopeptideLengthBins.map((item) => ({
+              range: item.label,
+              count: item.value,
+            }))}
+            index="range"
+            categories={['count']}
+            colors={['amber']}
+            yAxisWidth={40}
+            showLegend={false}
+            className="h-[420px]"
           />
         </ChartCard>
       </section>

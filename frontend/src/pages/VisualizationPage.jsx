@@ -1,39 +1,15 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import VisualizationLayout from '@/features/visualization/components/VisualizationLayout'
+import InsightsSection from '@/features/visualization/components/VisualizationInsightsSection'
+import MetricsSection from '@/features/visualization/components/VisualizationMetricsSection'
+import OverviewCardsSection from '@/features/visualization/components/VisualizationOverviewCardsSection'
+import TrendsSection from '@/features/visualization/components/VisualizationTrendsSection'
 import { loadVisualizationBackupData } from '@/features/visualization/data/visualizationBackupData'
 import {
   visualizationBreadcrumbs,
   visualizationMeta,
 } from '@/features/visualization/data/visualizationMockData'
-
-const MetricsSection = lazy(() =>
-  import('@/features/visualization/components/VisualizationMetricsSection').then((module) => ({
-    default: module.default,
-  })),
-)
-
-const OverviewCardsSection = lazy(() =>
-  import('@/features/visualization/components/VisualizationOverviewCardsSection').then((module) => ({
-    default: module.default,
-  })),
-)
-
-const TrendsSection = lazy(() =>
-  import('@/features/visualization/components/VisualizationTrendsSection').then((module) => ({
-    default: module.default,
-  })),
-)
-
-const InsightsSection = lazy(() =>
-  import('@/features/visualization/components/VisualizationInsightsSection').then((module) => ({
-    default: module.default,
-  })),
-)
-
-function SectionFallback({ className = 'h-64' }) {
-  return <div className={`animate-pulse rounded-[1.25rem] border border-[var(--app-border)] bg-white ${className}`} />
-}
 
 export default function VisualizationPage() {
   const [visualizationData, setVisualizationData] = useState(null)
@@ -43,9 +19,9 @@ export default function VisualizationPage() {
 
     async function loadData() {
       try {
-        const backupData = await loadVisualizationBackupData()
+        const loadedData = await loadVisualizationBackupData()
         if (active) {
-          setVisualizationData(backupData)
+          setVisualizationData(loadedData)
         }
       } catch {
         if (active) {
@@ -67,26 +43,27 @@ export default function VisualizationPage() {
       title={visualizationMeta.title}
       subtitle={visualizationMeta.subtitle}
     >
-      <Suspense fallback={<SectionFallback className="h-28" />}>
-        <MetricsSection metrics={visualizationData?.metrics ?? []} />
-      </Suspense>
+      <MetricsSection metrics={visualizationData?.metrics ?? []} />
 
-      <Suspense fallback={<SectionFallback className="h-[420px]" />}>
-        <OverviewCardsSection cards={visualizationData?.overviewCards ?? []} />
-      </Suspense>
+      <OverviewCardsSection cards={visualizationData?.overviewCards ?? []} />
 
-      <Suspense fallback={<SectionFallback className="h-[360px]" />}>
-        <TrendsSection
-          speciesAreaData={visualizationData?.speciesAreaData ?? []}
-          biomarkerBarData={visualizationData?.biomarkerBarData ?? []}
-          conopeptideLineData={visualizationData?.conopeptideLineData ?? []}
-          biomarkerCoverageData={visualizationData?.biomarkerCoverageData ?? []}
-        />
-      </Suspense>
+      <section className="space-y-2 px-1 pt-1">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--app-muted)]">
+          Charts and coverage
+        </p>
+        <p className="max-w-2xl text-sm leading-6 text-[var(--app-muted)]">
+          The graphs below show the distribution and coverage views behind the summary numbers above.
+        </p>
+      </section>
 
-      <Suspense fallback={<SectionFallback className="h-64" />}>
-        <InsightsSection insights={visualizationData?.insights ?? []} />
-      </Suspense>
+      <TrendsSection
+        speciesAreaData={visualizationData?.speciesAreaData ?? []}
+        biomarkerBarData={visualizationData?.biomarkerBarData ?? []}
+        conopeptideLineData={visualizationData?.conopeptideLineData ?? []}
+        biomarkerCoverageData={visualizationData?.biomarkerCoverageData ?? []}
+      />
+
+      <InsightsSection crossDataInsights={visualizationData?.crossDataInsights ?? null} />
     </VisualizationLayout>
   )
 }

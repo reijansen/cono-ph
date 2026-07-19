@@ -405,6 +405,14 @@ export const speciesSubgenusLegend = [
   { label: 'Other', color: 'bg-[#aac0e4]' },
 ]
 
+export const speciesSubgenusChartData = [
+  { name: 'Pionoconus', value: 4 },
+  { name: 'Tesseliconus', value: 3 },
+  { name: 'Rhizoconus', value: 3 },
+  { name: 'Splinoconus', value: 3 },
+  { name: 'Other', value: 6 },
+]
+
 export const speciesProvinceCoverage = [
   { label: 'A', value: 64 },
   { label: 'B', value: 80 },

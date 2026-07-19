@@ -1,9 +1,6 @@
+import { BarChart, DonutChart } from '@tremor/react'
+
 import ChartCard from '@/features/visualization/components/ChartCard'
-import {
-  DonutChartPlaceholder,
-  GaugePlaceholder,
-  BarChartPlaceholder,
-} from '@/features/visualization/components/ChartPlaceholders'
 import VisualizationLayout from '@/features/visualization/components/VisualizationLayout'
 import Table from '@/components/ui/Table'
 import {
@@ -75,7 +72,16 @@ export default function BiomarkerOverviewPage() {
         >
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-center">
             <div className="grid place-items-center">
-              <DonutChartPlaceholder className="min-h-[340px] w-full max-w-[430px]" />
+              <DonutChart
+                data={biomarkerTypeLegend.map((item) => ({
+                  name: item.label,
+                  value: item.count,
+                }))}
+                category="name"
+                value="value"
+                variant="donut"
+                className="h-[340px] w-full max-w-[430px]"
+              />
             </div>
 
             <div className="space-y-4 rounded-3xl border border-[var(--app-border)] bg-brand-50/40 p-4 sm:p-5">
@@ -99,15 +105,22 @@ export default function BiomarkerOverviewPage() {
           viewAllTo="/visualization/biomarkers"
           className="h-full"
         >
-          <div className="space-y-5">
-            <GaugePlaceholder
-              value={biomarkerCoverageData[0].value}
-              label={biomarkerCoverageData[0].label}
-              details={`${biomarkerCoverageData[1].label}: ${biomarkerCoverageData[1].value}%`}
-              className="min-h-[440px]"
+          <div className="relative grid place-items-center">
+            <DonutChart
+              data={biomarkerCoverageData.map((item) => ({
+                name: item.label,
+                value: item.value,
+              }))}
+              category="name"
+              value="value"
+              variant="donut"
+              className="h-[440px] w-full max-w-[440px]"
             />
-            <div className="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm leading-6 text-[var(--app-muted)]">
-              Species with biomarker data are shown as the dominant coverage segment.
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-4xl font-semibold text-[var(--app-text)]">{biomarkerCoverageData[0].value}%</div>
+                <p className="mt-2 text-sm text-[var(--app-muted)]">{biomarkerCoverageData[0].label}</p>
+              </div>
             </div>
           </div>
         </ChartCard>
@@ -121,11 +134,17 @@ export default function BiomarkerOverviewPage() {
           viewAllTo="/visualization/biomarkers"
           className="h-full"
         >
-          <BarChartPlaceholder
-            items={biomarkerDensityByProvince}
-            yAxisLabel="Number of Biomarker Records"
-            xAxisLabel="Province"
-            className="min-h-[360px]"
+          <BarChart
+            data={biomarkerDensityByProvince.map((item) => ({
+              province: item.label,
+              biomarker: item.value,
+            }))}
+            index="province"
+            categories={['biomarker']}
+            colors={['indigo']}
+            yAxisWidth={40}
+            showLegend={false}
+            className="h-[360px]"
           />
         </ChartCard>
 

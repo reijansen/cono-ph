@@ -1,4 +1,4 @@
-import { Card as TremorCard, DonutChart, Metric, Text, Title } from '@tremor/react'
+import { DonutChart, Metric } from '@tremor/react'
 import { Link } from 'react-router-dom'
 
 import Button from '@/components/ui/Button'
@@ -23,6 +23,10 @@ function PreviewList({ title, items }) {
 function OverviewPreviewCard({ card }) {
   const showStaticMap = Boolean(card.previewImage)
   const Icon = card.icon
+  const metricValue = card.metricValue ?? '0'
+  const metricDescription = card.metricDescription ?? 'No data available'
+  const hasChartData = Array.isArray(card.chartData) && card.chartData.length > 0
+  const hasListItems = Array.isArray(card.listItems) && card.listItems.length > 0
 
   return (
     <ChartCard
@@ -31,7 +35,7 @@ function OverviewPreviewCard({ card }) {
       viewAllTo={card.viewAllTo}
       className="h-full"
     >
-      <div className="flex h-full flex-col gap-5">
+      <div className="flex h-full flex-col gap-4">
         <section className="space-y-3">
           <div className="flex items-center gap-3">
             {Icon ? (
@@ -39,11 +43,14 @@ function OverviewPreviewCard({ card }) {
                 <Icon className="h-5 w-5" strokeWidth={1.8} />
               </span>
             ) : null}
-            <p className="text-[1rem] font-medium text-[var(--app-muted)]">{card.previewTitle}</p>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--app-text)]">{card.previewTitle}</p>
+              {!showStaticMap ? <p className="text-xs text-[var(--app-muted)]">{metricDescription}</p> : null}
+            </div>
           </div>
 
           {showStaticMap ? (
-            <div className="overflow-hidden rounded-3xl border border-[var(--app-border)] bg-white">
+            <div className="overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-surface)]">
               <img
                 src={card.previewImage}
                 alt={card.previewAlt}
@@ -51,30 +58,40 @@ function OverviewPreviewCard({ card }) {
               />
             </div>
           ) : (
-            <TremorCard className="border border-[var(--app-border)] bg-white p-4 shadow-none">
-              <Title className="text-[1rem] font-medium text-[var(--app-muted)]">{card.previewTitle}</Title>
-              <Metric className="mt-2 text-[2rem] leading-none text-[var(--app-text)]">
-                {card.id === 'conopeptides' ? '3,671' : '312'}
-              </Metric>
-              <Text className="mt-1 text-sm text-[var(--app-muted)]">
-                {card.id === 'conopeptides'
-                  ? 'Conopeptide superfamily distribution'
-                  : 'Marker coverage across species'}
-              </Text>
+            <div className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
+              <Metric className="text-[2rem] leading-none text-[var(--app-text)]">{metricValue}</Metric>
 
               <div className="mt-5">
-                <DonutChart data={card.chartData} category="name" value="value" variant="donut" className="h-72" />
+                {hasChartData ? (
+                  <DonutChart data={card.chartData} category="name" value="value" variant="donut" className="h-72" />
+                ) : (
+                  <div className="flex h-72 items-center justify-center rounded-3xl border border-dashed border-[var(--app-border)] bg-white text-sm text-[var(--app-muted)]">
+                    No chart data available
+                  </div>
+                )}
               </div>
-            </TremorCard>
+            </div>
           )}
         </section>
 
         <div className="flex-1">
-          <PreviewList title={card.listTitle} items={card.listItems} />
+          {hasListItems ? (
+            <PreviewList title={card.listTitle} items={card.listItems} />
+          ) : (
+            <div className="rounded-3xl border border-dashed border-[var(--app-border)] bg-[var(--app-surface)] p-4 text-sm text-[var(--app-muted)]">
+              No list items available
+            </div>
+          )}
         </div>
 
-        <div className="pt-1">
-          <Button as={Link} to={card.ctaTo} variant="outline" size="lg" className="w-full sm:w-auto sm:min-w-56">
+        <div className="flex justify-center pt-1">
+          <Button
+            as={Link}
+            to={card.ctaTo}
+            variant="primary"
+            size="lg"
+            className="w-full min-w-56 sm:w-auto"
+          >
             {card.ctaLabel}
           </Button>
         </div>

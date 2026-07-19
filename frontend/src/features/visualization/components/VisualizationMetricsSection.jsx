@@ -15,9 +15,6 @@ export default function MetricsSection({ metrics }) {
                 {metric.value}
               </p>
               <p className="mt-1 text-[0.92rem] font-semibold text-brand-700">{metric.label}</p>
-              {metric.description ? (
-                <p className="mt-1 text-[0.92rem] leading-6 text-[var(--app-muted)]">{metric.description}</p>
-              ) : null}
             </div>
           </div>
         )
