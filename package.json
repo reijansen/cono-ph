@@ -5,6 +5,7 @@
   "main": "backend/server.js",
   "scripts": {
     "dev": "nodemon backend/server.js",
+    "start": "node backend/server.js",
     "seed:json": "node backend/seed-data/scripts/import-csv-backups.mjs",
     "seed:supabase": "node backend/scripts/seedSupabase.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"

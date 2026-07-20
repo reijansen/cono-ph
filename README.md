@@ -13,6 +13,45 @@ The frontend is Vercel-ready in the `frontend` directory.
 
 The backend is an Express server and should be deployed separately.
 
+## Render Backend Deployment
+
+The repository includes `render.yaml` for deploying the Express backend as a Render Web Service.
+
+1. Push this repository to GitHub.
+2. In Render, choose `New` -> `Blueprint`.
+3. Select this repository.
+4. Render will read `render.yaml` and create `cono-ph-backend`.
+5. Add the required environment variables in Render:
+   - `DATABASE_URL`
+   - `CORS_ORIGINS`
+   - `ADMIN_PASSWORD`
+   - `ADMIN_SESSION_SECRET`
+   - `ADMIN_API_KEY`
+
+Use the Supabase transaction pooler for `DATABASE_URL` when deploying:
+
+```txt
+postgresql://postgres.YOUR_PROJECT_REF:YOUR_PASSWORD@aws-0-YOUR_REGION.pooler.supabase.com:6543/postgres?sslmode=require
+```
+
+After Render deploys, your backend API base URL will be:
+
+```txt
+https://your-render-service.onrender.com/api
+```
+
+Set that value in the frontend deployment as:
+
+```env
+VITE_API_BASE_URL=https://your-render-service.onrender.com/api
+```
+
+Also set `CORS_ORIGINS` in Render to include your frontend domain, for example:
+
+```env
+CORS_ORIGINS=https://your-frontend.vercel.app,http://localhost:5173
+```
+
 ## Backend Development Setup
 
 **.env setup**
