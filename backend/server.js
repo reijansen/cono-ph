@@ -4,6 +4,8 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // from directory
 import speciesRoutes from "./routes/speciesRoutes.js";
@@ -11,7 +13,10 @@ import { sql } from "./config/db.js";
 import { aj } from "./lib/arcjet.js";
 
 // config
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 const PORT = process.env.PORT || 3333;
 
 const app = express();

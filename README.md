@@ -18,7 +18,9 @@ The backend is an Express server and should be deployed separately.
 **.env setup**
 
 1. Create `.env`
-2. Update `.env` following format from`.env.example` which is taken from the [Neon Postgres Website](console.neon.tech)
+2. Update `.env` following the format from `.env.example`
+3. If you are using Supabase, paste the Postgres connection string from your Supabase project settings into `DATABASE_URL`
+4. If you prefer split fields instead, fill in `PGHOST`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`
 
 **run backend**
 
