@@ -169,7 +169,7 @@ export default function BiomarkerDetailPage() {
 
   const generalInformationItems = [
     { label: 'Scientific Name', value: getTopSummaryValue('Species Name') },
-    { label: 'specimen_id', value: getTopSummaryValue('Specimen ID') },
+    { label: 'Specimen ID', value: getTopSummaryValue('Specimen ID') },
     { label: 'Province', value: getTopSummaryValue('Collection Province') },
     {
       label: 'Municipality',
@@ -180,53 +180,53 @@ export default function BiomarkerDetailPage() {
   ]
 
   const annotationInformationItems = [
-    { label: 'gene_marker', value: getTopSummaryValue('Gene Marker') },
+    { label: 'Gene Marker', value: getTopSummaryValue('Gene Marker') },
     {
-      label: 'gene_name',
+      label: 'Gene Name',
       value:
         getTopSummaryValue('Gene Marker') === 'COI'
           ? 'Cytochrome c oxidase subunit I'
           : 'Unavailable',
     },
     {
-      label: 'genome_origin',
+      label: 'Genome Origin',
       value:
         getTopSummaryValue('Gene Marker') === 'COI'
           ? 'Mitochondrial'
           : 'Unavailable',
     },
     {
-      label: 'sequence_completeness',
+      label: 'Sequence Completeness',
       value:
         record.sequenceTab.summaryItems?.find((item) => item.label === 'Sequence Completeness')?.value ??
         'Unavailable',
     },
     {
-      label: 'sequence_length_bp',
+      label: 'Sequence Length (bp)',
       value: record.sequenceTab.length ?? 'Unavailable',
     },
     {
-      label: 'source_method',
+      label: 'Source Method',
       value:
         record.sequenceTab.summaryItems?.find((item) => item.label === 'Source Method')?.value ??
         record.metadataTab.rows.find((item) => item.label === 'Source Method')?.value ??
         'Unavailable',
     },
-    { label: 'validation_status', value: getTopSummaryValue('Validation Status') },
+    { label: 'Validation Status', value: getTopSummaryValue('Validation Status') },
   ]
 
   const referenceItems = [
     {
-      label: 'sequence_database',
+      label: 'Sequence Database',
       value:
         record.metadataTab.rows.find((item) => item.label === 'Sequence Database')?.value ?? 'Unavailable',
     },
     {
-      label: 'external_accession',
+      label: 'External Accession',
       value: record.overview.fields.find((item) => item.label === 'External Accession')?.value ?? 'Unavailable',
     },
     {
-      label: 'publication_doi',
+      label: 'Publication DOI',
       value: record.overview.fields.find((item) => item.label === 'Publication DOI')?.value ?? 'Unavailable',
     },
   ]
