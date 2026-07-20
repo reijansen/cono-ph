@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { fetchPublicationExplorerRows } from '@/services/catalogService'
 import { loadPublicationBackupRows } from '@/features/publications/data/publicationBackupData'
 
 const publicationExplorerBreadcrumbs = [
@@ -55,15 +56,30 @@ export function usePublicationsExplorerController() {
       setRowsStatus('loading')
 
       try {
+        const liveRows = await fetchPublicationExplorerRows()
+        if (active && liveRows.length > 0) {
+          setRowsSource(liveRows)
+          setRowsStatus('live')
+          return
+        }
+
         const backupRows = await loadPublicationBackupRows()
         if (active) {
           setRowsSource(backupRows)
           setRowsStatus('backup')
         }
       } catch {
-        if (active) {
-          setRowsSource([])
-          setRowsStatus('empty')
+        try {
+          const backupRows = await loadPublicationBackupRows()
+          if (active) {
+            setRowsSource(backupRows)
+            setRowsStatus('backup')
+          }
+        } catch {
+          if (active) {
+            setRowsSource([])
+            setRowsStatus('empty')
+          }
         }
       }
     }

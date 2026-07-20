@@ -6,6 +6,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { cn } from '@/utils/cn'
+import { fetchConopeptideDetail } from '@/services/catalogService'
 import { loadConopeptideBackupDetails } from '@/features/conopeptides/data/conopeptideDetailBackupData'
 
 const defaultConopeptideDetailId = ''
@@ -142,14 +143,29 @@ export default function ConopeptideDetailPage() {
 
     async function loadRecords() {
       try {
+        const liveRecord = await fetchConopeptideDetail(id)
+        if (active && liveRecord) {
+          setRecordsSource([liveRecord])
+          return
+        }
+
         const backupRecords = await loadConopeptideBackupDetails()
         if (active && backupRecords.length > 0) {
           setRecordsSource(backupRecords)
           return
         }
       } catch {
-        if (active) {
-          setRecordsSource([])
+        try {
+          const backupRecords = await loadConopeptideBackupDetails()
+          if (active && backupRecords.length > 0) {
+            setRecordsSource(backupRecords)
+          } else if (active) {
+            setRecordsSource([])
+          }
+        } catch {
+          if (active) {
+            setRecordsSource([])
+          }
         }
       }
     }

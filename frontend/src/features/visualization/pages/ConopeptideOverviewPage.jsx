@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react'
 import { BarChart, DonutChart } from '@tremor/react'
 
 import ChartCard from '@/features/visualization/components/ChartCard'
 import VisualizationLayout from '@/features/visualization/components/VisualizationLayout'
 import Table from '@/components/ui/Table'
+import { fetchDashboardSummary } from '@/services/catalogService'
 import {
   conopeptideLengthBins,
   conopeptideOverviewBreadcrumbs,
@@ -49,6 +51,39 @@ function MetricJoinCard({ metric }) {
 }
 
 export default function ConopeptideOverviewPage() {
+  const [summary, setSummary] = useState(null)
+
+  useEffect(() => {
+    let active = true
+    async function load() {
+      try {
+        const data = await fetchDashboardSummary()
+        if (active) setSummary(data)
+      } catch {
+        if (active) setSummary(null)
+      }
+    }
+    load()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const liveMetrics = conopeptideOverviewMetrics.map((metric, index) => {
+    if (!summary) return metric
+    const values = [
+      summary.summary?.conopeptideCount,
+      metric.value,
+      metric.value,
+      summary.summary?.speciesWithConopeptides ?? metric.value,
+    ]
+    return { ...metric, value: String(values[index] ?? metric.value) }
+  })
+
+  const liveSuperfamilies = summary?.overviewCards?.find((card) => card.id === 'conopeptides')?.chartData ?? conopeptideSuperfamilyLegend.map((item) => ({ name: item.label, value: item.count }))
+  const liveLengthBins = summary?.conopeptideLineData ?? conopeptideLengthBins.map((item) => ({ range: item.label, count: item.value }))
+  const liveTopRows = summary?.overviewCards?.find((card) => card.id === 'conopeptides')?.listItems ?? conopeptideTopAbundantRows
+
   return (
     <VisualizationLayout
       breadcrumbs={conopeptideOverviewBreadcrumbs}
@@ -56,7 +91,7 @@ export default function ConopeptideOverviewPage() {
       subtitle={conopeptideOverviewMeta.subtitle}
     >
       <section className="join w-full flex-col overflow-hidden rounded-[1.5rem] border border-[var(--app-border)] bg-white shadow-[0_10px_26px_rgba(16,16,16,0.04)] xl:flex-row">
-        {conopeptideOverviewMetrics.map((metric) => (
+        {liveMetrics.map((metric) => (
           <MetricJoinCard key={metric.label} metric={metric} />
         ))}
       </section>
@@ -72,10 +107,7 @@ export default function ConopeptideOverviewPage() {
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-center">
             <div className="grid place-items-center">
               <DonutChart
-                data={conopeptideSuperfamilyLegend.map((item) => ({
-                  name: item.label,
-                  value: item.count,
-                }))}
+                data={liveSuperfamilies}
                 category="name"
                 value="value"
                 variant="donut"
@@ -105,10 +137,7 @@ export default function ConopeptideOverviewPage() {
           className="h-full"
         >
           <BarChart
-            data={conopeptideLengthBins.map((item) => ({
-              range: item.label,
-              count: item.value,
-            }))}
+            data={liveLengthBins}
             index="range"
             categories={['count']}
             colors={['amber']}
@@ -125,11 +154,11 @@ export default function ConopeptideOverviewPage() {
         viewAllLabel="View full list"
         viewAllTo="/visualization/conopeptides"
       >
-        <Table
-          columns={['Conopeptide / Toxin Name', 'Superfamily', 'Framework', 'Count', 'Linked Species']}
-          className="shadow-none"
-        >
-          {conopeptideTopAbundantRows.map((row) => (
+          <Table
+            columns={['Conopeptide / Toxin Name', 'Superfamily', 'Framework', 'Count', 'Linked Species']}
+            className="shadow-none"
+          >
+          {liveTopRows.map((row) => (
             <tr key={`${row.name}-${row.count}`} className="border-b border-[var(--app-border)] last:border-b-0">
               <td className="px-4 py-4 font-medium text-[var(--app-text)]">{row.name}</td>
               <td className="px-4 py-4 text-[var(--app-muted)]">{row.superfamily}</td>

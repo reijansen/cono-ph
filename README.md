@@ -29,8 +29,15 @@ The backend now exposes MVC-style routes under `/api`:
 - `/api/biomarkers`
 - `/api/publications`
 - `/api/taxonomy`
+- `/api/dashboard/summary`
 
 The database bootstrap creates the required tables and seeds them from the repo backup JSON files if the tables are empty.
+
+To reseed Supabase manually from the backup JSON files, run:
+
+```powershell
+npm run seed:supabase
+```
 
 ## Dockerfile Setup
 

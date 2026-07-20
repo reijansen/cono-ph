@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { BarChart, BarList, DonutChart } from '@tremor/react'
 
 import ChartCard from '@/features/visualization/components/ChartCard'
 import VisualizationLayout from '@/features/visualization/components/VisualizationLayout'
+import { fetchDashboardSummary } from '@/services/catalogService'
 import {
   speciesOverviewBreadcrumbs,
   speciesOverviewMeta,
@@ -67,6 +69,48 @@ function MetricJoinCard({ metric }) {
 }
 
 export default function SpeciesOverviewPage() {
+  const [summary, setSummary] = useState(null)
+
+  useEffect(() => {
+    let active = true
+
+    async function load() {
+      try {
+        const data = await fetchDashboardSummary()
+        if (active) setSummary(data)
+      } catch {
+        if (active) setSummary(null)
+      }
+    }
+
+    load()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const liveMetrics = speciesOverviewMetrics.map((metric, index) => {
+    if (!summary) return metric
+    const values = [
+      summary.summary?.speciesCount,
+      summary.summary?.subgenusCount ?? metric.value,
+      summary.summary?.provinceCount ?? metric.value,
+      summary.summary?.speciesCount,
+    ]
+    return { ...metric, value: String(values[index] ?? metric.value) }
+  })
+
+  const liveProvinceCoverage = summary?.speciesAreaData?.map((item) => ({
+    province: item.province,
+    Species: item.Species,
+  })) ?? speciesProvinceCoverage.map((item) => ({
+    province: item.label,
+    Species: item.value,
+  }))
+
+  const liveTopSpecies = summary?.overviewCards?.find((card) => card.id === 'species')?.listItems ?? speciesTopSequencedSpecies
+
   return (
     <VisualizationLayout
       breadcrumbs={speciesOverviewBreadcrumbs}
@@ -74,7 +118,7 @@ export default function SpeciesOverviewPage() {
       subtitle={speciesOverviewMeta.subtitle}
     >
       <section className="join w-full flex-col overflow-hidden rounded-[1.5rem] border border-[var(--app-border)] bg-white shadow-[0_10px_26px_rgba(16,16,16,0.04)] xl:flex-row">
-        {speciesOverviewMetrics.map((metric) => (
+        {liveMetrics.map((metric) => (
           <MetricJoinCard key={metric.label} metric={metric} />
         ))}
       </section>
@@ -124,7 +168,7 @@ export default function SpeciesOverviewPage() {
           className="h-full"
         >
           <BarList
-            data={speciesTopSequencedSpecies.map((item) => ({ name: item.name, value: item.value }))}
+            data={liveTopSpecies.map((item) => ({ name: item.name, value: item.value }))}
             valueFormatter={(value) => `${value}`}
           />
         </ChartCard>
@@ -162,10 +206,7 @@ export default function SpeciesOverviewPage() {
         subtitle="A lightweight support chart for province-level sequencing spread."
       >
         <BarChart
-          data={speciesProvinceCoverage.map((item) => ({
-            province: item.label,
-            Species: item.value,
-          }))}
+          data={liveProvinceCoverage}
           index="province"
           categories={['Species']}
           colors={['indigo']}

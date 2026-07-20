@@ -5,6 +5,7 @@ import InsightsSection from '@/features/visualization/components/VisualizationIn
 import MetricsSection from '@/features/visualization/components/VisualizationMetricsSection'
 import OverviewCardsSection from '@/features/visualization/components/VisualizationOverviewCardsSection'
 import TrendsSection from '@/features/visualization/components/VisualizationTrendsSection'
+import { fetchDashboardSummary } from '@/services/catalogService'
 import { loadVisualizationBackupData } from '@/features/visualization/data/visualizationBackupData'
 import {
   visualizationBreadcrumbs,
@@ -19,13 +20,26 @@ export default function VisualizationPage() {
 
     async function loadData() {
       try {
-        const loadedData = await loadVisualizationBackupData()
-        if (active) {
+        const loadedData = await fetchDashboardSummary()
+        if (active && loadedData) {
           setVisualizationData(loadedData)
+          return
+        }
+
+        const fallbackData = await loadVisualizationBackupData()
+        if (active) {
+          setVisualizationData(fallbackData)
         }
       } catch {
-        if (active) {
-          setVisualizationData(null)
+        try {
+          const fallbackData = await loadVisualizationBackupData()
+          if (active) {
+            setVisualizationData(fallbackData)
+          }
+        } catch {
+          if (active) {
+            setVisualizationData(null)
+          }
         }
       }
     }

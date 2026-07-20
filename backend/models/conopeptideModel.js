@@ -64,6 +64,59 @@ function sortRows(rows, sortBy, order) {
     });
 }
 
+function mapConopeptideDetail(row) {
+    if (!row) return null;
+
+    return {
+        accession: row.accession,
+        title: row.accession,
+        subtitle: "Conopeptide Precursor",
+        status: String(row.doi ?? "Unavailable") === "Unpublished" ? "Unpublished" : "Published",
+        topSummaryItems: [
+            { label: "Conopeptide ID", value: row.accession || "Unavailable" },
+            { label: "Species", value: row.speciesName || "Unavailable" },
+            { label: "Species ID", value: row.speciesId || "Unavailable" },
+            { label: "Gene superfamily", value: row.superfamily || "Unavailable" },
+            { label: "Precursor length", value: `${String(row.precursorLength ?? "Unavailable")} aa` },
+            { label: "Cysteine Framework", value: row.cysteineFramework || "Unavailable" },
+        ],
+        generalInformation: {
+            conopeptideId: row.accession || "Unavailable",
+            species: row.speciesName || "Unavailable",
+            speciesId: row.speciesId || "Unavailable",
+            sequenceRemarks: row.remarksSequence || "Unavailable",
+        },
+        sequenceInformation: {
+            precursorSequence: row.precursorSequence || "Unavailable",
+            precursorLength: `${String(row.precursorLength ?? "Unavailable")} aa`,
+        },
+        sequenceArchitecture: [
+            { label: "Signal peptide", value: row.signalPeptide || "Unavailable" },
+            { label: "Propeptide", value: row.propeptideSequence || "Unavailable" },
+            { label: "Mature peptide", value: row.maturePeptideSequence || "Unavailable" },
+            { label: "Post peptide", value: row.postPeptideSequence || "Unavailable" },
+        ],
+        classification: {
+            geneSuperfamily: row.superfamily || "Unavailable",
+            maturePeptideLength: `${String(row.matureLength ?? "Unavailable")} aa`,
+            numberOfCysteines: String(row.numCysteineResidues ?? "Unavailable"),
+            cysteinePattern: row.cysteinePattern || "Unavailable",
+            cysteineFramework: row.cysteineFramework || "Unavailable",
+        },
+        similarity: {
+            matchedToxin: row.matchedToxin || "Unavailable",
+            percentSimilarity: String(row.percentSimilarity ?? "Unavailable"),
+            similaritySource: row.sourcePercentSimilarity || "Unavailable",
+        },
+        expression: {
+            expressionValue: String(row.expressionValue ?? "Unavailable"),
+        },
+        reference: {
+            doi: row.doi || "Unavailable",
+        },
+    };
+}
+
 export async function listConopeptides(filters = {}) {
     const rows = await CONOPEPTIDE_SELECT;
     let filtered = rows.filter((row) => {
@@ -86,7 +139,7 @@ export async function listConopeptides(filters = {}) {
 
 export async function getConopeptideById(accession) {
     const rows = await sql`${CONOPEPTIDE_SELECT} WHERE accession = ${accession}`;
-    return rows[0] ?? null;
+    return mapConopeptideDetail(rows[0] ?? null);
 }
 
 export async function listConopeptideFilters() {

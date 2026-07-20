@@ -6,6 +6,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { cn } from '@/utils/cn'
+import { fetchBiomarkerDetail } from '@/services/catalogService'
 import { loadBiomarkerBackupDetails } from '@/features/biomarkers/data/biomarkerDetailBackupData'
 
 const defaultBiomarkerDetailId = ''
@@ -132,14 +133,29 @@ export default function BiomarkerDetailPage() {
 
     async function loadRecords() {
       try {
+        const liveRecord = await fetchBiomarkerDetail(id)
+        if (active && liveRecord) {
+          setRecordsSource([liveRecord])
+          return
+        }
+
         const backupRecords = await loadBiomarkerBackupDetails()
         if (active && backupRecords.length > 0) {
           setRecordsSource(backupRecords)
           return
         }
       } catch {
-        if (active) {
-          setRecordsSource([])
+        try {
+          const backupRecords = await loadBiomarkerBackupDetails()
+          if (active && backupRecords.length > 0) {
+            setRecordsSource(backupRecords)
+          } else if (active) {
+            setRecordsSource([])
+          }
+        } catch {
+          if (active) {
+            setRecordsSource([])
+          }
         }
       }
     }

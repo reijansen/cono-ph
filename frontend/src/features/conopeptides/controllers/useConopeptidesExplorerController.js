@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { fetchConopeptideExplorerRows } from '@/services/catalogService'
 import { loadConopeptideBackupRows } from '@/features/conopeptides/data/conopeptideBackupData'
 
 const conopeptideExplorerBreadcrumbs = [
@@ -58,13 +59,27 @@ export function useConopeptidesExplorerController() {
 
     async function loadRows() {
       try {
+        const liveRows = await fetchConopeptideExplorerRows()
+        if (active && liveRows.length > 0) {
+          setRowsSource(liveRows)
+          return
+        }
         const backupRows = await loadConopeptideBackupRows()
         if (active && backupRows.length > 0) {
           setRowsSource(backupRows)
         }
       } catch {
-        if (active) {
-          setRowsSource([])
+        try {
+          const backupRows = await loadConopeptideBackupRows()
+          if (active && backupRows.length > 0) {
+            setRowsSource(backupRows)
+          } else if (active) {
+            setRowsSource([])
+          }
+        } catch {
+          if (active) {
+            setRowsSource([])
+          }
         }
       }
     }

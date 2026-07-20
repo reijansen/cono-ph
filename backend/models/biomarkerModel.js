@@ -60,30 +60,7 @@ function normalizeStatus(status) {
     return value === "Putative" ? "Partial" : value;
 }
 
-export async function listBiomarkers(filters = {}) {
-    const rows = await BIOMARKER_SELECT;
-    let filtered = rows.filter((row) => {
-        const searchTerm = normalize(filters.search).trim();
-        const searchable = normalize(Object.values(row).join(" "));
-
-        if (searchTerm && !searchable.includes(searchTerm)) return false;
-        if (filters.markerType && !String(filters.markerType).startsWith("All ") && row.markerType !== filters.markerType) return false;
-        if (filters.species && !String(filters.species).startsWith("All ") && row.speciesName !== filters.species) return false;
-        if (filters.province && !String(filters.province).startsWith("All ") && row.province !== filters.province) return false;
-        if (Array.isArray(filters.status) && filters.status.length > 0 && !filters.status.includes(row.validationStatus)) return false;
-        if (filters.hasAccession && row.accession === "Unavailable") return false;
-        return true;
-    });
-
-    filtered = sortRows(filtered, filters.sortBy, filters.order);
-    const { rows: paginatedRows, pagination } = paginate(filtered, filters.page, filters.limit);
-
-    return { rows: paginatedRows.map((row) => ({ ...row, validationStatus: normalizeStatus(row.validationStatus) })), pagination, total: filtered.length };
-}
-
-export async function getBiomarkerById(biomarkerId) {
-    const rows = await sql`${BIOMARKER_SELECT} WHERE biomarker_id = ${biomarkerId}`;
-    const row = rows[0] ?? null;
+function mapBiomarkerDetail(row) {
     if (!row) return null;
 
     const status = normalizeStatus(row.validationStatus);
@@ -148,6 +125,32 @@ export async function getBiomarkerById(biomarkerId) {
             ],
         },
     };
+}
+
+export async function listBiomarkers(filters = {}) {
+    const rows = await BIOMARKER_SELECT;
+    let filtered = rows.filter((row) => {
+        const searchTerm = normalize(filters.search).trim();
+        const searchable = normalize(Object.values(row).join(" "));
+
+        if (searchTerm && !searchable.includes(searchTerm)) return false;
+        if (filters.markerType && !String(filters.markerType).startsWith("All ") && row.markerType !== filters.markerType) return false;
+        if (filters.species && !String(filters.species).startsWith("All ") && row.speciesName !== filters.species) return false;
+        if (filters.province && !String(filters.province).startsWith("All ") && row.province !== filters.province) return false;
+        if (Array.isArray(filters.status) && filters.status.length > 0 && !filters.status.includes(row.validationStatus)) return false;
+        if (filters.hasAccession && row.accession === "Unavailable") return false;
+        return true;
+    });
+
+    filtered = sortRows(filtered, filters.sortBy, filters.order);
+    const { rows: paginatedRows, pagination } = paginate(filtered, filters.page, filters.limit);
+
+    return { rows: paginatedRows.map((row) => ({ ...row, validationStatus: normalizeStatus(row.validationStatus) })), pagination, total: filtered.length };
+}
+
+export async function getBiomarkerById(biomarkerId) {
+    const rows = await sql`${BIOMARKER_SELECT} WHERE biomarker_id = ${biomarkerId}`;
+    return mapBiomarkerDetail(rows[0] ?? null);
 }
 
 export async function listBiomarkerFilters() {

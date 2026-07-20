@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react'
 import { BarChart, DonutChart } from '@tremor/react'
 
 import ChartCard from '@/features/visualization/components/ChartCard'
 import VisualizationLayout from '@/features/visualization/components/VisualizationLayout'
 import Table from '@/components/ui/Table'
+import { fetchDashboardSummary } from '@/services/catalogService'
 import {
   biomarkerCoverageData,
   biomarkerDensityByProvince,
@@ -50,6 +52,59 @@ function MetricJoinCard({ metric }) {
 }
 
 export default function BiomarkerOverviewPage() {
+  const [summary, setSummary] = useState(null)
+
+  useEffect(() => {
+    let active = true
+
+    async function load() {
+      try {
+        const data = await fetchDashboardSummary()
+        if (active) setSummary(data)
+      } catch {
+        if (active) setSummary(null)
+      }
+    }
+
+    load()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const liveMetrics = biomarkerOverviewMetrics.map((metric, index) => {
+    if (!summary) return metric
+
+    const coverage = summary.summary?.speciesCount
+      ? `${Math.round((summary.summary.speciesWithBiomarkerData / summary.summary.speciesCount) * 100)}%`
+      : metric.value
+
+    const values = [
+      summary.summary?.biomarkerCount,
+      metric.value,
+      summary.summary?.speciesWithBiomarkerData ?? metric.value,
+      coverage,
+    ]
+
+    return { ...metric, value: String(values[index] ?? metric.value) }
+  })
+
+  const liveTypeLegend =
+    summary?.overviewCards?.find((card) => card.id === 'biomarkers')?.chartData ??
+    biomarkerTypeLegend.map((item) => ({ name: item.label, value: item.count }))
+  const liveCoverage = summary?.biomarkerCoverageData ?? biomarkerCoverageData
+  const liveDensity =
+    summary?.biomarkerBarData?.map((item) => ({
+      province: item.name,
+      biomarker: item.value,
+    })) ?? biomarkerDensityByProvince.map((item) => ({
+      province: item.label,
+      biomarker: item.value,
+    }))
+  const liveRows =
+    summary?.overviewCards?.find((card) => card.id === 'biomarkers')?.listItems ?? biomarkerSummaryRows
+
   return (
     <VisualizationLayout
       breadcrumbs={biomarkerOverviewBreadcrumbs}
@@ -57,7 +112,7 @@ export default function BiomarkerOverviewPage() {
       subtitle={biomarkerOverviewMeta.subtitle}
     >
       <section className="join w-full flex-col overflow-hidden rounded-[1.5rem] border border-[var(--app-border)] bg-white shadow-[0_10px_26px_rgba(16,16,16,0.04)] xl:flex-row">
-        {biomarkerOverviewMetrics.map((metric) => (
+        {liveMetrics.map((metric) => (
           <MetricJoinCard key={metric.label} metric={metric} />
         ))}
       </section>
@@ -73,10 +128,7 @@ export default function BiomarkerOverviewPage() {
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-center">
             <div className="grid place-items-center">
               <DonutChart
-                data={biomarkerTypeLegend.map((item) => ({
-                  name: item.label,
-                  value: item.count,
-                }))}
+                data={liveTypeLegend}
                 category="name"
                 value="value"
                 variant="donut"
@@ -90,7 +142,7 @@ export default function BiomarkerOverviewPage() {
                 Marker-type proportions and their record counts are shown together for quick scanning.
               </p>
               <ul className="space-y-3 pt-1">
-                {biomarkerTypeLegend.map((item) => (
+                {(summary?.overviewCards?.find((card) => card.id === 'biomarkers')?.listItems ?? biomarkerTypeLegend).map((item) => (
                   <LegendItem key={item.label} {...item} />
                 ))}
               </ul>
@@ -107,7 +159,7 @@ export default function BiomarkerOverviewPage() {
         >
           <div className="relative grid place-items-center">
             <DonutChart
-              data={biomarkerCoverageData.map((item) => ({
+              data={liveCoverage.map((item) => ({
                 name: item.label,
                 value: item.value,
               }))}
@@ -118,8 +170,8 @@ export default function BiomarkerOverviewPage() {
             />
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-4xl font-semibold text-[var(--app-text)]">{biomarkerCoverageData[0].value}%</div>
-                <p className="mt-2 text-sm text-[var(--app-muted)]">{biomarkerCoverageData[0].label}</p>
+                <div className="text-4xl font-semibold text-[var(--app-text)]">{liveCoverage[0]?.value}%</div>
+                <p className="mt-2 text-sm text-[var(--app-muted)]">{liveCoverage[0]?.label}</p>
               </div>
             </div>
           </div>
@@ -135,10 +187,7 @@ export default function BiomarkerOverviewPage() {
           className="h-full"
         >
           <BarChart
-            data={biomarkerDensityByProvince.map((item) => ({
-              province: item.label,
-              biomarker: item.value,
-            }))}
+            data={liveDensity}
             index="province"
             categories={['biomarker']}
             colors={['indigo']}
@@ -159,7 +208,7 @@ export default function BiomarkerOverviewPage() {
             columns={['Biomarker ID', 'Marker Type', 'Species', 'Accession Number', 'Sequence Length', 'Province']}
             className="shadow-none"
           >
-            {biomarkerSummaryRows.map((row) => (
+            {liveRows.map((row) => (
               <tr key={row.biomarkerId} className="border-b border-[var(--app-border)] last:border-b-0">
                 <td className="px-4 py-4 font-medium text-[var(--app-text)]">{row.biomarkerId}</td>
                 <td className="px-4 py-4 text-[var(--app-muted)]">{row.markerType}</td>

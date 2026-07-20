@@ -9,6 +9,7 @@ import Pagination from '@/components/ui/Pagination'
 import SearchInput from '@/components/ui/SearchInput'
 import SelectWithChevron from '@/components/ui/SelectWithChevron'
 import { cn } from '@/utils/cn'
+import { fetchSpeciesDetail } from '@/services/catalogService'
 
 import { loadSpeciesBackupDetails } from '@/features/species/data/speciesDetailBackupData'
 import speciesShellImage from '@/assets/HomeShell.png'
@@ -458,14 +459,29 @@ export default function SpeciesDetailPage() {
 
     async function loadSpecies() {
       try {
+        const liveRecord = await fetchSpeciesDetail(speciesId)
+        if (active && liveRecord) {
+          setSpeciesSource([liveRecord])
+          return
+        }
+
         const backupRecords = await loadSpeciesBackupDetails()
         if (active && backupRecords.length > 0) {
           setSpeciesSource(backupRecords)
           return
         }
       } catch {
-        if (active) {
-          setSpeciesSource([])
+        try {
+          const backupRecords = await loadSpeciesBackupDetails()
+          if (active && backupRecords.length > 0) {
+            setSpeciesSource(backupRecords)
+          } else if (active) {
+            setSpeciesSource([])
+          }
+        } catch {
+          if (active) {
+            setSpeciesSource([])
+          }
         }
       }
     }
