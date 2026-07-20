@@ -6,6 +6,8 @@ import Button from '@/components/ui/Button'
 import { cn } from '@/utils/cn'
 import PrimaryNav from '@/components/layout/PrimaryNav'
 
+const contactGmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=bioinformatics@pgc.up.edu.ph'
+
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
@@ -47,7 +49,7 @@ export default function Navbar() {
 
           <div className="flex items-center justify-end gap-3 py-1 lg:pr-2 lg:py-2.5">
             <div className="hidden lg:block">
-              <Button as="a" href="/#contact" variant="primary" size="sm">
+              <Button as="a" href={contactGmailUrl} target="_blank" rel="noreferrer" variant="primary" size="sm">
                 Contact Us
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Button>
@@ -74,7 +76,15 @@ export default function Navbar() {
                 isSolid
                 mobile
               />
-              <Button as="a" href="/#contact" variant="primary" size="sm" className="mt-3 w-full">
+              <Button
+                as="a"
+                href={contactGmailUrl}
+                target="_blank"
+                rel="noreferrer"
+                variant="primary"
+                size="sm"
+                className="mt-3 w-full"
+              >
                 Contact Us
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Button>
