@@ -22,6 +22,7 @@ async function fetchAPI(endpoint, options = {}) {
   
   try {
     const response = await fetch(url, {
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,

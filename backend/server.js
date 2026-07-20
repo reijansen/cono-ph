@@ -12,6 +12,7 @@ import biomarkerRoutes from "./routes/biomarkerRoutes.js";
 import publicationRoutes from "./routes/publicationRoutes.js";
 import taxonomyRoutes from "./routes/taxonomyRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import { buildCorsOptions } from "./config/cors.js";
 import { initializeDatabase } from "./config/initDatabase.js";
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.js";
@@ -42,6 +43,7 @@ app.use("/api/biomarkers", biomarkerRoutes);
 app.use("/api/publications", publicationRoutes);
 app.use("/api/taxonomy", taxonomyRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

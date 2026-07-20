@@ -15,6 +15,7 @@ export function buildCorsOptions() {
     ]);
 
     return {
+        credentials: true,
         origin(origin, callback) {
             if (!origin) {
                 callback(null, true);

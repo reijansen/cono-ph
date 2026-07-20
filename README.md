@@ -21,9 +21,10 @@ The backend is an Express server and should be deployed separately.
 2. Update `.env` following the format from `.env.example`
 3. Paste your Supabase Postgres connection string into `DATABASE_URL`
 4. Set `CORS_ORIGINS` to the frontend origins allowed to call the API
-5. Set `ADMIN_API_KEY` if you need to use protected write routes
-6. Run `npm install` in the repo root
-7. Run `npm run dev`
+5. Set `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` for `/adminlogin`
+6. Set `ADMIN_API_KEY` if you need non-session admin tooling
+7. Run `npm install` in the repo root
+8. Run `npm run dev`
 
 The backend now exposes MVC-style routes under `/api`:
 - `/api/species`
@@ -46,6 +47,12 @@ npm run seed:supabase
 The frontend reads data through the Express API only. Raw seed JSON is kept out of `frontend/public` so users cannot download it as a static browser asset.
 
 Species write routes are protected with `x-admin-api-key`. Do not put `ADMIN_API_KEY` in frontend environment variables.
+
+## Admin Area
+
+The hidden admin login is available at `/adminlogin`. The backend validates `ADMIN_PASSWORD` and sets a signed HTTP-only cookie. Admin CRUD routes under `/api/admin` require that session cookie.
+
+Keep `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `ADMIN_API_KEY`, and `DATABASE_URL` only in backend environment variables. They must never be added as `VITE_` variables.
 
 ## Dockerfile Setup
 

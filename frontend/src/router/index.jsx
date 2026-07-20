@@ -7,6 +7,8 @@ import BiomarkersPage from '@/pages/BiomarkersPage'
 import ConopeptidesPage from '@/pages/ConopeptidesPage'
 import ConopeptideDetailPage from '@/pages/ConopeptideDetailPage'
 import HomePage from '@/pages/HomePage'
+import AdminDashboardPage from '@/pages/AdminDashboardPage'
+import AdminLoginPage from '@/pages/AdminLoginPage'
 import PublicationsPage from '@/pages/PublicationsPage'
 import SpeciesDetailPage from '@/pages/SpeciesDetailPage'
 import SpeciesPage from '@/pages/SpeciesPage'
@@ -20,6 +22,8 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { path: '/', element: <HomePage /> },
+      { path: '/adminlogin', element: <AdminLoginPage /> },
+      { path: '/admin', element: <AdminDashboardPage /> },
       { path: '/about', element: <AboutPage /> },
       { path: '/species', element: <SpeciesPage /> },
       { path: '/species/:speciesId', element: <SpeciesDetailPage /> },
