@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 
 import mapImage from '@/assets/map.png'
 import StatCard from '@/components/ui/StatCard'
+import { fetchDashboardSummary } from '@/services/catalogService'
 import { cn } from '@/utils/cn'
 
 import {
@@ -12,6 +13,7 @@ import {
   recentSpecies,
   specimenDistribution,
   superfamilyBreakdown,
+  databaseUpdates,
 } from '../data/homeDashboardData'
 
 function SectionHeading({ eyebrow, title, description }) {
@@ -54,8 +56,8 @@ function ListSection({ title, description, children }) {
   )
 }
 
-function SuperfamilyBarChart() {
-  const total = superfamilyBreakdown.reduce((sum, item) => sum + item.value, 0)
+function SuperfamilyBarChart({ data }) {
+  const total = data.reduce((sum, item) => sum + item.value, 0)
 
   return (
     <ListSection title="Conopeptides by Superfamily" description="Bar graph breakdown">
@@ -71,8 +73,8 @@ function SuperfamilyBarChart() {
         </div>
 
         <div className="mt-4 flex h-48 items-end gap-4 rounded-[1.5rem] bg-[#fafafa] px-4 pb-4 pt-3">
-          {superfamilyBreakdown.map((item) => {
-            const tallest = Math.max(...superfamilyBreakdown.map((entry) => entry.value))
+          {data.map((item) => {
+            const tallest = Math.max(...data.map((entry) => entry.value), 1)
             const height = `${Math.max((item.value / tallest) * 100, 18)}%`
 
             return (
@@ -93,8 +95,8 @@ function SuperfamilyBarChart() {
   )
 }
 
-function SpecimenPieChart() {
-  const total = specimenDistribution.reduce((sum, item) => sum + item.value, 0)
+function SpecimenPieChart({ data }) {
+  const total = data.reduce((sum, item) => sum + item.value, 0)
 
   return (
     <ListSection title="Specimen Distribution" description="Pie chart breakdown">
@@ -112,7 +114,7 @@ function SpecimenPieChart() {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white">
-          {specimenDistribution.map((item) => (
+          {data.map((item) => (
             <div
               key={item.label}
               className="flex items-center justify-between gap-4 border-b border-[var(--app-border)] px-4 py-3 last:border-b-0"
@@ -131,7 +133,7 @@ function SpecimenPieChart() {
   )
 }
 
-function DiscoveryLineChart() {
+function DiscoveryLineChart({ data }) {
   const yearOptions = [
     { label: '2016-2025', start: 2016, end: 2025 },
     { label: '2018-2025', start: 2018, end: 2025 },
@@ -141,7 +143,7 @@ function DiscoveryLineChart() {
   const [rangeIndex, setRangeIndex] = useState(0)
 
   const { start, end } = yearOptions[rangeIndex]
-  const filteredTrend = discoveryTrend.filter((item) => {
+  const filteredTrend = data.filter((item) => {
     const year = Number(item.year)
     return year >= start && year <= end
   })
@@ -150,7 +152,7 @@ function DiscoveryLineChart() {
     if (!filteredTrend.length) return ''
 
     const widthStep = filteredTrend.length === 1 ? 0 : 100 / (filteredTrend.length - 1)
-    const maxValue = Math.max(...filteredTrend.map((item) => item.value))
+    const maxValue = Math.max(...filteredTrend.map((item) => item.value), 1)
     return filteredTrend
       .map((item, index) => {
         const x = 8 + index * widthStep * 0.84
@@ -160,7 +162,7 @@ function DiscoveryLineChart() {
       .join(' ')
   }, [filteredTrend])
 
-  const maxValue = Math.max(...filteredTrend.map((item) => item.value))
+  const maxValue = Math.max(...filteredTrend.map((item) => item.value), 1)
 
   return (
     <ListSection title="Conopeptide Discoveries Over Time" description="Line graph with year filters">
@@ -271,6 +273,35 @@ function DiscoveryLineChart() {
 }
 
 export default function HomeDashboardSection() {
+  const [summary, setSummary] = useState(null)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadSummary() {
+      try {
+        const data = await fetchDashboardSummary()
+        if (active) setSummary(data)
+      } catch {
+        if (active) setSummary(null)
+      }
+    }
+
+    loadSummary()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const liveHomeMetrics = summary?.homeMetrics ?? homeMetrics
+  const liveSuperfamilyBreakdown = summary?.superfamilyBreakdown ?? superfamilyBreakdown
+  const liveSpecimenDistribution = summary?.specimenDistribution ?? specimenDistribution
+  const liveDiscoveryTrend = summary?.discoveryTrend ?? discoveryTrend
+  const liveRecentSpecies = summary?.recentSpecies ?? recentSpecies
+  const liveRecentPublications = summary?.recentPublications ?? recentPublications
+  const liveDatabaseUpdates = summary?.databaseUpdates ?? databaseUpdates
+
   return (
     <section className="space-y-7 border-t border-brand-100 pt-8">
       <SectionHeading
@@ -282,13 +313,13 @@ export default function HomeDashboardSection() {
       <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2">
-            {homeMetrics.map((metric) => (
+            {liveHomeMetrics.map((metric) => (
               <MetricTile key={metric.key} metric={metric} />
             ))}
           </div>
 
-          <SuperfamilyBarChart />
-          <SpecimenPieChart />
+          <SuperfamilyBarChart data={liveSuperfamilyBreakdown} />
+          <SpecimenPieChart data={liveSpecimenDistribution} />
         </div>
 
         <div className="space-y-6">
@@ -303,13 +334,29 @@ export default function HomeDashboardSection() {
       </div>
 
       <section className="space-y-5 border-t border-brand-100 pt-8">
-        <DiscoveryLineChart />
+        <DiscoveryLineChart data={liveDiscoveryTrend} />
       </section>
 
       <section className="space-y-6">
+        <ListSection title="Latest Updates" description="Live status and ingest summary from Supabase">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {liveDatabaseUpdates.map((update) => (
+              <div
+                key={update.id}
+                className="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-4 shadow-sm"
+              >
+                <div className="text-[11px] uppercase tracking-[0.18em] text-[var(--app-muted)]">{update.type}</div>
+                <div className="mt-2 text-base font-semibold text-black">{update.title}</div>
+                <div className="mt-2 text-sm leading-6 text-[var(--app-muted)]">{update.detail}</div>
+                <div className="mt-4 text-xs font-semibold text-brand-700">{update.date}</div>
+              </div>
+            ))}
+          </div>
+        </ListSection>
+
         <ListSection title="Top 3 Recent Species" description="Sorted by linked publication date">
           <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
-            {recentSpecies.map((species, index) => (
+            {liveRecentSpecies.map((species, index) => (
               <div
                 key={species.id}
                 title={species.name}
@@ -332,7 +379,7 @@ export default function HomeDashboardSection() {
 
         <ListSection title="Top 3 Recent Publications" description="Most recent by publication date">
           <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
-            {recentPublications.map((publication, index) => (
+            {liveRecentPublications.map((publication, index) => (
               <div
                 key={publication.id}
                 title={publication.title}

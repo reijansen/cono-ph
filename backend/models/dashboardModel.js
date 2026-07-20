@@ -53,6 +53,12 @@ function buildConopeptideLengthBins(conopeptideRows) {
     return bins.filter((bin) => bin.value > 0).map(({ label, value }) => ({ range: label, count: value }));
 }
 
+function toDateString(value) {
+    const date = value ? new Date(value) : null;
+    if (!date || Number.isNaN(date.getTime())) return "";
+    return date.toISOString().slice(0, 10);
+}
+
 export async function getDashboardSummary() {
     const [speciesRows, conopeptideRows, biomarkerRows, publicationRows] = await Promise.all([
         sql`
@@ -68,7 +74,7 @@ export async function getDashboardSummary() {
             FROM biomarker
         `,
         sql`
-            SELECT publication_id, title, authors, year_published, journal, doi, linked_species, linked_conopeptides, linked_biomarkers
+            SELECT publication_id, title, authors, year_published, journal, doi, linked_species, linked_conopeptides, linked_biomarkers, created_at
             FROM publication
         `,
     ]);
@@ -95,6 +101,96 @@ export async function getDashboardSummary() {
     const topSpeciesName = speciesCountsByName[0]?.name ?? "Unavailable";
     const topConopeptideSpecies = conopeptideCountsBySpecies[0]?.name ?? "Unavailable";
     const topBiomarkerSpecies = biomarkerCountsBySpecies[0]?.name ?? "Unavailable";
+    const provinceEntryCounts = entriesFromCountMap(countBy(speciesRows, (row) => row.province));
+    const provinceTotal = provinceEntryCounts.reduce((sum, item) => sum + item.value, 0) || 1;
+    const topProvinceCounts = provinceEntryCounts.slice(0, 4);
+    const specimenDistribution = topProvinceCounts.map((item, index) => ({
+        label: item.name,
+        value: Number(((item.value / provinceTotal) * 100).toFixed(1)),
+        color: ["#111827", "#8ab4f8", "#a8e6cf", "#c7d4f3"][index % 4],
+    }));
+    const superfamilyTotal = superfamilyCounts.reduce((sum, item) => sum + item.value, 0) || 1;
+    const superfamilyBreakdown = superfamilyCounts.map((item, index) => ({
+        label: item.name,
+        value: Number(((item.value / superfamilyTotal) * 100).toFixed(1)),
+        color: ["#8ab4f8", "#5fd0c1", "#111827", "#6fb0ff", "#b79be8", "#71d57d"][index % 6],
+    }));
+    const discoveryTrendMap = entriesFromCountMap(countBy(publicationRows, (row) => row.year_published)).sort(
+        (left, right) => String(left.name).localeCompare(String(right.name)),
+    );
+    const discoveryTrend = discoveryTrendMap.map((item) => ({
+        year: item.name,
+        value: item.value,
+    }));
+    const recentSpecies = [...speciesRows]
+        .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))
+        .slice(0, 3)
+        .map((row, index) => ({
+            id: row.species_id,
+            name: row.scientific_name,
+            publicationDate: toDateString(row.created_at) || row.created_at || "",
+            locality: [row.municipality, row.province].filter(Boolean).join(", ") || row.province || "Unavailable",
+            status: row.species_id ? "Curated" : "Unavailable",
+        }));
+    const recentPublications = [...publicationRows]
+        .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))
+        .slice(0, 3)
+        .map((row) => ({
+            id: row.publication_id,
+            title: row.title,
+            journal: row.journal || "Unavailable",
+            publicationDate: toDateString(row.created_at) || row.year_published || "",
+            authors: row.authors || "Unavailable",
+            badge: row.evidence_type || "Publication",
+        }));
+    const databaseUpdates = [
+        {
+            id: "UPD-01",
+            type: "Species",
+            title: `${speciesCount} species records available`,
+            detail: "Live species rows are being served from Supabase.",
+            date: recentSpecies[0]?.publicationDate || "",
+        },
+        {
+            id: "UPD-02",
+            type: "Sequences",
+            title: `${conopeptideCount} conopeptide entries indexed`,
+            detail: "Superfamily and framework summaries are computed from the live database.",
+            date: recentPublications[0]?.publicationDate || "",
+        },
+        {
+            id: "UPD-03",
+            type: "Publications",
+            title: `${publicationCount} publication records indexed`,
+            detail: "Publication cards now read from the live dashboard summary payload.",
+            date: recentPublications[0]?.publicationDate || "",
+        },
+        {
+            id: "UPD-04",
+            type: "Records",
+            title: `${biomarkerCount} biomarker records refreshed`,
+            detail: "Biomarker coverage and density are computed server-side.",
+            date: recentPublications[0]?.publicationDate || "",
+        },
+    ];
+    const homeMetrics = [
+        {
+            key: "species-records",
+            label: "Species Records",
+            value: String(speciesCount),
+            delta: `${speciesWithConopeptides} species with conopeptides`,
+            tone: "indigo",
+            detail: "Curated occurrence records, taxonomy, and specimen-linked metadata.",
+        },
+        {
+            key: "conopeptides",
+            label: "Conopeptides",
+            value: String(conopeptideCount),
+            delta: `${superfamilyCounts.length} superfamilies tracked`,
+            tone: "sky",
+            detail: "Annotated peptide entries with sequence, family, and publication links.",
+        },
+    ];
 
     return {
         summary: {
@@ -109,15 +205,18 @@ export async function getDashboardSummary() {
             linkedBiomarkerCoverage,
         },
         metrics: [
-            { label: "Total Species", value: String(speciesCount) },
-            { label: "Conopeptide Precursors", value: String(conopeptideCount) },
-            { label: "Biomarkers", value: String(biomarkerCount) },
-            { label: "Publications", value: String(publicationCount) },
-            {
-                label: "Biomarker Coverage",
-                value: speciesCount > 0 ? `${Math.round((speciesWithBiomarkerData / speciesCount) * 100)}%` : "0%",
-            },
+            { icon: null, label: "Total Species", value: String(speciesCount), description: "Live record count from Supabase." },
+            { icon: null, label: "Conopeptide Precursors", value: String(conopeptideCount), description: "Live record count from Supabase." },
+            { icon: null, label: "Biomarkers", value: String(biomarkerCount), description: "Live record count from Supabase." },
+            { icon: null, label: "Publications", value: String(publicationCount), description: "Live record count from Supabase." },
         ],
+        homeMetrics,
+        superfamilyBreakdown,
+        specimenDistribution,
+        discoveryTrend,
+        recentSpecies,
+        recentPublications,
+        databaseUpdates,
         overviewCards: [
             {
                 id: "species",
