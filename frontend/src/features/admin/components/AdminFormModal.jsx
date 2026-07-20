@@ -21,21 +21,23 @@ export default function AdminFormModal({ mode, resource, row, saving, error, onC
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box flex max-h-[88vh] w-11/12 max-w-4xl flex-col overflow-hidden rounded-md p-0">
+      <div className="modal-box flex max-h-[88vh] w-11/12 max-w-5xl flex-col overflow-hidden rounded-md p-0">
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
           <div className="flex items-center justify-between border-b border-base-300 px-4 py-3">
             <div>
               <h2 className="font-sans text-sm font-semibold text-base-content">
                 {mode === 'create' ? 'Create record' : 'Edit record'}
               </h2>
-              <p className="text-xs text-base-content/60">{resource.label}</p>
+              <p className="text-xs text-base-content/60">
+                {resource.label} {mode === 'edit' ? `- ${row?.[resource.idColumn] ?? ''}` : ''}
+              </p>
             </div>
             <button type="button" onClick={onCancel} className="btn btn-ghost btn-xs rounded-md">
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="grid gap-3 overflow-y-auto px-4 py-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-x-4 gap-y-3 overflow-y-auto px-4 py-4 sm:grid-cols-2 lg:grid-cols-3">
             {resource.columns.map((column) => {
               const type = resource.types[column]
               const isRequired = resource.required.includes(column)

@@ -16,6 +16,7 @@ export function getInitialForm(resource, row = null) {
 export function displayValue(value) {
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
   if (value === null || value === undefined || value === '') return 'Unavailable'
+  if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
 }
 

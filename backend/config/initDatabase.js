@@ -113,6 +113,17 @@ async function createTables() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     `;
+
+    await sql`
+        CREATE TABLE IF NOT EXISTS admin_archive (
+            archive_id TEXT PRIMARY KEY,
+            resource_name TEXT NOT NULL,
+            record_id TEXT NOT NULL,
+            record_data JSONB NOT NULL,
+            archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            archived_by TEXT DEFAULT 'admin'
+        );
+    `;
 }
 
 async function seedTable({ tableName, idColumn, rows, columns }) {

@@ -141,6 +141,23 @@ export const adminResources = {
         searchable: ["species_id", "scientific_name", "common_name", "class_name", "family_name", "genus_name"],
         types: {},
     },
+    archive: {
+        table: "admin_archive",
+        idColumn: "archive_id",
+        label: "Archive",
+        readOnly: true,
+        columns: [
+            "archive_id",
+            "resource_name",
+            "record_id",
+            "record_data",
+            "archived_at",
+            "archived_by",
+        ],
+        required: ["archive_id", "resource_name", "record_id"],
+        searchable: ["archive_id", "resource_name", "record_id", "archived_by"],
+        types: {},
+    },
 };
 
 export function getAdminResource(resourceName) {

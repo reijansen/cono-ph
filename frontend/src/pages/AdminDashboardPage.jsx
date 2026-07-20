@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import AdminConfirmModal from '@/features/admin/components/AdminConfirmModal'
 import AdminDataTable from '@/features/admin/components/AdminDataTable'
 import AdminFormModal from '@/features/admin/components/AdminFormModal'
 import AdminHeader from '@/features/admin/components/AdminHeader'
@@ -30,6 +31,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [editor, setEditor] = useState(null)
+  const [confirmation, setConfirmation] = useState(null)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -125,12 +127,13 @@ export default function AdminDashboardPage() {
     setFilterValue('')
   }
 
-  async function handleLogout() {
+  async function executeLogout() {
+    setSaving(true)
     await logoutAdmin()
     navigate('/adminlogin', { replace: true })
   }
 
-  async function handleSave(form) {
+  async function executeSave(form) {
     setSaving(true)
     setFormError('')
 
@@ -140,27 +143,29 @@ export default function AdminDashboardPage() {
       } else {
         await updateAdminRow(activeResource.key, editor.row[activeResource.idColumn], form)
       }
+      setConfirmation(null)
       setEditor(null)
       await reloadRows()
     } catch (err) {
+      setConfirmation(null)
       setFormError(err.message || 'Unable to save record.')
     } finally {
       setSaving(false)
     }
   }
 
-  async function handleDelete(row) {
+  async function executeArchive(row) {
     const id = row[activeResource.idColumn]
-    if (!window.confirm(`Delete ${id}?`)) return
-
-    setLoading(true)
+    setSaving(true)
+    setError('')
     try {
       await deleteAdminRow(activeResource.key, id)
+      setConfirmation(null)
       await reloadRows()
     } catch {
-      setError('Unable to delete record.')
+      setError('Unable to archive record.')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
@@ -168,7 +173,19 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-[72vh] border-y border-base-300">
-      <AdminHeader onRefresh={reloadRows} onLogout={handleLogout} />
+      <AdminHeader
+        onRefresh={reloadRows}
+        onLogout={() => {
+          setConfirmation({
+            type: 'logout',
+            title: 'Log out?',
+            description: 'Your admin session will end on this browser.',
+            confirmLabel: 'Log out',
+            tone: 'danger',
+            onConfirm: executeLogout,
+          })
+        }}
+      />
 
       <div className="grid lg:grid-cols-[190px_minmax(0,1fr)]">
         <AdminResourceNav
@@ -185,6 +202,7 @@ export default function AdminDashboardPage() {
             filterValue={filterValue}
             search={search}
             onCreate={() => {
+              if (activeResource?.readOnly) return
               setFormError('')
               setEditor({ mode: 'create', row: null })
             }}
@@ -208,8 +226,19 @@ export default function AdminDashboardPage() {
               pagination={pagination}
               rows={rows}
               visibleColumns={visibleColumns}
-              onDelete={handleDelete}
+              onDelete={(row) => {
+                const id = row[activeResource.idColumn]
+                setConfirmation({
+                  type: 'archive',
+                  title: 'Archive this record?',
+                  description: `${id} will move out of active ${activeResource.label} records and appear in Archive.`,
+                  confirmLabel: 'Archive',
+                  tone: 'danger',
+                  onConfirm: () => executeArchive(row),
+                })
+              }}
               onEdit={(row) => {
+                if (activeResource.readOnly) return
                 setFormError('')
                 setEditor({ mode: 'edit', row })
               }}
@@ -226,7 +255,32 @@ export default function AdminDashboardPage() {
           saving={saving}
           error={formError}
           onCancel={() => setEditor(null)}
-          onSubmit={handleSave}
+          onSubmit={(form) => {
+            setConfirmation({
+              type: 'save',
+              title: editor.mode === 'create' ? 'Create this record?' : 'Save changes?',
+              description:
+                editor.mode === 'create'
+                  ? `A new ${activeResource.label} record will be added.`
+                  : `Changes to ${editor.row[activeResource.idColumn]} will be saved.`,
+              confirmLabel: editor.mode === 'create' ? 'Create' : 'Save',
+              onConfirm: () => executeSave(form),
+            })
+          }}
+        />
+      ) : null}
+
+      {confirmation ? (
+        <AdminConfirmModal
+          title={confirmation.title}
+          description={confirmation.description}
+          confirmLabel={confirmation.confirmLabel}
+          tone={confirmation.tone}
+          loading={saving}
+          onCancel={() => {
+            if (!saving) setConfirmation(null)
+          }}
+          onConfirm={confirmation.onConfirm}
         />
       ) : null}
     </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LockKeyhole } from 'lucide-react'
+import { Eye, EyeOff, LockKeyhole } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import Button from '@/components/ui/Button'
@@ -12,6 +12,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -67,16 +68,26 @@ export default function AdminLoginPage() {
         <label className="block text-sm font-medium text-[var(--app-text)]" htmlFor="admin-password">
           Password
         </label>
-        <Input
-          id="admin-password"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="mt-2 rounded-md"
-          autoComplete="current-password"
-          autoFocus
-          required
-        />
+        <div className="relative mt-2">
+          <Input
+            id="admin-password"
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="rounded-md pr-11"
+            autoComplete="current-password"
+            autoFocus
+            required
+          />
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-[var(--app-muted)] hover:bg-brand-50 hover:text-brand-700"
+            onClick={() => setShowPassword((current) => !current)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
         {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
 
         <Button type="submit" className="mt-5 w-full rounded-md" disabled={loading}>

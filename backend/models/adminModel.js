@@ -1,6 +1,7 @@
 import { sql } from "../config/db.js";
 import { getAdminResource, adminResources } from "../config/adminResources.js";
 import { ApiError } from "../utils/apiError.js";
+import crypto from "crypto";
 
 function normalize(value) {
     return String(value ?? "").toLowerCase();
@@ -71,6 +72,7 @@ export function listAdminResourceMetadata() {
         columns: resource.columns,
         required: resource.required,
         types: resource.types,
+        readOnly: Boolean(resource.readOnly),
     }));
 }
 
@@ -103,6 +105,10 @@ export async function getAdminRow(resourceName, id) {
 
 export async function createAdminRow(resourceName, payload) {
     const resource = assertResource(resourceName);
+    if (resource.readOnly) {
+        throw new ApiError(400, "This admin resource is read-only", "ADMIN_RESOURCE_READ_ONLY");
+    }
+
     const data = cleanPayload(resource, payload);
     const columns = resource.columns.filter((column) => column in data);
     const values = columns.map((column) => data[column]);
@@ -118,6 +124,10 @@ export async function createAdminRow(resourceName, payload) {
 
 export async function updateAdminRow(resourceName, id, payload) {
     const resource = assertResource(resourceName);
+    if (resource.readOnly) {
+        throw new ApiError(400, "This admin resource is read-only", "ADMIN_RESOURCE_READ_ONLY");
+    }
+
     const existing = await getAdminRow(resourceName, id);
     if (!existing) return null;
 
@@ -141,10 +151,24 @@ export async function updateAdminRow(resourceName, id, payload) {
 
 export async function deleteAdminRow(resourceName, id) {
     const resource = assertResource(resourceName);
-    const rows = await sql.unsafe(
-        `DELETE FROM ${resource.table} WHERE ${resource.idColumn} = $1 RETURNING ${resource.columns.join(", ")}`,
+    if (resource.readOnly) {
+        throw new ApiError(400, "This admin resource is read-only", "ADMIN_RESOURCE_READ_ONLY");
+    }
+
+    const existing = await getAdminRow(resourceName, id);
+    if (!existing) return null;
+
+    const archiveId = crypto.randomUUID();
+
+    await sql.unsafe(
+        "INSERT INTO admin_archive (archive_id, resource_name, record_id, record_data, archived_by) VALUES ($1, $2, $3, $4::jsonb, $5)",
+        [archiveId, resourceName, String(id), JSON.stringify(existing), "admin"],
+    );
+
+    await sql.unsafe(
+        `DELETE FROM ${resource.table} WHERE ${resource.idColumn} = $1`,
         [id],
     );
 
-    return rows[0] ?? null;
+    return { ...existing, archived: true, archive_id: archiveId };
 }
