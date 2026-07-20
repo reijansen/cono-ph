@@ -19,14 +19,18 @@ The backend is an Express server and should be deployed separately.
 
 1. Create `.env`
 2. Update `.env` following the format from `.env.example`
-3. If you are using Supabase, paste the Postgres connection string from your Supabase project settings into `DATABASE_URL`
-4. If you prefer split fields instead, fill in `PGHOST`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`
+3. Paste your Supabase Postgres connection string into `DATABASE_URL`
+4. Run `npm install` in the repo root
+5. Run `npm run dev`
 
-**run backend**
+The backend now exposes MVC-style routes under `/api`:
+- `/api/species`
+- `/api/conopeptides`
+- `/api/biomarkers`
+- `/api/publications`
+- `/api/taxonomy`
 
-1. Make sure you are in the root of your directory
-2. run `npm install`
-3. run `npm run dev`
+The database bootstrap creates the required tables and seeds them from the repo backup JSON files if the tables are empty.
 
 ## Dockerfile Setup
 

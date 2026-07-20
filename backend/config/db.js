@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/serverless";
+import postgres from "postgres";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -14,4 +14,7 @@ const connectionString =
     DATABASE_URL ||
     `postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}/${PGDATABASE}?sslmode=require&channel_binding=require`;
 
-export const sql = neon(connectionString);
+export const sql = postgres(connectionString, {
+    ssl: "require",
+    prepare: false,
+});
