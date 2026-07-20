@@ -1,5 +1,5 @@
 import { sql } from "../config/db.js";
-import { getAdminResource, adminResources } from "../config/adminResources.js";
+import { getAdminResource, getOrderedAdminResourceEntries } from "../config/adminResources.js";
 import { ApiError } from "../utils/apiError.js";
 import crypto from "crypto";
 
@@ -65,7 +65,7 @@ function assertResource(resourceName) {
 }
 
 export function listAdminResourceMetadata() {
-    return Object.entries(adminResources).map(([key, resource]) => ({
+    return getOrderedAdminResourceEntries().map(([key, resource]) => ({
         key,
         label: resource.label,
         idColumn: resource.idColumn,
@@ -74,6 +74,87 @@ export function listAdminResourceMetadata() {
         types: resource.types,
         readOnly: Boolean(resource.readOnly),
     }));
+}
+
+function parseCsv(content) {
+    const rows = [];
+    let row = [];
+    let cell = "";
+    let inQuotes = false;
+
+    const pushCell = () => {
+        row.push(cell);
+        cell = "";
+    };
+
+    const pushRow = () => {
+        if (row.some((value) => String(value).trim())) rows.push(row);
+        row = [];
+    };
+
+    for (let index = 0; index < content.length; index += 1) {
+        const character = content[index];
+        const nextCharacter = content[index + 1];
+
+        if (inQuotes) {
+            if (character === "\"") {
+                if (nextCharacter === "\"") {
+                    cell += "\"";
+                    index += 1;
+                } else {
+                    inQuotes = false;
+                }
+            } else {
+                cell += character;
+            }
+            continue;
+        }
+
+        if (character === "\"") {
+            inQuotes = true;
+            continue;
+        }
+
+        if (character === ",") {
+            pushCell();
+            continue;
+        }
+
+        if (character === "\n") {
+            pushCell();
+            pushRow();
+            continue;
+        }
+
+        if (character !== "\r") {
+            cell += character;
+        }
+    }
+
+    if (cell.length > 0 || row.length > 0) {
+        pushCell();
+        pushRow();
+    }
+
+    if (rows.length < 2) return [];
+
+    const headers = rows[0].map((header) => header.trim());
+    return rows.slice(1).map((values) => {
+        const record = {};
+        headers.forEach((header, index) => {
+            record[header] = values[index] ?? "";
+        });
+        return record;
+    });
+}
+
+async function archiveExistingRecord(resourceName, resource, id, existing, reason = "import-overwrite") {
+    const archiveId = crypto.randomUUID();
+    await sql.unsafe(
+        "INSERT INTO admin_archive (archive_id, resource_name, record_id, record_data, archived_by) VALUES ($1, $2, $3, $4::jsonb, $5)",
+        [archiveId, resourceName, String(id), JSON.stringify({ ...existing, archive_reason: reason }), "admin"],
+    );
+    return archiveId;
 }
 
 export async function listAdminRows(resourceName, filters = {}) {
@@ -158,12 +239,7 @@ export async function deleteAdminRow(resourceName, id) {
     const existing = await getAdminRow(resourceName, id);
     if (!existing) return null;
 
-    const archiveId = crypto.randomUUID();
-
-    await sql.unsafe(
-        "INSERT INTO admin_archive (archive_id, resource_name, record_id, record_data, archived_by) VALUES ($1, $2, $3, $4::jsonb, $5)",
-        [archiveId, resourceName, String(id), JSON.stringify(existing), "admin"],
-    );
+    const archiveId = await archiveExistingRecord(resourceName, resource, id, existing, "manual-archive");
 
     await sql.unsafe(
         `DELETE FROM ${resource.table} WHERE ${resource.idColumn} = $1`,
@@ -171,4 +247,144 @@ export async function deleteAdminRow(resourceName, id) {
     );
 
     return { ...existing, archived: true, archive_id: archiveId };
+}
+
+export async function restoreArchivedRow(archiveId) {
+    const archiveResource = assertResource("archive");
+    const archive = await getAdminRow("archive", archiveId);
+    if (!archive) return null;
+
+    const resource = assertResource(archive.resource_name);
+    if (resource.readOnly) {
+        throw new ApiError(400, "Archived resource cannot be restored", "ARCHIVE_RESTORE_INVALID_RESOURCE");
+    }
+
+    const existing = await getAdminRow(archive.resource_name, archive.record_id);
+    if (existing) {
+        throw new ApiError(409, "An active record with this primary key already exists", "ARCHIVE_RESTORE_CONFLICT");
+    }
+
+    const recordData = archive.record_data ?? {};
+    const data = cleanPayload(resource, recordData);
+    const columns = resource.columns.filter((column) => column in data);
+    const values = columns.map((column) => data[column]);
+    const placeholders = columns.map((_, index) => `$${index + 1}`).join(", ");
+
+    const restoredRows = await sql.unsafe(
+        `INSERT INTO ${resource.table} (${columns.join(", ")}) VALUES (${placeholders}) RETURNING ${resource.columns.join(", ")}`,
+        values,
+    );
+
+    await sql.unsafe(`DELETE FROM ${archiveResource.table} WHERE ${archiveResource.idColumn} = $1`, [archiveId]);
+
+    return restoredRows[0] ?? null;
+}
+
+export async function permanentlyDeleteArchivedRow(archiveId) {
+    const archiveResource = assertResource("archive");
+    const rows = await sql.unsafe(
+        `DELETE FROM ${archiveResource.table} WHERE ${archiveResource.idColumn} = $1 RETURNING ${archiveResource.columns.join(", ")}`,
+        [archiveId],
+    );
+
+    return rows[0] ?? null;
+}
+
+export async function importAdminCsv(resourceName, { filename = "dataset.csv", csvText = "" } = {}) {
+    const resource = assertResource(resourceName);
+    if (resource.readOnly) {
+        throw new ApiError(400, "This admin resource cannot import CSV", "ADMIN_IMPORT_READ_ONLY");
+    }
+
+    if (!String(filename).toLowerCase().endsWith(".csv")) {
+        throw new ApiError(400, "Only CSV files are supported", "ADMIN_IMPORT_INVALID_FILE");
+    }
+
+    if (!csvText || Buffer.byteLength(csvText, "utf8") > 2_500_000) {
+        throw new ApiError(400, "CSV file is empty or too large", "ADMIN_IMPORT_INVALID_SIZE");
+    }
+
+    const parsedRows = parseCsv(csvText);
+    let createdCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
+
+    for (const row of parsedRows) {
+        const data = cleanPayload(resource, row, { partial: true });
+        const id = data[resource.idColumn];
+
+        if (!String(id ?? "").trim()) {
+            skippedCount += 1;
+            continue;
+        }
+
+        let hasMissingRequiredField = false;
+        for (const column of resource.required) {
+            if (!String(data[column] ?? "").trim()) {
+                hasMissingRequiredField = true;
+                break;
+            }
+        }
+        if (hasMissingRequiredField) {
+            skippedCount += 1;
+            continue;
+        }
+
+        const existing = await getAdminRow(resourceName, id);
+        const columns = resource.columns.filter((column) => column in data);
+        const values = columns.map((column) => data[column]);
+
+        if (existing) {
+            await archiveExistingRecord(resourceName, resource, id, existing, "csv-import-overwrite");
+            const updateColumns = columns.filter((column) => column !== resource.idColumn);
+            const setList = updateColumns.map((column, index) => `${column} = $${index + 1}`).join(", ");
+            const updateValues = updateColumns.map((column) => data[column]);
+
+            if (updateColumns.length > 0) {
+                await sql.unsafe(
+                    `UPDATE ${resource.table} SET ${setList} WHERE ${resource.idColumn} = $${updateColumns.length + 1}`,
+                    [...updateValues, id],
+                );
+            }
+            updatedCount += 1;
+        } else {
+            const placeholders = columns.map((_, index) => `$${index + 1}`).join(", ");
+            await sql.unsafe(
+                `INSERT INTO ${resource.table} (${columns.join(", ")}) VALUES (${placeholders})`,
+                values,
+            );
+            createdCount += 1;
+        }
+    }
+
+    const log = {
+        log_id: crypto.randomUUID(),
+        resource_name: resourceName,
+        original_filename: filename,
+        imported_row_count: parsedRows.length,
+        created_count: createdCount,
+        updated_count: updatedCount,
+        skipped_count: skippedCount,
+        status: "completed",
+        notes: "CSV import used upsert by primary key. Existing records were archived before update.",
+        imported_by: "admin",
+    };
+
+    await sql.unsafe(
+        "INSERT INTO dataset_import_logs (log_id, resource_name, original_filename, imported_row_count, created_count, updated_count, skipped_count, status, notes, imported_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+        [
+            log.log_id,
+            log.resource_name,
+            log.original_filename,
+            log.imported_row_count,
+            log.created_count,
+            log.updated_count,
+            log.skipped_count,
+            log.status,
+            log.notes,
+            log.imported_by,
+        ],
+    );
+
+    return log;
 }

@@ -27,7 +27,7 @@ const app = express();
 
 app.set("trust proxy", 1);
 app.use(cors(buildCorsOptions()));
-app.use(express.json());
+app.use(express.json({ limit: "3mb" }));
 app.use(helmet());
 app.use(morgan("dev"));
 

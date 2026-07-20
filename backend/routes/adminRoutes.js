@@ -8,7 +8,11 @@ import {
     getAdminResourceRow,
     getAdminResources,
     getAdminSession,
+    importAdminResourceCsv,
+    listAdminDatasetLogs,
     listAdminResourceRows,
+    permanentlyDeleteAdminArchiveRow,
+    restoreAdminArchiveRow,
     updateAdminResourceRow,
 } from "../controllers/adminController.js";
 import { requireAdminSession } from "../middlewares/adminSessionAuth.js";
@@ -21,6 +25,10 @@ router.get("/session", getAdminSession);
 
 router.use(requireAdminSession);
 router.get("/resources", getAdminResources);
+router.get("/dataset-logs", listAdminDatasetLogs);
+router.post("/archive/:archiveId/restore", restoreAdminArchiveRow);
+router.delete("/archive/:archiveId/permanent", permanentlyDeleteAdminArchiveRow);
+router.post("/:resource/import-csv", importAdminResourceCsv);
 router.get("/:resource", listAdminResourceRows);
 router.post("/:resource", createAdminResourceRow);
 router.get("/:resource/:id", getAdminResourceRow);

@@ -5,16 +5,21 @@ import AdminConfirmModal from '@/features/admin/components/AdminConfirmModal'
 import AdminDataTable from '@/features/admin/components/AdminDataTable'
 import AdminFormModal from '@/features/admin/components/AdminFormModal'
 import AdminHeader from '@/features/admin/components/AdminHeader'
+import AdminImportCsvModal from '@/features/admin/components/AdminImportCsvModal'
 import AdminResourceNav from '@/features/admin/components/AdminResourceNav'
+import AdminRowDetailModal from '@/features/admin/components/AdminRowDetailModal'
 import AdminToolbar from '@/features/admin/components/AdminToolbar'
-import { getFilterColumns, getVisibleColumns } from '@/features/admin/components/adminUiUtils'
+import { getFilterColumns, getVisibleColumns, orderAdminResources } from '@/features/admin/components/adminUiUtils'
 import {
   createAdminRow,
   deleteAdminRow,
   fetchAdminResources,
   fetchAdminRows,
   fetchAdminSession,
+  importAdminCsv,
   logoutAdmin,
+  permanentlyDeleteArchivedRow,
+  restoreArchivedRow,
   updateAdminRow,
 } from '@/services/adminService'
 
@@ -25,12 +30,17 @@ export default function AdminDashboardPage() {
   const [activeResourceKey, setActiveResourceKey] = useState('')
   const [rows, setRows] = useState([])
   const [pagination, setPagination] = useState(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
   const [search, setSearch] = useState('')
   const [filterColumn, setFilterColumn] = useState('')
   const [filterValue, setFilterValue] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [editor, setEditor] = useState(null)
+  const [detailRow, setDetailRow] = useState(null)
+  const [importModalOpen, setImportModalOpen] = useState(false)
+  const [importError, setImportError] = useState('')
   const [confirmation, setConfirmation] = useState(null)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
@@ -53,7 +63,7 @@ export default function AdminDashboardPage() {
           return
         }
 
-        const loadedResources = await fetchAdminResources()
+        const loadedResources = orderAdminResources(await fetchAdminResources())
         if (active) {
           setResources(loadedResources)
           setActiveResourceKey(loadedResources[0]?.key ?? '')
@@ -81,7 +91,13 @@ export default function AdminDashboardPage() {
       setLoading(true)
       setError('')
       try {
-        const result = await fetchAdminRows(activeResource.key, { search, filterColumn, filterValue, limit: 25 })
+        const result = await fetchAdminRows(activeResource.key, {
+          page,
+          search,
+          filterColumn,
+          filterValue,
+          limit: pageSize,
+        })
         if (active) {
           setRows(result.rows)
           setPagination(result.pagination)
@@ -102,14 +118,26 @@ export default function AdminDashboardPage() {
       active = false
       window.clearTimeout(timeout)
     }
-  }, [activeResource, search, filterColumn, filterValue])
+  }, [activeResource, page, pageSize, search, filterColumn, filterValue])
+
+  useEffect(() => {
+    if (pagination && page > pagination.totalPages) {
+      setPage(pagination.totalPages)
+    }
+  }, [page, pagination])
 
   async function reloadRows() {
     if (!activeResource) return
     setLoading(true)
     setError('')
     try {
-      const result = await fetchAdminRows(activeResource.key, { search, filterColumn, filterValue, limit: 25 })
+      const result = await fetchAdminRows(activeResource.key, {
+        page,
+        search,
+        filterColumn,
+        filterValue,
+        limit: pageSize,
+      })
       setRows(result.rows)
       setPagination(result.pagination)
     } catch {
@@ -122,6 +150,9 @@ export default function AdminDashboardPage() {
   function handleResourceSelect(resourceKey) {
     setActiveResourceKey(resourceKey)
     setEditor(null)
+    setDetailRow(null)
+    setImportModalOpen(false)
+    setPage(1)
     setSearch('')
     setFilterColumn('')
     setFilterValue('')
@@ -161,9 +192,56 @@ export default function AdminDashboardPage() {
     try {
       await deleteAdminRow(activeResource.key, id)
       setConfirmation(null)
+      setDetailRow(null)
       await reloadRows()
     } catch {
       setError('Unable to archive record.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function executeRestore(row) {
+    setSaving(true)
+    setError('')
+    try {
+      await restoreArchivedRow(row.archive_id)
+      setConfirmation(null)
+      setDetailRow(null)
+      await reloadRows()
+    } catch (err) {
+      setConfirmation(null)
+      setError(err.message || 'Unable to restore archived record.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function executePermanentDelete(row) {
+    setSaving(true)
+    setError('')
+    try {
+      await permanentlyDeleteArchivedRow(row.archive_id)
+      setConfirmation(null)
+      setDetailRow(null)
+      await reloadRows()
+    } catch (err) {
+      setConfirmation(null)
+      setError(err.message || 'Unable to permanently delete archived record.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function executeImport({ filename, csvText }) {
+    setSaving(true)
+    setImportError('')
+    try {
+      await importAdminCsv(activeResource.key, { filename, csvText })
+      setImportModalOpen(false)
+      await reloadRows()
+    } catch (err) {
+      setImportError(err.message || 'Unable to import CSV.')
     } finally {
       setSaving(false)
     }
@@ -206,13 +284,25 @@ export default function AdminDashboardPage() {
               setFormError('')
               setEditor({ mode: 'create', row: null })
             }}
+            onImport={() => {
+              setImportError('')
+              setImportModalOpen(true)
+            }}
             onFilterColumnChange={(nextColumn) => {
+              setPage(1)
               setFilterColumn(nextColumn)
               setFilterValue('')
             }}
-            onFilterValueChange={setFilterValue}
-            onSearchChange={setSearch}
+            onFilterValueChange={(nextValue) => {
+              setPage(1)
+              setFilterValue(nextValue)
+            }}
+            onSearchChange={(nextSearch) => {
+              setPage(1)
+              setSearch(nextSearch)
+            }}
             onClearFilters={() => {
+              setPage(1)
               setFilterColumn('')
               setFilterValue('')
             }}
@@ -223,6 +313,7 @@ export default function AdminDashboardPage() {
               activeResource={activeResource}
               error={error}
               loading={loading}
+              pageSize={pageSize}
               pagination={pagination}
               rows={rows}
               visibleColumns={visibleColumns}
@@ -237,10 +328,36 @@ export default function AdminDashboardPage() {
                   onConfirm: () => executeArchive(row),
                 })
               }}
+              onPermanentDelete={(row) => {
+                setConfirmation({
+                  type: 'permanent-delete',
+                  title: 'Permanently delete this archived record?',
+                  description: `${row.archive_id} will be removed from Archive. This cannot be undone.`,
+                  confirmLabel: 'Delete forever',
+                  tone: 'danger',
+                  onConfirm: () => executePermanentDelete(row),
+                })
+              }}
+              onRestore={(row) => {
+                setConfirmation({
+                  type: 'restore',
+                  title: 'Restore this archived record?',
+                  description: `${row.record_id} will be returned to ${row.resource_name} if its primary key is not already active.`,
+                  confirmLabel: 'Restore',
+                  onConfirm: () => executeRestore(row),
+                })
+              }}
+              onRowOpen={setDetailRow}
               onEdit={(row) => {
                 if (activeResource.readOnly) return
+                setDetailRow(null)
                 setFormError('')
                 setEditor({ mode: 'edit', row })
+              }}
+              onPageChange={setPage}
+              onPageSizeChange={(nextPageSize) => {
+                setPageSize(nextPageSize)
+                setPage(1)
               }}
             />
           ) : null}
@@ -265,6 +382,69 @@ export default function AdminDashboardPage() {
                   : `Changes to ${editor.row[activeResource.idColumn]} will be saved.`,
               confirmLabel: editor.mode === 'create' ? 'Create' : 'Save',
               onConfirm: () => executeSave(form),
+            })
+          }}
+        />
+      ) : null}
+
+      {activeResource && detailRow ? (
+        <AdminRowDetailModal
+          resource={activeResource}
+          row={detailRow}
+          onClose={() => setDetailRow(null)}
+          onEdit={(row) => {
+            setDetailRow(null)
+            setFormError('')
+            setEditor({ mode: 'edit', row })
+          }}
+          onArchive={(row) => {
+            const id = row[activeResource.idColumn]
+            setConfirmation({
+              type: 'archive',
+              title: 'Archive this record?',
+              description: `${id} will move out of active ${activeResource.label} records and appear in Archive.`,
+              confirmLabel: 'Archive',
+              tone: 'danger',
+              onConfirm: () => executeArchive(row),
+            })
+          }}
+          onRestore={(row) => {
+            setConfirmation({
+              type: 'restore',
+              title: 'Restore this archived record?',
+              description: `${row.record_id} will be returned to ${row.resource_name} if its primary key is not already active.`,
+              confirmLabel: 'Restore',
+              onConfirm: () => executeRestore(row),
+            })
+          }}
+          onPermanentDelete={(row) => {
+            setConfirmation({
+              type: 'permanent-delete',
+              title: 'Permanently delete this archived record?',
+              description: `${row.archive_id} will be removed from Archive. This cannot be undone.`,
+              confirmLabel: 'Delete forever',
+              tone: 'danger',
+              onConfirm: () => executePermanentDelete(row),
+            })
+          }}
+        />
+      ) : null}
+
+      {activeResource && importModalOpen ? (
+        <AdminImportCsvModal
+          resource={activeResource}
+          loading={saving}
+          error={importError}
+          onCancel={() => {
+            if (!saving) setImportModalOpen(false)
+          }}
+          onConfirm={(payload) => {
+            setConfirmation({
+              type: 'import',
+              title: 'Import this CSV?',
+              description: `${payload.filename} will be upserted into ${activeResource.label}. Existing matching records will be archived before update.`,
+              confirmLabel: 'Import',
+              onConfirm: () => executeImport(payload),
             })
           }}
         />

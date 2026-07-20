@@ -55,3 +55,41 @@ export function getFilterColumns(resource) {
   ]
   return Array.from(new Set(preferred.filter((column) => resource.columns.includes(column))))
 }
+
+export const fallbackDatasetLogsResource = {
+  key: 'datasetLogs',
+  label: 'Dataset Logs',
+  idColumn: 'log_id',
+  readOnly: true,
+  columns: [
+    'log_id',
+    'resource_name',
+    'original_filename',
+    'imported_row_count',
+    'created_count',
+    'updated_count',
+    'skipped_count',
+    'status',
+    'notes',
+    'imported_by',
+    'imported_at',
+  ],
+  required: ['log_id', 'resource_name'],
+  types: {
+    imported_row_count: 'number',
+    created_count: 'number',
+    updated_count: 'number',
+    skipped_count: 'number',
+  },
+}
+
+export function orderAdminResources(resources) {
+  const order = ['species', 'conopeptides', 'biomarkers', 'publications', 'taxonomy', 'archive', 'datasetLogs']
+  const byKey = new Map(resources.map((resource) => [resource.key, resource]))
+
+  if (!byKey.has('datasetLogs')) {
+    byKey.set('datasetLogs', fallbackDatasetLogsResource)
+  }
+
+  return order.map((key) => byKey.get(key)).filter(Boolean)
+}

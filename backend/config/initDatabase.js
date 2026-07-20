@@ -124,6 +124,22 @@ async function createTables() {
             archived_by TEXT DEFAULT 'admin'
         );
     `;
+
+    await sql`
+        CREATE TABLE IF NOT EXISTS dataset_import_logs (
+            log_id TEXT PRIMARY KEY,
+            resource_name TEXT NOT NULL,
+            original_filename TEXT,
+            imported_row_count INTEGER DEFAULT 0,
+            created_count INTEGER DEFAULT 0,
+            updated_count INTEGER DEFAULT 0,
+            skipped_count INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'completed',
+            notes TEXT,
+            imported_by TEXT DEFAULT 'admin',
+            imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
 }
 
 async function seedTable({ tableName, idColumn, rows, columns }) {

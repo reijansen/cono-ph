@@ -1,3 +1,5 @@
+const resourceOrder = ["species", "conopeptides", "biomarkers", "publications", "taxonomy", "archive", "datasetLogs"];
+
 export const adminResources = {
     species: {
         table: "species",
@@ -158,8 +160,39 @@ export const adminResources = {
         searchable: ["archive_id", "resource_name", "record_id", "archived_by"],
         types: {},
     },
+    datasetLogs: {
+        table: "dataset_import_logs",
+        idColumn: "log_id",
+        label: "Dataset Logs",
+        readOnly: true,
+        columns: [
+            "log_id",
+            "resource_name",
+            "original_filename",
+            "imported_row_count",
+            "created_count",
+            "updated_count",
+            "skipped_count",
+            "status",
+            "notes",
+            "imported_by",
+            "imported_at",
+        ],
+        required: ["log_id", "resource_name"],
+        searchable: ["log_id", "resource_name", "original_filename", "status", "notes", "imported_by"],
+        types: {
+            imported_row_count: "number",
+            created_count: "number",
+            updated_count: "number",
+            skipped_count: "number",
+        },
+    },
 };
 
 export function getAdminResource(resourceName) {
     return adminResources[resourceName] ?? null;
+}
+
+export function getOrderedAdminResourceEntries() {
+    return resourceOrder.map((key) => [key, adminResources[key]]).filter(([, resource]) => Boolean(resource));
 }

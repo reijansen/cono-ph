@@ -1,4 +1,4 @@
-import { Filter, Plus, Search } from 'lucide-react'
+import { Filter, Plus, Search, Upload } from 'lucide-react'
 
 export default function AdminToolbar({
   activeResource,
@@ -7,6 +7,7 @@ export default function AdminToolbar({
   filterValue,
   search,
   onCreate,
+  onImport,
   onFilterColumnChange,
   onFilterValueChange,
   onSearchChange,
@@ -62,15 +63,23 @@ export default function AdminToolbar({
           </button>
         </div>
 
-        <button
-          type="button"
-          className="btn btn-sm rounded-md bg-brand-700 text-white hover:bg-brand-800"
-          onClick={onCreate}
-          disabled={!activeResource || activeResource.readOnly}
-        >
-          <Plus className="h-4 w-4" />
-          New
-        </button>
+        <div className="flex gap-2">
+          {!activeResource?.readOnly ? (
+            <button type="button" className="btn btn-outline btn-sm rounded-md gap-2" onClick={onImport}>
+              <Upload className="h-4 w-4" />
+              Import CSV
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="btn btn-sm rounded-md bg-brand-700 text-white hover:bg-brand-800"
+            onClick={onCreate}
+            disabled={!activeResource || activeResource.readOnly}
+          >
+            <Plus className="h-4 w-4" />
+            New
+          </button>
+        </div>
       </div>
     </div>
   )

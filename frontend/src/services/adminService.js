@@ -46,3 +46,15 @@ export async function updateAdminRow(resource, id, data) {
 export async function deleteAdminRow(resource, id) {
   return unwrap(await apiClient.delete(`/admin/${resource}/${encodeURIComponent(id)}`)).data
 }
+
+export async function restoreArchivedRow(archiveId) {
+  return unwrap(await apiClient.post(`/admin/archive/${encodeURIComponent(archiveId)}/restore`, {})).data
+}
+
+export async function permanentlyDeleteArchivedRow(archiveId) {
+  return unwrap(await apiClient.delete(`/admin/archive/${encodeURIComponent(archiveId)}/permanent`)).data
+}
+
+export async function importAdminCsv(resource, { filename, csvText }) {
+  return unwrap(await apiClient.post(`/admin/${resource}/import-csv`, { filename, csvText })).data
+}

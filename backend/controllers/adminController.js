@@ -12,8 +12,11 @@ import {
     createAdminRow,
     deleteAdminRow,
     getAdminRow,
+    importAdminCsv,
     listAdminResourceMetadata,
     listAdminRows,
+    permanentlyDeleteArchivedRow,
+    restoreArchivedRow,
     updateAdminRow,
 } from "../models/adminModel.js";
 
@@ -157,6 +160,60 @@ export const deleteAdminResourceRow = asyncHandler(async (req, res) => {
 
     return sendSuccess(res, {
         data: row,
-        message: "Admin record deleted successfully.",
+        message: "Admin record archived successfully.",
+    });
+});
+
+export const listAdminDatasetLogs = asyncHandler(async (req, res) => {
+    const { rows, pagination } = await listAdminRows("datasetLogs", {
+        page: parsePositiveInt(req.query.page, 1),
+        limit: parsePositiveInt(req.query.limit, 25),
+        search: parseString(req.query.search),
+        filterColumn: parseString(req.query.filterColumn),
+        filterValue: parseString(req.query.filterValue),
+    });
+
+    return sendSuccess(res, {
+        data: rows,
+        pagination,
+        message: "Successfully fetched dataset import logs.",
+    });
+});
+
+export const restoreAdminArchiveRow = asyncHandler(async (req, res) => {
+    const row = await restoreArchivedRow(req.params.archiveId);
+
+    if (!row) {
+        throw new ApiError(404, "Archived record not found", "ARCHIVE_RECORD_NOT_FOUND");
+    }
+
+    return sendSuccess(res, {
+        data: row,
+        message: "Archived record restored successfully.",
+    });
+});
+
+export const permanentlyDeleteAdminArchiveRow = asyncHandler(async (req, res) => {
+    const row = await permanentlyDeleteArchivedRow(req.params.archiveId);
+
+    if (!row) {
+        throw new ApiError(404, "Archived record not found", "ARCHIVE_RECORD_NOT_FOUND");
+    }
+
+    return sendSuccess(res, {
+        data: row,
+        message: "Archived record permanently deleted.",
+    });
+});
+
+export const importAdminResourceCsv = asyncHandler(async (req, res) => {
+    const result = await importAdminCsv(req.params.resource, {
+        filename: parseString(req.body?.filename, "dataset.csv"),
+        csvText: parseString(req.body?.csvText),
+    });
+
+    return sendSuccess(res, {
+        data: result,
+        message: "CSV import completed.",
     });
 });
