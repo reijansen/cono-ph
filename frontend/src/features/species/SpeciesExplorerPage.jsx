@@ -42,7 +42,7 @@ export default function SpeciesExplorerPage() {
 
             <div className="space-y-5">
               {records.map((species) => (
-                <SpeciesExplorerCard key={species.id} species={species} />
+                <SpeciesExplorerCard key={species.speciesId} species={species} />
               ))}
             </div>
 

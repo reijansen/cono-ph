@@ -6,7 +6,6 @@ import MetricsSection from '@/features/visualization/components/VisualizationMet
 import OverviewCardsSection from '@/features/visualization/components/VisualizationOverviewCardsSection'
 import TrendsSection from '@/features/visualization/components/VisualizationTrendsSection'
 import { fetchDashboardSummary } from '@/services/catalogService'
-import { loadVisualizationBackupData } from '@/features/visualization/data/visualizationBackupData'
 import {
   visualizationBreadcrumbs,
   visualizationMeta,
@@ -23,23 +22,10 @@ export default function VisualizationPage() {
         const loadedData = await fetchDashboardSummary()
         if (active && loadedData) {
           setVisualizationData(loadedData)
-          return
-        }
-
-        const fallbackData = await loadVisualizationBackupData()
-        if (active) {
-          setVisualizationData(fallbackData)
         }
       } catch {
-        try {
-          const fallbackData = await loadVisualizationBackupData()
-          if (active) {
-            setVisualizationData(fallbackData)
-          }
-        } catch {
-          if (active) {
-            setVisualizationData(null)
-          }
+        if (active) {
+          setVisualizationData(null)
         }
       }
     }

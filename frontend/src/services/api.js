@@ -43,8 +43,9 @@ async function fetchAPI(endpoint, options = {}) {
 
     return responseData;
   } catch (error) {
-    // Log for debugging (remove in production)
-    console.error(`API Error [${options.method || 'GET'} ${endpoint}]:`, error.message);
+    if (import.meta.env.DEV) {
+      console.error(`API Error [${options.method || 'GET'} ${endpoint}]:`, error.message);
+    }
     throw error;
   }
 }

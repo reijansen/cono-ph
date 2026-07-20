@@ -23,10 +23,10 @@ Put each CSV file in the matching `csv/<dataset>/` folder and name it with the s
 - `csv/publications/publications_2026-07-15.csv`
 - `csv/taxonomic/taxonomic_2026-07-15.csv`
 
-Run this from `frontend/`:
+Run this from the repository root:
 
 ```bash
-npm run backup:json
+npm run seed:json
 ```
 
-The script writes JSON to the matching `json/<dataset>/` folder with the same base file name.
+The script writes backend-private JSON to the matching `json/<dataset>/` folder with the same base file name. It does not write anything to `frontend/public`.

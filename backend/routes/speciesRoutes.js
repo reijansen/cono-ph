@@ -7,13 +7,14 @@ import {
     updateSpeciesController,
     deleteSpeciesController,
 } from "../controllers/speciesController.js";
+import { requireAdminApiKey } from "../middlewares/adminAuth.js";
 
 const router = express.Router();
 
 router.get("/", getAllSpecies);
 router.get("/:id", getSpecies);
-router.post("/", createSpeciesController);
-router.put("/:id", updateSpeciesController);
-router.delete("/:id", deleteSpeciesController);
+router.post("/", requireAdminApiKey, createSpeciesController);
+router.put("/:id", requireAdminApiKey, updateSpeciesController);
+router.delete("/:id", requireAdminApiKey, deleteSpeciesController);
 
 export default router;

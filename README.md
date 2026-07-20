@@ -20,8 +20,10 @@ The backend is an Express server and should be deployed separately.
 1. Create `.env`
 2. Update `.env` following the format from `.env.example`
 3. Paste your Supabase Postgres connection string into `DATABASE_URL`
-4. Run `npm install` in the repo root
-5. Run `npm run dev`
+4. Set `CORS_ORIGINS` to the frontend origins allowed to call the API
+5. Set `ADMIN_API_KEY` if you need to use protected write routes
+6. Run `npm install` in the repo root
+7. Run `npm run dev`
 
 The backend now exposes MVC-style routes under `/api`:
 - `/api/species`
@@ -31,13 +33,19 @@ The backend now exposes MVC-style routes under `/api`:
 - `/api/taxonomy`
 - `/api/dashboard/summary`
 
-The database bootstrap creates the required tables and seeds them from the repo backup JSON files if the tables are empty.
+The database bootstrap creates the required tables and seeds them from backend-private JSON files in `backend/seed-data/json` if the tables are empty. These files are not served by the frontend.
 
-To reseed Supabase manually from the backup JSON files, run:
+To reseed Supabase manually from the private seed JSON files, run:
 
 ```powershell
 npm run seed:supabase
 ```
+
+## Security Notes
+
+The frontend reads data through the Express API only. Raw seed JSON is kept out of `frontend/public` so users cannot download it as a static browser asset.
+
+Species write routes are protected with `x-admin-api-key`. Do not put `ADMIN_API_KEY` in frontend environment variables.
 
 ## Dockerfile Setup
 

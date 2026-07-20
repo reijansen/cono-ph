@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { fetchPublicationExplorerRows } from '@/services/catalogService'
-import { loadPublicationBackupRows } from '@/features/publications/data/publicationBackupData'
 
 const publicationExplorerBreadcrumbs = [
   { label: 'Home', to: '/' },
@@ -57,29 +56,14 @@ export function usePublicationsExplorerController() {
 
       try {
         const liveRows = await fetchPublicationExplorerRows()
-        if (active && liveRows.length > 0) {
+        if (active) {
           setRowsSource(liveRows)
           setRowsStatus('live')
-          return
-        }
-
-        const backupRows = await loadPublicationBackupRows()
-        if (active) {
-          setRowsSource(backupRows)
-          setRowsStatus('backup')
         }
       } catch {
-        try {
-          const backupRows = await loadPublicationBackupRows()
-          if (active) {
-            setRowsSource(backupRows)
-            setRowsStatus('backup')
-          }
-        } catch {
-          if (active) {
-            setRowsSource([])
-            setRowsStatus('empty')
-          }
+        if (active) {
+          setRowsSource([])
+          setRowsStatus('empty')
         }
       }
     }
@@ -132,7 +116,7 @@ export function usePublicationsExplorerController() {
     handlePageChange,
     meta: publicationExplorerMeta,
     pagination: { ...publicationPagination, page, totalPages },
-    resultCount: rowsStatus === 'loading' ? 'Loading backup data...' : `${filteredRows.length.toLocaleString()} results`,
+    resultCount: rowsStatus === 'loading' ? 'Loading data...' : `${filteredRows.length.toLocaleString()} results`,
     rows,
   }
 }

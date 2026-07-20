@@ -12,6 +12,7 @@ import biomarkerRoutes from "./routes/biomarkerRoutes.js";
 import publicationRoutes from "./routes/publicationRoutes.js";
 import taxonomyRoutes from "./routes/taxonomyRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import { buildCorsOptions } from "./config/cors.js";
 import { initializeDatabase } from "./config/initDatabase.js";
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.js";
 
@@ -23,7 +24,7 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 const PORT = process.env.PORT || 3333;
 const app = express();
 
-app.use(cors());
+app.use(cors(buildCorsOptions()));
 app.use(express.json());
 app.use(helmet());
 app.use(morgan("dev"));

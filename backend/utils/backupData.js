@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const BACKUP_ROOT = path.resolve(__dirname, "../../frontend/public/backup-data/json");
+const BACKUP_ROOT = path.resolve(__dirname, "../seed-data/json");
 
 async function readJsonArray(...segments) {
     const filePath = path.join(BACKUP_ROOT, ...segments);
@@ -211,4 +211,3 @@ export async function loadPublicationSeedRows() {
         })
         .filter((record) => record.publication_id);
 }
-

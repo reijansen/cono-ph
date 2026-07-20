@@ -1,13 +1,13 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 
-const rootDir = path.resolve(process.cwd(), 'backup-data')
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const rootDir = path.resolve(__dirname, '..')
 const inputDir = path.join(rootDir, 'csv')
-const outputDirs = [
-  path.join(rootDir, 'json'),
-  path.resolve(process.cwd(), 'public', 'backup-data', 'json'),
-]
+const outputDir = path.join(rootDir, 'json')
 const datasetNames = ['species', 'conopeptides', 'barcodes', 'publications', 'taxonomic']
 
 function parseCsv(content) {
@@ -93,16 +93,12 @@ async function ensureDirectory(directoryPath) {
 }
 
 async function main() {
-  for (const outputDir of outputDirs) {
-    await ensureDirectory(outputDir)
-  }
+  await ensureDirectory(outputDir)
 
   for (const datasetName of datasetNames) {
     const datasetInputDir = path.join(inputDir, datasetName)
-    const datasetOutputDirs = outputDirs.map((outputDir) => path.join(outputDir, datasetName))
-    for (const datasetOutputDir of datasetOutputDirs) {
-      await ensureDirectory(datasetOutputDir)
-    }
+    const datasetOutputDir = path.join(outputDir, datasetName)
+    await ensureDirectory(datasetOutputDir)
 
     let files = []
     try {
@@ -118,14 +114,12 @@ async function main() {
       const targetFileName = fileName.replace(/\.csv$/i, '.json')
       const csvContent = await fs.readFile(sourcePath, 'utf8')
       const jsonData = parseCsv(csvContent)
-      for (const datasetOutputDir of datasetOutputDirs) {
-        const targetPath = path.join(datasetOutputDir, targetFileName)
-        const latestPath = path.join(datasetOutputDir, 'latest.json')
-        await fs.writeFile(targetPath, `${JSON.stringify(jsonData, null, 2)}\n`, 'utf8')
-        await fs.writeFile(latestPath, `${JSON.stringify(jsonData, null, 2)}\n`, 'utf8')
-        console.log(`Wrote ${path.relative(process.cwd(), targetPath)}`)
-        console.log(`Wrote ${path.relative(process.cwd(), latestPath)}`)
-      }
+      const targetPath = path.join(datasetOutputDir, targetFileName)
+      const latestPath = path.join(datasetOutputDir, 'latest.json')
+      await fs.writeFile(targetPath, `${JSON.stringify(jsonData, null, 2)}\n`, 'utf8')
+      await fs.writeFile(latestPath, `${JSON.stringify(jsonData, null, 2)}\n`, 'utf8')
+      console.log(`Wrote ${path.relative(process.cwd(), targetPath)}`)
+      console.log(`Wrote ${path.relative(process.cwd(), latestPath)}`)
     }
   }
 }

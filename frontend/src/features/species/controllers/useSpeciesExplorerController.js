@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { fetchSpeciesExplorerRows } from '@/services/catalogService'
-import { loadSpeciesBackupRecords } from '@/features/species/data/speciesBackupData'
 
 const speciesPageSize = 5
 
@@ -44,26 +43,12 @@ export function useSpeciesExplorerController() {
     async function loadRecords() {
       try {
         const liveRecords = await fetchSpeciesExplorerRows()
-        if (active && liveRecords.length > 0) {
+        if (active) {
           setRecordsSource(liveRecords)
-          return
-        }
-        const backupRecords = await loadSpeciesBackupRecords()
-        if (active && backupRecords.length > 0) {
-          setRecordsSource(backupRecords)
         }
       } catch {
-        try {
-          const backupRecords = await loadSpeciesBackupRecords()
-          if (active && backupRecords.length > 0) {
-            setRecordsSource(backupRecords)
-          } else if (active) {
-            setRecordsSource([])
-          }
-        } catch {
-          if (active) {
-            setRecordsSource([])
-          }
+        if (active) {
+          setRecordsSource([])
         }
       }
     }

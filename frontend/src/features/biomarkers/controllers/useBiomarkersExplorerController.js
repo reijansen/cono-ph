@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { fetchBiomarkerExplorerRows } from '@/services/catalogService'
-import { loadBiomarkerBackupRows } from '@/features/biomarkers/data/biomarkerBackupData'
 
 const biomarkerExplorerBreadcrumbs = [
   { label: 'Home', to: '/' },
@@ -63,26 +62,12 @@ export function useBiomarkersExplorerController() {
     async function loadRows() {
       try {
         const liveRows = await fetchBiomarkerExplorerRows()
-        if (active && liveRows.length > 0) {
+        if (active) {
           setRowsSource(liveRows)
-          return
-        }
-        const backupRows = await loadBiomarkerBackupRows()
-        if (active && backupRows.length > 0) {
-          setRowsSource(backupRows)
         }
       } catch {
-        try {
-          const backupRows = await loadBiomarkerBackupRows()
-          if (active && backupRows.length > 0) {
-            setRowsSource(backupRows)
-          } else if (active) {
-            setRowsSource([])
-          }
-        } catch {
-          if (active) {
-            setRowsSource([])
-          }
+        if (active) {
+          setRowsSource([])
         }
       }
     }

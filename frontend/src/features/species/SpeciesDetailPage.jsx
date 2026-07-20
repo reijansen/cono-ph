@@ -11,7 +11,6 @@ import SelectWithChevron from '@/components/ui/SelectWithChevron'
 import { cn } from '@/utils/cn'
 import { fetchSpeciesDetail } from '@/services/catalogService'
 
-import { loadSpeciesBackupDetails } from '@/features/species/data/speciesDetailBackupData'
 import speciesShellImage from '@/assets/HomeShell.png'
 
 const tabs = [
@@ -462,26 +461,10 @@ export default function SpeciesDetailPage() {
         const liveRecord = await fetchSpeciesDetail(speciesId)
         if (active && liveRecord) {
           setSpeciesSource([liveRecord])
-          return
-        }
-
-        const backupRecords = await loadSpeciesBackupDetails()
-        if (active && backupRecords.length > 0) {
-          setSpeciesSource(backupRecords)
-          return
         }
       } catch {
-        try {
-          const backupRecords = await loadSpeciesBackupDetails()
-          if (active && backupRecords.length > 0) {
-            setSpeciesSource(backupRecords)
-          } else if (active) {
-            setSpeciesSource([])
-          }
-        } catch {
-          if (active) {
-            setSpeciesSource([])
-          }
+        if (active) {
+          setSpeciesSource([])
         }
       }
     }
@@ -491,7 +474,7 @@ export default function SpeciesDetailPage() {
     return () => {
       active = false
     }
-  }, [])
+  }, [speciesId])
 
   if (!species) {
     return null
