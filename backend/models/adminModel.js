@@ -61,7 +61,7 @@ function normalizeImportPayload(resource, payload) {
         next[column] = value;
     }
 
-    return next;
+    return typeof resource.importDefaults === "function" ? resource.importDefaults(next) : next;
 }
 
 function paginate(rows, page, limit) {
