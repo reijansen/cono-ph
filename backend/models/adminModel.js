@@ -184,6 +184,78 @@ async function archiveExistingRecord(resourceName, resource, id, existing, reaso
     return archiveId;
 }
 
+async function archiveExistingRecords(resourceName, rows, reason = "csv-import-overwrite") {
+    if (!rows.length) return;
+
+    const archiveColumns = ["archive_id", "resource_name", "record_id", "record_data", "archived_by"];
+    const archiveRows = rows.map(({ resource, id, existing }) => ({
+        archive_id: crypto.randomUUID(),
+        resource_name: resourceName,
+        record_id: String(id),
+        record_data: JSON.stringify({ ...existing, archive_reason: reason }),
+        archived_by: "admin",
+        resource,
+    }));
+
+    for (let index = 0; index < archiveRows.length; index += 100) {
+        const batch = archiveRows.slice(index, index + 100);
+        const values = [];
+        const tuples = batch.map((row, rowIndex) => {
+            const offset = rowIndex * archiveColumns.length;
+            values.push(row.archive_id, row.resource_name, row.record_id, row.record_data, row.archived_by);
+            return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}::jsonb, $${offset + 5})`;
+        });
+
+        await sql.unsafe(
+            `INSERT INTO admin_archive (${archiveColumns.join(", ")}) VALUES ${tuples.join(", ")}`,
+            values,
+        );
+    }
+}
+
+async function getExistingRowsByIds(resource, ids) {
+    const uniqueIds = Array.from(new Set(ids.map((id) => String(id)).filter(Boolean)));
+    const existing = new Map();
+
+    for (let index = 0; index < uniqueIds.length; index += 500) {
+        const batch = uniqueIds.slice(index, index + 500);
+        const placeholders = batch.map((_, batchIndex) => `$${batchIndex + 1}`).join(", ");
+        const rows = await sql.unsafe(
+            `SELECT ${resource.columns.join(", ")} FROM ${resource.table} WHERE ${resource.idColumn} IN (${placeholders})`,
+            batch,
+        );
+
+        rows.forEach((row) => {
+            existing.set(String(row[resource.idColumn]), row);
+        });
+    }
+
+    return existing;
+}
+
+async function upsertImportRows(resource, rows) {
+    if (!rows.length) return;
+
+    const columns = resource.columns;
+    const updateColumns = columns.filter((column) => column !== resource.idColumn);
+    const updateList = updateColumns.map((column) => `${column} = EXCLUDED.${column}`).join(", ");
+
+    for (let index = 0; index < rows.length; index += 100) {
+        const batch = rows.slice(index, index + 100);
+        const values = [];
+        const tuples = batch.map((row, rowIndex) => {
+            const offset = rowIndex * columns.length;
+            values.push(...columns.map((column) => row[column]));
+            return `(${columns.map((_, columnIndex) => `$${offset + columnIndex + 1}`).join(", ")})`;
+        });
+
+        await sql.unsafe(
+            `INSERT INTO ${resource.table} (${columns.join(", ")}) VALUES ${tuples.join(", ")} ON CONFLICT (${resource.idColumn}) DO UPDATE SET ${updateList}`,
+            values,
+        );
+    }
+}
+
 export async function listAdminRows(resourceName, filters = {}) {
     const resource = assertResource(resourceName);
     const rows = await sql.unsafe(`SELECT ${resource.columns.join(", ")} FROM ${resource.table}`);
@@ -332,10 +404,9 @@ export async function importAdminCsv(resourceName, { filename = "dataset.csv", c
     }
 
     const parsedRows = parseCsv(csvText);
-    let createdCount = 0;
-    let updatedCount = 0;
     let skippedCount = 0;
     const skippedReasons = new Map();
+    const validRows = [];
 
     const trackSkipped = (reason) => {
         skippedCount += 1;
@@ -363,32 +434,25 @@ export async function importAdminCsv(resourceName, { filename = "dataset.csv", c
             continue;
         }
 
-        const existing = await getAdminRow(resourceName, id);
-        const columns = resource.columns.filter((column) => column in data);
-        const values = columns.map((column) => data[column]);
-
-        if (existing) {
-            await archiveExistingRecord(resourceName, resource, id, existing, "csv-import-overwrite");
-            const updateColumns = columns.filter((column) => column !== resource.idColumn);
-            const setList = updateColumns.map((column, index) => `${column} = $${index + 1}`).join(", ");
-            const updateValues = updateColumns.map((column) => data[column]);
-
-            if (updateColumns.length > 0) {
-                await sql.unsafe(
-                    `UPDATE ${resource.table} SET ${setList} WHERE ${resource.idColumn} = $${updateColumns.length + 1}`,
-                    [...updateValues, id],
-                );
-            }
-            updatedCount += 1;
-        } else {
-            const placeholders = columns.map((_, index) => `$${index + 1}`).join(", ");
-            await sql.unsafe(
-                `INSERT INTO ${resource.table} (${columns.join(", ")}) VALUES (${placeholders})`,
-                values,
-            );
-            createdCount += 1;
-        }
+        validRows.push(Object.fromEntries(resource.columns.map((column) => [column, column in data ? data[column] : null])));
     }
+
+    const existingRows = await getExistingRowsByIds(resource, validRows.map((row) => row[resource.idColumn]));
+    const updatedCount = validRows.filter((row) => existingRows.has(String(row[resource.idColumn]))).length;
+    const createdCount = validRows.length - updatedCount;
+
+    await archiveExistingRecords(
+        resourceName,
+        validRows
+            .map((row) => {
+                const id = row[resource.idColumn];
+                const existing = existingRows.get(String(id));
+                return existing ? { resource, id, existing } : null;
+            })
+            .filter(Boolean),
+    );
+
+    await upsertImportRows(resource, validRows);
 
     const log = {
         log_id: crypto.randomUUID(),
