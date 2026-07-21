@@ -91,6 +91,51 @@ function normalize(value) {
     return String(value ?? "").toLowerCase();
 }
 
+function normalizeImagePath(value) {
+    return String(value ?? "").trim();
+}
+
+function toPublicImagePath(value) {
+    const imagePath = normalizeImagePath(value);
+    if (!imagePath) return "";
+    if (/^https?:\/\//i.test(imagePath)) {
+        const bucketBaseUrl = String(process.env.SUPABASE_PUBLIC_BUCKET_URL ?? "").trim().replace(/\/$/, "");
+        const bucketPrefix = bucketBaseUrl ? `${bucketBaseUrl}/` : "";
+        const publicBucketMatch = imagePath.match(/\/storage\/v1\/object\/public\/species-images\/(.+)$/);
+
+        if (bucketPrefix && imagePath.startsWith(bucketPrefix)) {
+            return `/species-images/${imagePath.slice(bucketPrefix.length).replace(/^\/+/, "")}`;
+        }
+
+        if (publicBucketMatch?.[1]) {
+            return `/species-images/${publicBucketMatch[1].replace(/^\/+/, "")}`;
+        }
+
+        return imagePath;
+    }
+    if (imagePath.startsWith("/")) return imagePath;
+    if (imagePath.includes("/")) return `/${imagePath}`;
+    return `/species-images/${imagePath}`;
+}
+
+function resolveShellImageUrl(value) {
+    const imagePath = normalizeImagePath(value);
+    const bucketBaseUrl = String(process.env.SUPABASE_PUBLIC_BUCKET_URL ?? "").trim().replace(/\/$/, "");
+
+    if (!imagePath) return "";
+    if (/^https?:\/\//i.test(imagePath)) return imagePath;
+    if (!bucketBaseUrl) return toPublicImagePath(imagePath);
+
+    const pathSegments = imagePath.replace(/^\/+/, "").split("/").filter(Boolean);
+    const baseLastSegment = bucketBaseUrl.split("/").filter(Boolean).at(-1);
+
+    if (pathSegments[0] && baseLastSegment && pathSegments[0] === baseLastSegment) {
+        pathSegments.shift();
+    }
+
+    return `${bucketBaseUrl}/${pathSegments.map(encodeURIComponent).join("/")}`;
+}
+
 function buildPagination(total, page, limit) {
     return {
         page,
@@ -136,11 +181,81 @@ function paginate(rows, page, limit) {
     };
 }
 
-function mapSpeciesDetail(species, taxonomy, conopeptides, publications) {
+function toNumber(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function uniqueValues(rows, field) {
+    return Array.from(new Set(rows.map((row) => String(row[field] ?? "").trim()).filter(Boolean)));
+}
+
+function joinUnique(rows, field, fallback = "") {
+    const values = uniqueValues(rows, field);
+    return values.length ? values.join(", ") : fallback;
+}
+
+function includesFilterValue(rowValue, filterValue) {
+    if (!filterValue || String(filterValue).startsWith("All ")) return true;
+
+    return String(rowValue ?? "")
+        .split(",")
+        .map((value) => value.trim())
+        .includes(String(filterValue).trim());
+}
+
+function aggregateSpeciesRows(rows) {
+    const grouped = new Map();
+
+    rows.forEach((row) => {
+        const key = normalize(row.scientificName || row.speciesId);
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key).push(row);
+    });
+
+    return Array.from(grouped.values()).map((group) => {
+        const primary = sortRows(group, "speciesId", "ASC", "speciesId")[0];
+        const totalConopeptides = group.reduce((sum, row) => sum + toNumber(row.numConopeptides ?? row.precursorsCount), 0);
+
+        return {
+            ...primary,
+            specimenIds: group.map((row) => row.speciesId),
+            specimenCount: group.length,
+            province: joinUnique(group, "province"),
+            municipality: joinUnique(group, "municipality"),
+            sequencingPlatform: joinUnique(group, "sequencingPlatform"),
+            tissueSource: joinUnique(group, "tissueSource"),
+            project: joinUnique(group, "project"),
+            doi: joinUnique(group, "doi"),
+            status: joinUnique(group, "status", primary.status),
+            precursorsCount: totalConopeptides,
+            numConopeptides: totalConopeptides,
+            rawDataInNcbiSra: group.some((row) => row.rawDataInNcbiSra),
+        };
+    });
+}
+
+function mapSpecimenRows(rows) {
+    return rows.map((row) => ({
+        specimenId: row.speciesId,
+        author: "Unavailable",
+        repository: "Unavailable",
+        province: row.province || "Unavailable",
+        municipality: row.municipality || "Unavailable",
+        tissueSource: row.tissueSource || "Unavailable",
+        sequencingPlatform: row.sequencingPlatform || "Unavailable",
+        totalConopeptideSequences: String(toNumber(row.numConopeptides ?? row.precursorsCount)),
+        doi: row.doi || "Unavailable",
+        project: row.project || "Unavailable",
+    }));
+}
+
+function mapSpeciesDetail(species, taxonomy, conopeptides, publications, specimens = []) {
     if (!species) return null;
 
     const scientificName = species.scientificName || taxonomy?.scientificName || "";
     const commonName = species.commonName || taxonomy?.commonName || "";
+    const totalConopeptides = toNumber(species.precursorsCount ?? species.numConopeptides);
 
     return {
         speciesId: species.speciesId,
@@ -152,7 +267,8 @@ function mapSpeciesDetail(species, taxonomy, conopeptides, publications) {
             orderName: species.orderName || taxonomy?.orderName || "",
             familyName: species.familyName || taxonomy?.familyName || "",
             genusName: species.genusName || taxonomy?.genusName || "",
-            image: species.image || "",
+            image: resolveShellImageUrl(species.image),
+            imageFallback: toPublicImagePath(species.image),
         },
         taxonomy: {
             scientificName,
@@ -173,8 +289,8 @@ function mapSpeciesDetail(species, taxonomy, conopeptides, publications) {
             tissueSource: species.tissueSource || taxonomy?.tissueSource || "Unavailable",
         },
         molecular: {
-            specimensSequenced: "Unavailable",
-            totalConopeptides: String(species.precursorsCount ?? species.numConopeptides ?? 0),
+            specimensSequenced: String(specimens.length || 1),
+            totalConopeptides: String(totalConopeptides),
             totalGeneSuperfamilies: "Unavailable",
             sequencingPlatform: species.sequencingPlatform || "Unavailable",
             coiMarker: "Unavailable",
@@ -188,14 +304,14 @@ function mapSpeciesDetail(species, taxonomy, conopeptides, publications) {
             project: species.project || "Unavailable",
         },
         statistics: [
-            { label: "Conopeptide Precursors", value: String(species.precursorsCount ?? 0) },
+            { label: "Conopeptide Precursors", value: String(totalConopeptides) },
             { label: "Total Gene Superfamilies", value: "Unavailable" },
-            { label: "Specimens Sequenced", value: "Unavailable" },
+            { label: "Specimens Sequenced", value: String(specimens.length || 1) },
             { label: "Sequencing Platform", value: species.sequencingPlatform || "Unavailable" },
             { label: "Raw Data in NCBI SRA", value: species.rawDataInNcbiSra ? "Available" : "Unavailable" },
         ],
         conopeptides,
-        specimens: [],
+        specimens,
         publications,
     };
 }
@@ -220,24 +336,27 @@ function mapSpeciesRow(row) {
         sequencingPlatform: row.sequencingPlatform,
         tissueSource: row.tissueSource,
         rawDataInNcbiSra: row.rawDataInNcbiSra,
-        image: row.image,
+        image: resolveShellImageUrl(row.image),
+        imageFallback: toPublicImagePath(row.image),
         imagePosition: "center center",
         project: row.project,
         doi: row.doi,
         status: row.status,
+        specimenCount: row.specimenCount ?? 1,
+        specimenIds: row.specimenIds ?? [row.speciesId].filter(Boolean),
     };
 }
 
 export async function listSpecies(filters = {}) {
     const rows = await SPECIES_SELECT;
-    let filtered = rows.filter((row) => {
-        if (!matchesSearch(row, ["speciesId", "scientificName", "commonName", "subgenus", "province", "municipality", "diet", "project", "doi"], filters.search)) {
+    let filtered = aggregateSpeciesRows(rows).filter((row) => {
+        if (!matchesSearch(row, ["speciesId", "scientificName", "commonName", "subgenus", "province", "municipality", "diet", "project", "doi", "specimenIds"], filters.search)) {
             return false;
         }
-        if (filters.subgenus && !String(filters.subgenus).startsWith("All ") && row.subgenus !== filters.subgenus) return false;
-        if (filters.province && !String(filters.province).startsWith("All ") && row.province !== filters.province) return false;
-        if (filters.municipality && !String(filters.municipality).startsWith("All ") && row.municipality !== filters.municipality) return false;
-        if (filters.diet && !String(filters.diet).startsWith("All ") && row.diet !== filters.diet) return false;
+        if (!includesFilterValue(row.subgenus, filters.subgenus)) return false;
+        if (!includesFilterValue(row.province, filters.province)) return false;
+        if (!includesFilterValue(row.municipality, filters.municipality)) return false;
+        if (!includesFilterValue(row.diet, filters.diet)) return false;
         return true;
     });
 
@@ -252,30 +371,44 @@ export async function listSpecies(filters = {}) {
 }
 
 export async function getSpeciesById(speciesId) {
-    const rows = await sql`${SPECIES_SELECT} WHERE species_id = ${speciesId}`;
-    const species = rows[0] ?? null;
+    const rows = await SPECIES_SELECT;
+    const requestedSpecies = rows.find((row) => row.speciesId === speciesId) ?? null;
 
-    if (!species) return null;
+    if (!requestedSpecies) return null;
 
-    const taxonomyRows = await sql`${TAXONOMY_SELECT} WHERE species_id = ${speciesId}`;
-    const relatedConopeptides = (await sql`${CONOPEPTIDE_SELECT} WHERE species_id = ${speciesId}`)
+    const speciesRows = rows.filter((row) => normalize(row.scientificName) === normalize(requestedSpecies.scientificName));
+    const species = aggregateSpeciesRows(speciesRows)[0] ?? requestedSpecies;
+    const specimenIds = speciesRows.map((row) => row.speciesId);
+    const taxonomyRows = (await TAXONOMY_SELECT).filter((row) => specimenIds.includes(row.speciesId));
+    const relatedConopeptides = (await CONOPEPTIDE_SELECT)
+        .filter((row) => specimenIds.includes(row.speciesId))
         .map((row) => ({
             conopeptideId: row.accession,
             species: row.speciesName || species.scientificName || "Unavailable",
             publication: row.doi || "Unavailable",
             geneSuperfamily: row.superfamily || "Unavailable",
+            framework: row.framework || row.cysteineFramework || "Unavailable",
+            specimenId: row.speciesId || "Unavailable",
         }));
+    const specimenDois = uniqueValues(speciesRows, "doi").map(normalize);
 
     const relatedPublications = (await PUBLICATION_SELECT).filter((row) => {
-        const needle = species.doi ? normalize(species.doi) : normalize(species.scientificName);
-        return needle && (
-            normalize(row.title).includes(needle) ||
-            normalize(row.authors).includes(needle) ||
-            normalize(row.doi).includes(needle)
+        const title = normalize(row.title);
+        const authors = normalize(row.authors);
+        const doi = normalize(row.doi);
+        const speciesName = normalize(species.scientificName);
+
+        return (
+            (speciesName && title.includes(speciesName)) ||
+            specimenDois.some((needle) => needle && (
+                doi.includes(needle) ||
+                title.includes(needle) ||
+                authors.includes(needle)
+            ))
         );
     });
 
-    return mapSpeciesDetail(species, taxonomyRows[0] ?? null, relatedConopeptides, relatedPublications);
+    return mapSpeciesDetail(species, taxonomyRows[0] ?? null, relatedConopeptides, relatedPublications, mapSpecimenRows(speciesRows));
 }
 
 export async function createSpecies(data) {
@@ -415,7 +548,7 @@ export async function getSpeciesSummary() {
     ]);
 
     return {
-        speciesCount: speciesRows.length,
+        speciesCount: aggregateSpeciesRows(speciesRows).length,
         conopeptideCount: conopeptideRows.length,
         publicationCount: publicationRows.length,
     };

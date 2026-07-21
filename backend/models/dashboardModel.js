@@ -13,6 +13,12 @@ function entriesFromCountMap(counts) {
         .sort((left, right) => right.value - left.value || left.name.localeCompare(right.name));
 }
 
+function entriesFromValueMap(values) {
+    return Array.from(values.entries())
+        .map(([name, value]) => ({ name, value }))
+        .sort((left, right) => right.value - left.value || left.name.localeCompare(right.name));
+}
+
 function countBy(items, getter) {
     const counts = new Map();
     for (const item of items) {
@@ -22,8 +28,56 @@ function countBy(items, getter) {
     return counts;
 }
 
+function sumBy(items, keyGetter, valueGetter) {
+    const values = new Map();
+    for (const item of items) {
+        const key = String(keyGetter(item) ?? "").trim() || "Unknown";
+        const value = Number(valueGetter(item) || 0);
+        values.set(key, (values.get(key) || 0) + (Number.isFinite(value) ? value : 0));
+    }
+    return values;
+}
+
 function countNonEmpty(rows, getter) {
     return rows.reduce((total, row) => total + (Number(getter(row) || 0) > 0 ? 1 : 0), 0);
+}
+
+function normalizeDoi(value) {
+    return String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\/(dx\.)?doi\.org\//, "")
+        .replace(/^doi:\s*/, "")
+        .replace(/[.,;\s]+$/, "");
+}
+
+function splitDoiList(value) {
+    return String(value ?? "")
+        .split(/[,;]+/)
+        .map(normalizeDoi)
+        .filter((item) => item && item !== "unavailable" && item !== "unpublished");
+}
+
+function doiListIncludes(value, doi) {
+    const normalizedDoi = normalizeDoi(doi);
+    if (!normalizedDoi) return false;
+    return splitDoiList(value).includes(normalizedDoi);
+}
+
+function uniqueCount(rows, idGetter) {
+    return new Set(rows.map(idGetter).filter(Boolean)).size;
+}
+
+function uniqueSpeciesRows(rows) {
+    const grouped = new Map();
+
+    rows.forEach((row) => {
+        const key = String(row.scientific_name || row.species_id || "").trim().toLowerCase();
+        if (!key || grouped.has(key)) return;
+        grouped.set(key, row);
+    });
+
+    return Array.from(grouped.values());
 }
 
 function buildConopeptideLengthBins(conopeptideRows) {
@@ -79,7 +133,8 @@ export async function getDashboardSummary() {
         `,
     ]);
 
-    const speciesCount = speciesRows.length;
+    const uniqueSpecies = uniqueSpeciesRows(speciesRows);
+    const speciesCount = uniqueSpecies.length;
     const conopeptideCount = conopeptideRows.length;
     const biomarkerCount = biomarkerRows.length;
     const publicationCount = publicationRows.length;
@@ -87,16 +142,31 @@ export async function getDashboardSummary() {
     const speciesWithBiomarkerData = new Set(biomarkerRows.map((row) => row.species_name).filter(Boolean)).size;
     const speciesWithConopeptides = new Set(conopeptideRows.map((row) => row.species_name).filter(Boolean)).size;
 
-    const speciesCountsByName = topEntriesFromCountMap(countBy(speciesRows, (row) => row.scientific_name), 5);
+    const speciesCountsByName = entriesFromValueMap(sumBy(speciesRows, (row) => row.scientific_name, (row) => row.num_conopeptides)).slice(0, 5);
     const conopeptideCountsBySpecies = topEntriesFromCountMap(countBy(conopeptideRows, (row) => row.species_name), 5);
     const biomarkerCountsBySpecies = topEntriesFromCountMap(countBy(biomarkerRows, (row) => row.species_name), 5);
     const provinceCounts = entriesFromCountMap(countBy([...speciesRows, ...biomarkerRows], (row) => row.province)).slice(0, 5);
     const superfamilyCounts = entriesFromCountMap(countBy(conopeptideRows, (row) => row.superfamily)).slice(0, 6);
     const markerTypeCounts = entriesFromCountMap(countBy(biomarkerRows, (row) => row.marker_type)).slice(0, 6);
 
-    const linkedSpeciesCoverage = countNonEmpty(publicationRows, (row) => row.linked_species);
-    const linkedConopeptideCoverage = countNonEmpty(publicationRows, (row) => row.linked_conopeptides);
-    const linkedBiomarkerCoverage = countNonEmpty(publicationRows, (row) => row.linked_biomarkers);
+    const publicationLinkCounts = publicationRows.map((publication) => ({
+        publicationId: publication.publication_id,
+        linkedSpecies: uniqueCount(
+            speciesRows.filter((species) => doiListIncludes(species.doi, publication.doi)),
+            (species) => species.species_id,
+        ) || Number(publication.linked_species || 0),
+        linkedConopeptides: uniqueCount(
+            conopeptideRows.filter((conopeptide) => doiListIncludes(conopeptide.doi, publication.doi)),
+            (conopeptide) => conopeptide.accession,
+        ) || Number(publication.linked_conopeptides || 0),
+        linkedBiomarkers: uniqueCount(
+            biomarkerRows.filter((biomarker) => doiListIncludes(biomarker.publication_doi, publication.doi)),
+            (biomarker) => biomarker.biomarker_id,
+        ) || Number(publication.linked_biomarkers || 0),
+    }));
+    const linkedSpeciesCoverage = countNonEmpty(publicationLinkCounts, (row) => row.linkedSpecies);
+    const linkedConopeptideCoverage = countNonEmpty(publicationLinkCounts, (row) => row.linkedConopeptides);
+    const linkedBiomarkerCoverage = countNonEmpty(publicationLinkCounts, (row) => row.linkedBiomarkers);
 
     const topSpeciesName = speciesCountsByName[0]?.name ?? "Unavailable";
     const topConopeptideSpecies = conopeptideCountsBySpecies[0]?.name ?? "Unavailable";
@@ -122,7 +192,7 @@ export async function getDashboardSummary() {
         year: item.name,
         value: item.value,
     }));
-    const recentSpecies = [...speciesRows]
+    const recentSpecies = [...uniqueSpecies]
         .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))
         .slice(0, 3)
         .map((row, index) => ({

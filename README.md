@@ -27,6 +27,7 @@ The repository includes `render.yaml` for deploying the Express backend as a Ren
    - `ADMIN_PASSWORD`
    - `ADMIN_SESSION_SECRET`
    - `ADMIN_API_KEY`
+   - `SUPABASE_PUBLIC_BUCKET_URL` if shell images are served from Supabase Storage
 
 Use the Supabase transaction pooler for `DATABASE_URL` when deploying:
 
@@ -62,8 +63,9 @@ CORS_ORIGINS=https://your-frontend.vercel.app,http://localhost:5173
 4. Set `CORS_ORIGINS` to the frontend origins allowed to call the API
 5. Set `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` for `/adminlogin`
 6. Set `ADMIN_API_KEY` if you need non-session admin tooling
-7. Run `npm install` in the repo root
-8. Run `npm run dev`
+7. Optionally set `SUPABASE_PUBLIC_BUCKET_URL` to the public Supabase Storage bucket base URL for shell images
+8. Run `npm install` in the repo root
+9. Run `npm run dev`
 
 The backend now exposes MVC-style routes under `/api`:
 - `/api/species`
@@ -74,6 +76,8 @@ The backend now exposes MVC-style routes under `/api`:
 - `/api/dashboard/summary`
 
 The database bootstrap creates the required tables and seeds them from backend-private JSON files in `backend/seed-data/json` if the tables are empty. These files are not served by the frontend.
+
+Shell image values stored as paths, for example `/species-images/eburneus.jpg`, are converted to Supabase Storage URLs when `SUPABASE_PUBLIC_BUCKET_URL` is configured. The original path remains available as the frontend fallback if the bucket image fails to load.
 
 To reseed Supabase manually from the private seed JSON files, run:
 

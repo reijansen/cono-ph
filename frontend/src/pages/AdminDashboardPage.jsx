@@ -44,6 +44,7 @@ export default function AdminDashboardPage() {
   const [confirmation, setConfirmation] = useState(null)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
+  const [notice, setNotice] = useState(null)
 
   const activeResource = useMemo(
     () => resources.find((resource) => resource.key === activeResourceKey) ?? resources[0],
@@ -152,6 +153,8 @@ export default function AdminDashboardPage() {
     setEditor(null)
     setDetailRow(null)
     setImportModalOpen(false)
+    setConfirmation(null)
+    setNotice(null)
     setPage(1)
     setSearch('')
     setFilterColumn('')
@@ -237,11 +240,26 @@ export default function AdminDashboardPage() {
     setSaving(true)
     setImportError('')
     try {
-      await importAdminCsv(activeResource.key, { filename, csvText })
+      const result = await importAdminCsv(activeResource.key, { filename, csvText })
+      setConfirmation(null)
       setImportModalOpen(false)
+      setNotice({
+        type: 'success',
+        message: [
+          `Imported ${result.imported_row_count ?? 0} rows from ${filename}.`,
+          `Created ${result.created_count ?? 0}, updated ${result.updated_count ?? 0}, skipped ${result.skipped_count ?? 0}.`,
+          result.notes,
+        ].filter(Boolean).join(' '),
+      })
       await reloadRows()
     } catch (err) {
-      setImportError(err.message || 'Unable to import CSV.')
+      const message = err.message || 'Unable to import CSV.'
+      setConfirmation(null)
+      setImportError(message)
+      setNotice({
+        type: 'error',
+        message,
+      })
     } finally {
       setSaving(false)
     }
@@ -307,6 +325,21 @@ export default function AdminDashboardPage() {
               setFilterValue('')
             }}
           />
+
+          {notice ? (
+            <div className="px-4 pt-4">
+              <div
+                className={`alert rounded-md py-3 text-sm ${
+                  notice.type === 'success' ? 'alert-success' : 'alert-error'
+                }`}
+              >
+                <span>{notice.message}</span>
+                <button type="button" className="btn btn-ghost btn-xs" onClick={() => setNotice(null)}>
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {activeResource ? (
             <AdminDataTable

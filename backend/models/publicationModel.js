@@ -17,8 +17,49 @@ const PUBLICATION_SELECT = sql`
     FROM publication
 `;
 
+const SPECIES_LINK_SELECT = sql`
+    SELECT species_id AS "speciesId", scientific_name AS "scientificName", doi
+    FROM species
+`;
+
+const CONOPEPTIDE_LINK_SELECT = sql`
+    SELECT accession, doi
+    FROM conopeptide
+`;
+
+const BIOMARKER_LINK_SELECT = sql`
+    SELECT biomarker_id AS "biomarkerId", publication_doi AS "publicationDoi"
+    FROM biomarker
+`;
+
 function normalize(value) {
     return String(value ?? "").toLowerCase();
+}
+
+function normalizeDoi(value) {
+    return String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\/(dx\.)?doi\.org\//, "")
+        .replace(/^doi:\s*/, "")
+        .replace(/[.,;\s]+$/, "");
+}
+
+function splitDoiList(value) {
+    return String(value ?? "")
+        .split(/[,;]+/)
+        .map(normalizeDoi)
+        .filter((item) => item && item !== "unavailable" && item !== "unpublished");
+}
+
+function doiListIncludes(value, doi) {
+    const normalizedDoi = normalizeDoi(doi);
+    if (!normalizedDoi) return false;
+    return splitDoiList(value).includes(normalizedDoi);
+}
+
+function uniqueCount(rows, idGetter) {
+    return new Set(rows.map(idGetter).filter(Boolean)).size;
 }
 
 function buildPagination(total, page, limit) {
@@ -54,8 +95,38 @@ function sortRows(rows, sortBy, order) {
     });
 }
 
+async function enrichPublicationRows(rows) {
+    const [speciesRows, conopeptideRows, biomarkerRows] = await Promise.all([
+        SPECIES_LINK_SELECT,
+        CONOPEPTIDE_LINK_SELECT,
+        BIOMARKER_LINK_SELECT,
+    ]);
+
+    return rows.map((row) => {
+        const linkedSpecies = uniqueCount(
+            speciesRows.filter((species) => doiListIncludes(species.doi, row.doi)),
+            (species) => species.speciesId,
+        );
+        const linkedConopeptides = uniqueCount(
+            conopeptideRows.filter((conopeptide) => doiListIncludes(conopeptide.doi, row.doi)),
+            (conopeptide) => conopeptide.accession,
+        );
+        const linkedBiomarkers = uniqueCount(
+            biomarkerRows.filter((biomarker) => doiListIncludes(biomarker.publicationDoi, row.doi)),
+            (biomarker) => biomarker.biomarkerId,
+        );
+
+        return {
+            ...row,
+            linkedSpecies: linkedSpecies || Number(row.linkedSpecies || 0),
+            linkedConopeptides: linkedConopeptides || Number(row.linkedConopeptides || 0),
+            linkedBiomarkers: linkedBiomarkers || Number(row.linkedBiomarkers || 0),
+        };
+    });
+}
+
 export async function listPublications(filters = {}) {
-    const rows = await PUBLICATION_SELECT;
+    const rows = await enrichPublicationRows(await PUBLICATION_SELECT);
     let filtered = rows.filter((row) => {
         const searchTerm = normalize(filters.search).trim();
         const searchable = normalize(Object.values(row).join(" "));
@@ -74,7 +145,8 @@ export async function listPublications(filters = {}) {
 
 export async function getPublicationById(publicationId) {
     const rows = await sql`${PUBLICATION_SELECT} WHERE publication_id = ${publicationId}`;
-    return rows[0] ?? null;
+    const enrichedRows = await enrichPublicationRows(rows);
+    return enrichedRows[0] ?? null;
 }
 
 export async function listPublicationFilters() {
@@ -86,6 +158,6 @@ export async function listPublicationFilters() {
 }
 
 export async function getPublicationSummary() {
-    const rows = await PUBLICATION_SELECT;
+    const rows = await enrichPublicationRows(await PUBLICATION_SELECT);
     return { publicationCount: rows.length };
 }

@@ -14,20 +14,72 @@ export const speciesExplorerInitialFilters = {
 
 const isDefaultOption = (value) => !value || value.startsWith('All ')
 const normalize = (value) => String(value ?? '').toLowerCase()
+const toNumber = (value) => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
 const uniqueOptions = (label, rows, field) => [
   label,
   ...Array.from(new Set(rows.map((row) => row[field]).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
 ]
+
+function splitJoinedValues(value) {
+  return String(value ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function joinUniqueValues(values) {
+  return Array.from(new Set(values.flatMap(splitJoinedValues))).join(', ')
+}
+
+function aggregateSpeciesRows(rows) {
+  const grouped = new Map()
+
+  rows.forEach((row) => {
+    const key = normalize(row.scientificName || row.speciesId).trim()
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key).push(row)
+  })
+
+  return Array.from(grouped.values())
+    .map((group) => {
+      const primary = group
+        .slice()
+        .sort((left, right) => String(left.speciesId).localeCompare(String(right.speciesId)))[0]
+      const totalConopeptides = group.reduce(
+        (sum, row) => sum + toNumber(row.precursorsCount ?? row.numConopeptides),
+        0,
+      )
+
+      return {
+        ...primary,
+        speciesId: primary.speciesId,
+        specimenIds: Array.from(
+          new Set(group.flatMap((row) => (Array.isArray(row.specimenIds) && row.specimenIds.length ? row.specimenIds : [row.speciesId])).filter(Boolean)),
+        ),
+        specimenCount: group.reduce((count, row) => count + (row.specimenCount || 1), 0),
+        province: joinUniqueValues(group.map((row) => row.province)),
+        municipality: joinUniqueValues(group.map((row) => row.municipality)),
+        sequencingPlatform: joinUniqueValues(group.map((row) => row.sequencingPlatform)),
+        tissueSource: joinUniqueValues(group.map((row) => row.tissueSource)),
+        precursorsCount: totalConopeptides,
+        numConopeptides: totalConopeptides,
+      }
+    })
+    .sort((left, right) => left.scientificName.localeCompare(right.scientificName))
+}
 
 function rowMatchesFilters(row, filters) {
   const searchTerm = normalize(filters.search).trim()
   const searchableText = normalize(Object.values(row).join(' '))
 
   if (searchTerm && !searchableText.includes(searchTerm)) return false
-  if (!isDefaultOption(filters.subgenus) && row.subgenus !== filters.subgenus) return false
-  if (!isDefaultOption(filters.province) && row.province !== filters.province) return false
-  if (!isDefaultOption(filters.municipality) && row.municipality !== filters.municipality) return false
-  if (!isDefaultOption(filters.diet) && row.diet !== filters.diet) return false
+  if (!isDefaultOption(filters.subgenus) && !splitJoinedValues(row.subgenus).includes(filters.subgenus)) return false
+  if (!isDefaultOption(filters.province) && !splitJoinedValues(row.province).includes(filters.province)) return false
+  if (!isDefaultOption(filters.municipality) && !splitJoinedValues(row.municipality).includes(filters.municipality)) return false
+  if (!isDefaultOption(filters.diet) && !splitJoinedValues(row.diet).includes(filters.diet)) return false
 
   return true
 }
@@ -44,7 +96,7 @@ export function useSpeciesExplorerController() {
       try {
         const liveRecords = await fetchSpeciesExplorerRows()
         if (active) {
-          setRecordsSource(liveRecords)
+          setRecordsSource(aggregateSpeciesRows(liveRecords))
         }
       } catch {
         if (active) {

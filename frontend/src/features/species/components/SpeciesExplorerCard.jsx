@@ -5,6 +5,9 @@ import Card from '@/components/ui/Card'
 import { cn } from '@/utils/cn'
 
 export default function SpeciesExplorerCard({ species }) {
+  const specimenIds = Array.isArray(species.specimenIds) ? species.specimenIds : [species.speciesId].filter(Boolean)
+  const hasMultipleSpecimens = specimenIds.length > 1
+
   return (
     <Card
       as={Link}
@@ -14,8 +17,14 @@ export default function SpeciesExplorerCard({ species }) {
       <div className="shrink-0">
         <div className="flex h-[164px] w-full items-center justify-center overflow-hidden rounded-[1.2rem] bg-black sm:h-[160px] lg:w-[230px]">
           <img
-            src={species.image}
+            src={species.image || species.imageFallback}
             alt={species.scientificName}
+            onError={(event) => {
+              if (species.imageFallback && !event.currentTarget.dataset.fallbackApplied) {
+                event.currentTarget.dataset.fallbackApplied = 'true'
+                event.currentTarget.src = species.imageFallback
+              }
+            }}
             className={cn(
               'h-full w-full object-contain',
               species.imagePosition === 'left center' && 'object-left',
@@ -38,7 +47,10 @@ export default function SpeciesExplorerCard({ species }) {
 
         <div className="grid gap-1 text-sm text-[var(--app-muted)] sm:grid-cols-2 lg:grid-cols-1">
           <p>
-            <span className="font-semibold text-brand-700">Species ID:</span> {species.speciesId}
+            <span className="font-semibold text-brand-700">
+              {hasMultipleSpecimens ? 'Specimen IDs:' : 'Species ID:'}
+            </span>{' '}
+            {hasMultipleSpecimens ? specimenIds.join(', ') : species.speciesId}
           </p>
           <p>
             <span className="font-semibold text-brand-700">Subgenus:</span> {species.subgenus}

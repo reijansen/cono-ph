@@ -493,8 +493,15 @@ export default function SpeciesDetailPage() {
       <section className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)] xl:items-start">
         <div className="overflow-hidden rounded-2xl bg-black">
           <img
-            src={species.species.image ?? speciesShellImage}
+            src={species.species.image || species.species.imageFallback || speciesShellImage}
             alt={species.species.imageAlt ?? species.species.scientificName}
+            onError={(event) => {
+              const fallback = species.species.imageFallback || speciesShellImage
+              if (!event.currentTarget.dataset.fallbackApplied) {
+                event.currentTarget.dataset.fallbackApplied = 'true'
+                event.currentTarget.src = fallback
+              }
+            }}
             className="h-[265px] w-full object-contain object-center"
           />
         </div>

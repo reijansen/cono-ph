@@ -1,5 +1,7 @@
 import { apiClient } from './api.js'
 
+const explorerFetchLimit = 10000
+
 function toQueryString(params = {}) {
   const query = new URLSearchParams()
   Object.entries(params).forEach(([key, value]) => {
@@ -32,7 +34,98 @@ function normalizeSpeciesRow(row) {
     tissueSource: String(row.tissueSource ?? row.tissue_source ?? ''),
     rawDataInNcbiSra: Boolean(row.rawDataInNcbiSra ?? row.raw_data_in_ncbi_sra ?? false),
     image: String(row.image ?? ''),
+    imageFallback: String(row.imageFallback ?? row.image_fallback ?? ''),
     imagePosition: String(row.imagePosition ?? 'center center'),
+    specimenCount: Number(row.specimenCount ?? 1),
+    specimenIds: Array.isArray(row.specimenIds) ? row.specimenIds.map(String) : [],
+    doi: String(row.doi ?? ''),
+  }
+}
+
+function toNumber(value) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function normalizeText(value) {
+  return String(value ?? '').trim().toLowerCase()
+}
+
+function normalizeDoi(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\/(dx\.)?doi\.org\//, '')
+    .replace(/^doi:\s*/, '')
+    .replace(/[.,;\s]+$/, '')
+}
+
+function splitDoiList(value) {
+  return String(value ?? '')
+    .split(/[,;]+/)
+    .map(normalizeDoi)
+    .filter((item) => item && item !== 'unavailable' && item !== 'unpublished')
+}
+
+function doiListIncludes(value, doi) {
+  const normalizedDoi = normalizeDoi(doi)
+  if (!normalizedDoi) return false
+  return splitDoiList(value).includes(normalizedDoi)
+}
+
+function uniqueCount(rows, idGetter) {
+  return new Set(rows.map(idGetter).filter(Boolean)).size
+}
+
+function buildSpecimensFromSpeciesRows(detail, rows) {
+  const scientificName = detail?.species?.scientificName
+  const requestedSpeciesId = detail?.speciesId
+  const matchingRows = rows.filter((row) => {
+    if (scientificName && normalizeText(row.scientificName) === normalizeText(scientificName)) return true
+    if (requestedSpeciesId && row.speciesId === requestedSpeciesId) return true
+    return false
+  })
+
+  return matchingRows.map((row) => ({
+    specimenId: row.speciesId,
+    author: 'Unavailable',
+    repository: 'Unavailable',
+    province: row.province || 'Unavailable',
+    municipality: row.municipality || 'Unavailable',
+    tissueSource: row.tissueSource || 'Unavailable',
+    sequencingPlatform: row.sequencingPlatform || 'Unavailable',
+    totalConopeptideSequences: String(toNumber(row.precursorsCount ?? row.numConopeptides)),
+    doi: row.doi || 'Unavailable',
+    project: row.project || 'Unavailable',
+  }))
+}
+
+function withSpecimenFallback(detail, rows) {
+  if (!detail || (Array.isArray(detail.specimens) && detail.specimens.length > 0)) return detail
+
+  const specimens = buildSpecimensFromSpeciesRows(detail, rows)
+  if (!specimens.length) return detail
+
+  const totalConopeptides = specimens.reduce(
+    (sum, specimen) => sum + toNumber(specimen.totalConopeptideSequences),
+    0,
+  )
+
+  return {
+    ...detail,
+    specimens,
+    molecular: {
+      ...detail.molecular,
+      specimensSequenced: String(specimens.length),
+      totalConopeptides: String(totalConopeptides),
+    },
+    statistics: Array.isArray(detail.statistics)
+      ? detail.statistics.map((stat) => {
+          if (stat.label === 'Conopeptide Precursors') return { ...stat, value: String(totalConopeptides) }
+          if (stat.label === 'Specimens Sequenced') return { ...stat, value: String(specimens.length) }
+          return stat
+        })
+      : detail.statistics,
   }
 }
 
@@ -47,6 +140,7 @@ function normalizeConopeptideRow(row) {
     speciesId: String(row.speciesId ?? ''),
     specimenId: String(row.specimenId ?? row.speciesId ?? ''),
     geneSuperfamily: String(row.superfamily ?? ''),
+    doi: String(row.doi ?? ''),
   }
 }
 
@@ -59,6 +153,7 @@ function normalizeBiomarkerRow(row) {
     sequenceLength: String(row.sequenceLength ?? 'Unavailable'),
     province: String(row.province ?? ''),
     status: String(row.validationStatus ?? row.status ?? 'Unavailable'),
+    publicationDoi: String(row.publicationDoi ?? row.publication_doi ?? ''),
   }
 }
 
@@ -79,6 +174,30 @@ function normalizePublicationRow(row) {
   }
 }
 
+function enrichPublicationLinkCounts(publications, speciesRows, conopeptideRows, biomarkerRows) {
+  return publications.map((publication) => {
+    const linkedSpecies = uniqueCount(
+      speciesRows.filter((species) => doiListIncludes(species.doi, publication.doi)),
+      (species) => species.speciesId,
+    )
+    const linkedConopeptides = uniqueCount(
+      conopeptideRows.filter((conopeptide) => doiListIncludes(conopeptide.doi, publication.doi)),
+      (conopeptide) => conopeptide.accession,
+    )
+    const linkedBiomarkers = uniqueCount(
+      biomarkerRows.filter((biomarker) => doiListIncludes(biomarker.publicationDoi, publication.doi)),
+      (biomarker) => biomarker.biomarkerId,
+    )
+
+    return {
+      ...publication,
+      linkedSpecies: linkedSpecies || publication.linkedSpecies,
+      linkedConopeptides: linkedConopeptides || publication.linkedConopeptides,
+      linkedBiomarkers: linkedBiomarkers || publication.linkedBiomarkers,
+    }
+  })
+}
+
 async function fetchList(pathname, fallbackKey) {
   const response = await apiClient.get(pathname)
   if (!response.success) throw new Error(response.message || `Failed to fetch ${fallbackKey}`)
@@ -92,16 +211,20 @@ async function fetchDetail(pathname, fallbackKey) {
 }
 
 export async function fetchSpeciesExplorerRows() {
-  const rows = await fetchList('/species')
+  const rows = await fetchList(`/species${toQueryString({ limit: explorerFetchLimit, sortBy: 'scientificName', order: 'ASC' })}`)
   return rows.map(normalizeSpeciesRow)
 }
 
 export async function fetchSpeciesDetail(speciesId) {
-  return fetchDetail(`/species/${speciesId}`, 'species detail')
+  const detail = await fetchDetail(`/species/${speciesId}`, 'species detail')
+  if (!detail || (Array.isArray(detail.specimens) && detail.specimens.length > 0)) return detail
+
+  const rows = await fetchSpeciesExplorerRows()
+  return withSpecimenFallback(detail, rows)
 }
 
 export async function fetchConopeptideExplorerRows() {
-  const rows = await fetchList('/conopeptides')
+  const rows = await fetchList(`/conopeptides${toQueryString({ limit: explorerFetchLimit, sortBy: 'speciesName', order: 'ASC' })}`)
   return rows.map(normalizeConopeptideRow)
 }
 
@@ -110,7 +233,7 @@ export async function fetchConopeptideDetail(accession) {
 }
 
 export async function fetchBiomarkerExplorerRows() {
-  const rows = await fetchList('/biomarkers')
+  const rows = await fetchList(`/biomarkers${toQueryString({ limit: explorerFetchLimit, sortBy: 'speciesName', order: 'ASC' })}`)
   return rows.map(normalizeBiomarkerRow)
 }
 
@@ -119,8 +242,25 @@ export async function fetchBiomarkerDetail(biomarkerId) {
 }
 
 export async function fetchPublicationExplorerRows() {
-  const rows = await fetchList('/publications')
-  return rows.map(normalizePublicationRow)
+  const rows = await fetchList(`/publications${toQueryString({ limit: explorerFetchLimit, sortBy: 'year', order: 'DESC' })}`)
+  const publications = rows.map(normalizePublicationRow)
+  const needsFallback = publications.some(
+    (publication) => !publication.linkedSpecies && !publication.linkedConopeptides && !publication.linkedBiomarkers,
+  )
+
+  if (!needsFallback) return publications
+
+  try {
+    const [speciesRows, conopeptideRows, biomarkerRows] = await Promise.all([
+      fetchSpeciesExplorerRows(),
+      fetchConopeptideExplorerRows(),
+      fetchBiomarkerExplorerRows(),
+    ])
+
+    return enrichPublicationLinkCounts(publications, speciesRows, conopeptideRows, biomarkerRows)
+  } catch {
+    return publications
+  }
 }
 
 export async function fetchDashboardSummary() {

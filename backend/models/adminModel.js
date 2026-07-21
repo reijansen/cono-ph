@@ -7,6 +7,15 @@ function normalize(value) {
     return String(value ?? "").toLowerCase();
 }
 
+function normalizeKey(value) {
+    return String(value ?? "")
+        .replace(/^\uFEFF/, "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+}
+
 function coerceValue(value, type) {
     if (type === "number") {
         if (value === "" || value == null) return null;
@@ -35,6 +44,21 @@ function cleanPayload(resource, payload, { partial = false } = {}) {
                 throw new ApiError(400, `${column} is required`, "VALIDATION_ERROR");
             }
         }
+    }
+
+    return next;
+}
+
+function normalizeImportPayload(resource, payload) {
+    const aliases = Object.fromEntries(
+        Object.entries(resource.importAliases ?? {}).map(([key, value]) => [normalizeKey(key), value]),
+    );
+    const next = {};
+
+    for (const [key, value] of Object.entries(payload)) {
+        const normalizedKey = String(key).trim();
+        const column = aliases[normalizeKey(normalizedKey)] ?? normalizedKey;
+        next[column] = value;
     }
 
     return next;
@@ -77,6 +101,9 @@ export function listAdminResourceMetadata() {
 }
 
 function parseCsv(content) {
+    const normalizedContent = String(content ?? "")
+        .replace(/^\uFEFF/, "")
+        .replace(/,"""([^",\r\n]+)(?=,)/g, ",$1");
     const rows = [];
     let row = [];
     let cell = "";
@@ -92,9 +119,9 @@ function parseCsv(content) {
         row = [];
     };
 
-    for (let index = 0; index < content.length; index += 1) {
-        const character = content[index];
-        const nextCharacter = content[index + 1];
+    for (let index = 0; index < normalizedContent.length; index += 1) {
+        const character = normalizedContent[index];
+        const nextCharacter = normalizedContent[index + 1];
 
         if (inQuotes) {
             if (character === "\"") {
@@ -138,7 +165,7 @@ function parseCsv(content) {
 
     if (rows.length < 2) return [];
 
-    const headers = rows[0].map((header) => header.trim());
+    const headers = rows[0].map((header) => header.replace(/^\uFEFF/, "").trim());
     return rows.slice(1).map((values) => {
         const record = {};
         headers.forEach((header, index) => {
@@ -308,25 +335,31 @@ export async function importAdminCsv(resourceName, { filename = "dataset.csv", c
     let createdCount = 0;
     let updatedCount = 0;
     let skippedCount = 0;
+    const skippedReasons = new Map();
+
+    const trackSkipped = (reason) => {
+        skippedCount += 1;
+        skippedReasons.set(reason, (skippedReasons.get(reason) || 0) + 1);
+    };
 
     for (const row of parsedRows) {
-        const data = cleanPayload(resource, row, { partial: true });
+        const data = cleanPayload(resource, normalizeImportPayload(resource, row), { partial: true });
         const id = data[resource.idColumn];
 
         if (!String(id ?? "").trim()) {
-            skippedCount += 1;
+            trackSkipped(`Missing ${resource.idColumn}`);
             continue;
         }
 
-        let hasMissingRequiredField = false;
+        let missingRequiredField = "";
         for (const column of resource.required) {
             if (!String(data[column] ?? "").trim()) {
-                hasMissingRequiredField = true;
+                missingRequiredField = column;
                 break;
             }
         }
-        if (hasMissingRequiredField) {
-            skippedCount += 1;
+        if (missingRequiredField) {
+            trackSkipped(`Missing ${missingRequiredField}`);
             continue;
         }
 
@@ -366,9 +399,22 @@ export async function importAdminCsv(resourceName, { filename = "dataset.csv", c
         updated_count: updatedCount,
         skipped_count: skippedCount,
         status: "completed",
-        notes: "CSV import used upsert by primary key. Existing records were archived before update.",
+        notes: [
+            "CSV import used upsert by primary key. Existing records were archived before update.",
+            skippedReasons.size
+                ? `Skipped rows: ${Array.from(skippedReasons.entries()).map(([reason, count]) => `${reason} (${count})`).join(", ")}.`
+                : "",
+        ].filter(Boolean).join(" "),
         imported_by: "admin",
     };
+
+    if (parsedRows.length > 0 && skippedCount === parsedRows.length) {
+        throw new ApiError(
+            400,
+            `${resource.label} CSV import skipped all ${skippedCount} rows. ${log.notes}`,
+            "ADMIN_IMPORT_ALL_ROWS_SKIPPED",
+        );
+    }
 
     await sql.unsafe(
         "INSERT INTO dataset_import_logs (log_id, resource_name, original_filename, imported_row_count, created_count, updated_count, skipped_count, status, notes, imported_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",

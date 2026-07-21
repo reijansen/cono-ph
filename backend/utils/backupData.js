@@ -29,6 +29,38 @@ function toBoolean(value) {
     return normalized === "true" || normalized === "yes" || normalized === "1";
 }
 
+function normalizeDoi(value) {
+    return String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\/(dx\.)?doi\.org\//, "")
+        .replace(/^doi:\s*/, "")
+        .replace(/[.,;\s]+$/, "");
+}
+
+function splitList(value) {
+    return String(value ?? "")
+        .split(/[,;]+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+}
+
+function splitDoiList(value) {
+    return splitList(value)
+        .map(normalizeDoi)
+        .filter((item) => item && item !== "unavailable" && item !== "unpublished");
+}
+
+function doiListIncludes(value, doi) {
+    const normalizedDoi = normalizeDoi(doi);
+    if (!normalizedDoi) return false;
+    return splitDoiList(value).includes(normalizedDoi);
+}
+
+function uniqueCount(rows, idGetter) {
+    return new Set(rows.map(idGetter).filter(Boolean)).size;
+}
+
 function normalizeImage(value) {
     const link = String(value ?? "").trim();
 
@@ -188,11 +220,30 @@ export async function loadBiomarkerSeedRows() {
 }
 
 export async function loadPublicationSeedRows() {
-    const records = await readJsonArray("publications", "latest.json");
+    const [records, speciesRows, conopeptideRows, biomarkerRows] = await Promise.all([
+        readJsonArray("publications", "latest.json"),
+        readJsonArray("species", "latest.json"),
+        readJsonArray("conopeptides", "latest.json"),
+        readJsonArray("barcodes", "latest.json"),
+    ]);
 
     return records
         .map((record) => {
             const publicationId = String(record["Publication ID"] ?? record.id ?? record.publication_id ?? record.DOI ?? record.Title ?? "");
+            const doi = String(record.DOI ?? record.doi ?? "");
+            const speciesReported = splitList(record["Species reported"] ?? record.speciesReported ?? record.species_reported);
+            const linkedSpecies = speciesReported.length || uniqueCount(
+                speciesRows.filter((species) => doiListIncludes(species.DOI ?? species.doi, doi)),
+                (species) => species["Species ID"] ?? species.speciesId ?? species.species_id,
+            );
+            const linkedConopeptides = uniqueCount(
+                conopeptideRows.filter((conopeptide) => doiListIncludes(conopeptide.DOI ?? conopeptide.doi, doi)),
+                (conopeptide) => conopeptide["Conopeptide ID"] ?? conopeptide.accession ?? conopeptide.conopeptideId,
+            );
+            const linkedBiomarkers = uniqueCount(
+                biomarkerRows.filter((biomarker) => doiListIncludes(biomarker["Publication DOI"] ?? biomarker.publicationDoi ?? biomarker.publication_doi, doi)),
+                (biomarker) => biomarker["Specimen ID"] ?? biomarker.biomarkerId ?? biomarker.biomarker_id,
+            );
 
             return {
                 publication_id: publicationId,
@@ -200,11 +251,11 @@ export async function loadPublicationSeedRows() {
                 authors: String(record.Authors ?? record.authors ?? ""),
                 year_published: String(record["Year Published"] ?? record.Year ?? record.year ?? ""),
                 journal: String(record.Journal ?? record.journal ?? ""),
-                doi: String(record.DOI ?? record.doi ?? ""),
+                doi,
                 evidence_type: String(record["Evidence Type"] ?? record.evidenceType ?? record.evidence_type ?? ""),
-                linked_species: toNumber(record["Linked Species"] ?? record.linkedSpecies ?? record.linked_species, 0),
-                linked_conopeptides: toNumber(record["Linked Conopeptides"] ?? record.linkedConopeptides ?? record.linked_conopeptides, 0),
-                linked_biomarkers: toNumber(record["Linked Biomarkers"] ?? record.linkedBiomarkers ?? record.linked_biomarkers, 0),
+                linked_species: toNumber(record["Linked Species"] ?? record.linkedSpecies ?? record.linked_species, linkedSpecies),
+                linked_conopeptides: toNumber(record["Linked Conopeptides"] ?? record.linkedConopeptides ?? record.linked_conopeptides, linkedConopeptides),
+                linked_biomarkers: toNumber(record["Linked Biomarkers"] ?? record.linkedBiomarkers ?? record.linked_biomarkers, linkedBiomarkers),
                 province: String(record.Province ?? record.province ?? ""),
                 status: String(record.Status ?? record.status ?? ""),
             };
