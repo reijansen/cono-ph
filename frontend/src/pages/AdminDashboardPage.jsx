@@ -321,6 +321,7 @@ export default function AdminDashboardPage() {
             }}
             onClearFilters={() => {
               setPage(1)
+              setSearch('')
               setFilterColumn('')
               setFilterValue('')
             }}

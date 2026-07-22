@@ -23,6 +23,9 @@ export default function AdminToolbar({
               type="search"
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') onSearchChange(event.currentTarget.value)
+              }}
               placeholder="Search records"
               className="grow text-sm"
             />
@@ -57,7 +60,7 @@ export default function AdminToolbar({
             type="button"
             className="btn btn-outline btn-sm rounded-md"
             onClick={onClearFilters}
-            disabled={!filterColumn && !filterValue}
+            disabled={!search && !filterColumn && !filterValue}
           >
             Clear
           </button>

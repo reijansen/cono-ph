@@ -124,7 +124,7 @@ export async function listConopeptides(filters = {}) {
     const rows = await CONOPEPTIDE_SELECT;
     let filtered = rows.filter((row) => {
         const searchTerm = normalize(filters.search).trim();
-        const searchable = normalize(Object.values(row).join(" "));
+        const searchable = normalize([row.accession, row.speciesName, row.superfamily, row.cysteineFramework, row.predictedPeptide, row.maturePeptideSequence, row.matchedToxin, row.doi].join(" "));
 
         if (searchTerm && !searchable.includes(searchTerm)) return false;
         if (filters.species && !String(filters.species).startsWith("All ") && row.speciesName !== filters.species) return false;

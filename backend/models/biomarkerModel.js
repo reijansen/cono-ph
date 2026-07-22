@@ -146,14 +146,14 @@ export async function listBiomarkers(filters = {}) {
     const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT);
     let filtered = rows.filter((row) => {
         const searchTerm = normalize(filters.search).trim();
-        const searchable = normalize(Object.values(row).join(" "));
+        const searchable = normalize([row.biomarkerId, row.speciesId, row.speciesName, row.markerType, row.accession, row.sequence, row.province, row.validationStatus, row.publicationDoi].join(" "));
 
         if (searchTerm && !searchable.includes(searchTerm)) return false;
         if (filters.markerType && !String(filters.markerType).startsWith("All ") && row.markerType !== filters.markerType) return false;
         if (filters.species && !String(filters.species).startsWith("All ") && row.speciesName !== filters.species) return false;
         if (filters.province && !String(filters.province).startsWith("All ") && row.province !== filters.province) return false;
-        if (Array.isArray(filters.status) && filters.status.length > 0 && !filters.status.includes(row.validationStatus)) return false;
-        if (filters.hasAccession && row.accession === "Unavailable") return false;
+        if (Array.isArray(filters.status) && filters.status.length > 0 && !filters.status.includes(normalizeStatus(row.validationStatus))) return false;
+        if (filters.hasAccession && !String(row.accession ?? "").trim()) return false;
         return true;
     });
 

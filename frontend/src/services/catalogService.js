@@ -1,7 +1,5 @@
 import { apiClient } from './api.js'
 
-const explorerFetchLimit = 10000
-
 function toQueryString(params = {}) {
   const query = new URLSearchParams()
   Object.entries(params).forEach(([key, value]) => {
@@ -187,16 +185,6 @@ function normalizePublicationRow(row) {
   }
 }
 
-function onlyBarcodeBiomarkerRows(rows) {
-  const referencedSpeciesIds = new Set(rows.map((row) => row.speciesId).filter(Boolean))
-  return rows.filter((row) => {
-    if (!row.biomarkerId) return false
-    if (row.speciesId && row.biomarkerId === row.speciesId) return false
-    if (referencedSpeciesIds.has(row.biomarkerId)) return false
-    return true
-  })
-}
-
 function enrichPublicationLinkCounts(publications, speciesRows, conopeptideRows, biomarkerRows) {
   return publications.map((publication) => {
     const linkedSpecies = uniqueCount(
@@ -319,8 +307,18 @@ async function fetchDetail(pathname, fallbackKey) {
 }
 
 export async function fetchSpeciesExplorerRows() {
-  const rows = await fetchList(`/species${toQueryString({ limit: explorerFetchLimit, sortBy: 'scientificName', order: 'ASC' })}`)
-  return rows.map(normalizeSpeciesRow)
+  const result = await fetchSpeciesExplorerPage({ limit: 10000, sortBy: 'scientificName', order: 'ASC' })
+  return result.rows
+}
+
+export async function fetchSpeciesExplorerPage(params = {}) {
+  const response = await apiClient.get(`/species${toQueryString({ sortBy: 'scientificName', order: 'ASC', ...params })}`)
+  if (!response.success) throw new Error(response.message || 'Failed to fetch species')
+  return { rows: (response.data || []).map(normalizeSpeciesRow), pagination: response.pagination }
+}
+
+export async function fetchSpeciesExplorerOptions() {
+  return fetchList('/species/filters')
 }
 
 export async function fetchSpeciesDetail(speciesId) {
@@ -334,8 +332,18 @@ export async function fetchSpeciesDetail(speciesId) {
 }
 
 export async function fetchConopeptideExplorerRows() {
-  const rows = await fetchList(`/conopeptides${toQueryString({ limit: explorerFetchLimit, sortBy: 'speciesName', order: 'ASC' })}`)
-  return rows.map(normalizeConopeptideRow)
+  const result = await fetchConopeptideExplorerPage({ limit: 10000, sortBy: 'speciesName', order: 'ASC' })
+  return result.rows
+}
+
+export async function fetchConopeptideExplorerPage(params = {}) {
+  const response = await apiClient.get(`/conopeptides${toQueryString({ sortBy: 'speciesName', order: 'ASC', ...params })}`)
+  if (!response.success) throw new Error(response.message || 'Failed to fetch conopeptides')
+  return { rows: (response.data || []).map(normalizeConopeptideRow), pagination: response.pagination }
+}
+
+export async function fetchConopeptideExplorerOptions() {
+  return fetchList('/conopeptides/filters')
 }
 
 export async function fetchConopeptideDetail(accession) {
@@ -343,8 +351,18 @@ export async function fetchConopeptideDetail(accession) {
 }
 
 export async function fetchBiomarkerExplorerRows() {
-  const rows = await fetchList(`/biomarkers${toQueryString({ limit: explorerFetchLimit, sortBy: 'speciesName', order: 'ASC' })}`)
-  return onlyBarcodeBiomarkerRows(rows.map(normalizeBiomarkerRow))
+  const result = await fetchBiomarkerExplorerPage({ limit: 10000, sortBy: 'speciesName', order: 'ASC' })
+  return result.rows
+}
+
+export async function fetchBiomarkerExplorerPage(params = {}) {
+  const response = await apiClient.get(`/biomarkers${toQueryString({ sortBy: 'speciesName', order: 'ASC', ...params })}`)
+  if (!response.success) throw new Error(response.message || 'Failed to fetch biomarkers')
+  return { rows: (response.data || []).map(normalizeBiomarkerRow), pagination: response.pagination }
+}
+
+export async function fetchBiomarkerExplorerOptions() {
+  return fetchList('/biomarkers/filters')
 }
 
 export async function fetchBiomarkerDetail(biomarkerId) {
@@ -352,13 +370,11 @@ export async function fetchBiomarkerDetail(biomarkerId) {
 }
 
 export async function fetchPublicationExplorerRows() {
-  const rows = await fetchList(`/publications${toQueryString({ limit: explorerFetchLimit, sortBy: 'year', order: 'DESC' })}`)
-  const publications = rows.map(normalizePublicationRow)
-  const needsFallback = publications.some(
+  const result = await fetchPublicationExplorerPage({ limit: 10000, sortBy: 'year', order: 'DESC' })
+  const needsFallback = result.rows.some(
     (publication) => !publication.linkedSpecies && !publication.linkedConopeptides && !publication.linkedBiomarkers,
   )
-
-  if (!needsFallback) return publications
+  if (!needsFallback) return result.rows
 
   try {
     const [speciesRows, conopeptideRows, biomarkerRows] = await Promise.all([
@@ -366,11 +382,21 @@ export async function fetchPublicationExplorerRows() {
       fetchConopeptideExplorerRows(),
       fetchBiomarkerExplorerRows(),
     ])
-
-    return enrichPublicationLinkCounts(publications, speciesRows, conopeptideRows, biomarkerRows)
+    return enrichPublicationLinkCounts(result.rows, speciesRows, conopeptideRows, biomarkerRows)
   } catch {
-    return publications
+    return result.rows
   }
+}
+
+export async function fetchPublicationExplorerPage(params = {}) {
+  const response = await apiClient.get(`/publications${toQueryString({ sortBy: 'year', order: 'DESC', ...params })}`)
+  if (!response.success) throw new Error(response.message || 'Failed to fetch publications')
+  const publications = (response.data || []).map(normalizePublicationRow)
+  return { rows: publications, pagination: response.pagination }
+}
+
+export async function fetchPublicationExplorerOptions() {
+  return fetchList('/publications/filters')
 }
 
 export async function fetchDashboardSummary() {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
 
 import Button from '@/components/ui/Button'
@@ -38,6 +38,8 @@ export default function ConopeptideSidebar({
   onFilterChange = () => {},
 }) {
   const [localFilters, setLocalFilters] = useState(filters)
+
+  useEffect(() => setLocalFilters(filters), [filters])
 
   const updateLocalFilters = (patch) => {
     setLocalFilters((current) => ({ ...current, ...patch }))
@@ -79,6 +81,9 @@ export default function ConopeptideSidebar({
             aria-label="Search conopeptides"
             value={localFilters.search || ''}
             onChange={(e) => updateLocalFilters({ search: e.target.value })}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') handleApplyFilters()
+            }}
             className="pl-11"
           />
         </label>

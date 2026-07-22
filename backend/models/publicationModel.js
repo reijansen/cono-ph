@@ -129,7 +129,7 @@ export async function listPublications(filters = {}) {
     const rows = await enrichPublicationRows(await PUBLICATION_SELECT);
     let filtered = rows.filter((row) => {
         const searchTerm = normalize(filters.search).trim();
-        const searchable = normalize(Object.values(row).join(" "));
+        const searchable = normalize([row.id, row.title, row.authors, row.journal, row.doi, row.evidenceType].join(" "));
 
         if (searchTerm && !searchable.includes(searchTerm)) return false;
         if (filters.year && !String(filters.year).startsWith("All ") && row.year !== filters.year) return false;

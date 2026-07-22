@@ -1,149 +1,38 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { fetchBiomarkerExplorerRows } from '@/services/catalogService'
+import { fetchBiomarkerExplorerOptions, fetchBiomarkerExplorerPage } from '@/services/catalogService'
 
-const biomarkerExplorerBreadcrumbs = [
-  { label: 'Home', to: '/' },
-  { label: 'Biomarkers' },
-]
-
-const biomarkerExplorerMeta = {
-  title: 'Biomarkers Explorer',
-  subtitle:
-    'Explore biomarker records, marker types, and linked sequence evidence from Philippine cone snails.',
-}
-
-const biomarkerExplorerInitialFilters = {
-  search: '',
-  markerType: 'All Marker Types',
-  species: 'All Species',
-  province: 'All Provinces',
-  status: [],
-  hasAccession: false,
-}
-
-const biomarkerPageSize = 10
-const biomarkerPagination = {
-  page: 1,
-  totalPages: 1,
-}
-
-const isDefaultOption = (value) => !value || value.startsWith('All ')
-const normalize = (value) => String(value ?? '').toLowerCase()
-const uniqueOptions = (label, rows, field) => [
-  label,
-  ...Array.from(new Set(rows.map((row) => row[field]).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-]
-
-function rowMatchesFilters(row, filters) {
-  const searchTerm = normalize(filters.search).trim()
-  const searchableText = normalize(Object.values(row).join(' '))
-
-  if (searchTerm && !searchableText.includes(searchTerm)) return false
-  if (!isDefaultOption(filters.markerType) && row.markerType !== filters.markerType) return false
-  if (!isDefaultOption(filters.species) && row.species !== filters.species) return false
-  if (!isDefaultOption(filters.province) && row.province !== filters.province) return false
-  if ((filters.status || []).length > 0 && !filters.status.includes(row.status)) return false
-  if (filters.hasAccession && row.accession === 'Unavailable') return false
-
-  return true
-}
+const pageSize = 10
+const initialFilters = { search: '', markerType: '', species: '', province: '', status: [], hasAccession: false }
 
 export function useBiomarkersExplorerController() {
   const navigate = useNavigate()
-  const [filters, setFilters] = useState(biomarkerExplorerInitialFilters)
-  const [page, setPage] = useState(biomarkerPagination.page)
-  const [rowsSource, setRowsSource] = useState([])
+  const [filters, setFilters] = useState(initialFilters)
+  const [page, setPage] = useState(1)
+  const [rows, setRows] = useState([])
+  const [filterOptions, setFilterOptions] = useState({})
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
 
+  useEffect(() => { fetchBiomarkerExplorerOptions().then(setFilterOptions).catch(() => setFilterOptions({})) }, [])
   useEffect(() => {
     let active = true
+    fetchBiomarkerExplorerPage({ ...filters, status: filters.status.join(','), page, limit: pageSize })
+      .then((result) => { if (active) { setRows(result.rows); setPagination(result.pagination) } })
+      .catch(() => { if (active) { setRows([]); setPagination({ page: 1, totalPages: 1, total: 0 }) } })
+    return () => { active = false }
+  }, [filters, page])
 
-    async function loadRows() {
-      try {
-        const liveRows = await fetchBiomarkerExplorerRows()
-        if (active) {
-          setRowsSource(liveRows)
-        }
-      } catch {
-        if (active) {
-          setRowsSource([])
-        }
-      }
-    }
-
-    loadRows()
-
-    return () => {
-      active = false
-    }
-  }, [])
-
-  const filteredRows = useMemo(
-    () => rowsSource.filter((row) => rowMatchesFilters(row, filters)),
-    [filters, rowsSource],
-  )
-
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / biomarkerPageSize))
-  const rows = useMemo(
-    () => filteredRows.slice((page - 1) * biomarkerPageSize, page * biomarkerPageSize),
-    [filteredRows, page],
-  )
-  const filterOptions = useMemo(
-    () => ({
-      markerType: uniqueOptions('All Marker Types', rowsSource, 'markerType'),
-      species: uniqueOptions('All Species', rowsSource, 'species'),
-      province: uniqueOptions('All Provinces', rowsSource, 'province'),
-      status: Array.from(new Set(rowsSource.map((row) => row.status).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-    }),
-    [rowsSource],
-  )
-
-  const resultCount = `${filteredRows.length.toLocaleString()} results`
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
-
-  const handleFilterChange = useCallback((nextFilters) => {
-    setFilters(nextFilters)
-    setPage(1)
-  }, [])
-
-  const handlePageChange = useCallback((nextPage) => {
-    setPage(nextPage)
-  }, [])
-
-  const openBiomarker = useCallback(
-    (biomarkerId) => {
-      navigate(`/biomarkers/${biomarkerId}`)
-    },
-    [navigate],
-  )
-
-  const handleRowKeyDown = useCallback(
-    (event, biomarkerId) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        openBiomarker(biomarkerId)
-      }
-    },
-    [openBiomarker],
-  )
+  const handleFilterChange = useCallback((nextFilters) => { setFilters({ ...initialFilters, ...nextFilters }); setPage(1) }, [])
+  const openBiomarker = useCallback((biomarkerId) => navigate(`/biomarkers/${biomarkerId}`), [navigate])
+  const handleRowKeyDown = useCallback((event, biomarkerId) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openBiomarker(biomarkerId) } }, [openBiomarker])
 
   return {
-    breadcrumbs: biomarkerExplorerBreadcrumbs,
-    filters,
-    filterOptions,
-    handleFilterChange,
-    handlePageChange,
-    handleRowKeyDown,
-    meta: biomarkerExplorerMeta,
-    openBiomarker,
-    pagination: { ...biomarkerPagination, page, totalPages },
-    resultCount,
-    rows,
+    breadcrumbs: [{ label: 'Home', to: '/' }, { label: 'Biomarkers' }],
+    filters: { ...filters, markerType: filters.markerType || 'All Marker Types', species: filters.species || 'All Species', province: filters.province || 'All Provinces' },
+    filterOptions: { markerType: ['All Marker Types', ...(filterOptions.markerType || [])], species: ['All Species', ...(filterOptions.species || [])], province: ['All Provinces', ...(filterOptions.province || [])], status: filterOptions.status || [] },
+    handleFilterChange, handlePageChange: setPage, handleRowKeyDown,
+    meta: { title: 'Biomarkers Explorer', subtitle: 'Explore biomarker records, marker types, and linked sequence evidence from Philippine cone snails.' },
+    openBiomarker, pagination: { ...pagination, page }, resultCount: `${(pagination.total || 0).toLocaleString()} results`, rows,
   }
 }

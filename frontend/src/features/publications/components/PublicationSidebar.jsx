@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
 
 import Button from '@/components/ui/Button'
@@ -54,6 +54,8 @@ export default function PublicationSidebar({
 }) {
   const [localFilters, setLocalFilters] = useState(filters)
 
+  useEffect(() => setLocalFilters(filters), [filters])
+
   const updateLocalFilters = (patch) => {
     setLocalFilters((current) => ({ ...current, ...patch }))
   }
@@ -84,6 +86,9 @@ export default function PublicationSidebar({
             aria-label="Search publications"
             value={localFilters.search || ''}
             onChange={(event) => updateLocalFilters({ search: event.target.value })}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') handleApplyFilters()
+            }}
             className="pl-11"
           />
         </label>

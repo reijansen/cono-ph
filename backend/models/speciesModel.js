@@ -230,6 +230,13 @@ function joinUnique(rows, field, fallback = "") {
     return values.length ? values.join(", ") : fallback;
 }
 
+function splitMultiValue(value) {
+    return String(value ?? "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+}
+
 function includesFilterValue(rowValue, filterValue) {
     if (!filterValue || String(filterValue).startsWith("All ")) return true;
 
@@ -269,6 +276,50 @@ function aggregateSpeciesRows(rows) {
             rawDataInNcbiSra: group.some((row) => row.rawDataInNcbiSra),
         };
     });
+}
+
+function buildTaxonomyLookup(rows) {
+    const bySpeciesId = new Map();
+    const byScientificName = new Map();
+
+    rows.forEach((row) => {
+        const speciesId = String(row.speciesId ?? "").trim();
+        const scientificName = normalize(row.scientificName).trim();
+
+        if (speciesId) bySpeciesId.set(speciesId, row);
+        if (scientificName && !byScientificName.has(scientificName)) byScientificName.set(scientificName, []);
+        if (scientificName) byScientificName.get(scientificName).push(row);
+    });
+
+    return { bySpeciesId, byScientificName };
+}
+
+function enrichSpeciesRowsWithTaxonomy(speciesRows, taxonomyRows) {
+    const lookup = buildTaxonomyLookup(taxonomyRows);
+
+    return speciesRows.map((row) => {
+        const specimenMatches = (row.specimenIds ?? [])
+            .map((specimenId) => lookup.bySpeciesId.get(String(specimenId).trim()))
+            .filter(Boolean);
+        const scientificNameMatches = lookup.byScientificName.get(normalize(row.scientificName).trim()) ?? [];
+        const matches = specimenMatches.length ? specimenMatches : scientificNameMatches;
+
+        const subgenus = row.subgenus || joinUnique(matches, "subgenus");
+        const diet = row.diet || joinUnique(matches, "organismsDiet");
+        const tissueSource = row.tissueSource || joinUnique(matches, "tissueSource");
+
+        return {
+            ...row,
+            subgenus,
+            diet,
+            tissueSource,
+        };
+    });
+}
+
+function listOptionValues(rows, field) {
+    return Array.from(new Set(rows.flatMap((row) => splitMultiValue(row[field]))))
+        .sort((a, b) => a.localeCompare(b));
 }
 
 function mapSpecimenRows(rows) {
@@ -398,8 +449,8 @@ function mapSpeciesRow(row) {
 }
 
 export async function listSpecies(filters = {}) {
-    const rows = await SPECIES_SELECT;
-    let filtered = aggregateSpeciesRows(rows).filter((row) => {
+    const [rows, taxonomyRows] = await Promise.all([SPECIES_SELECT, TAXONOMY_SELECT]);
+    let filtered = enrichSpeciesRowsWithTaxonomy(aggregateSpeciesRows(rows), taxonomyRows).filter((row) => {
         if (!matchesSearch(row, ["speciesId", "scientificName", "commonName", "subgenus", "province", "municipality", "diet", "project", "doi", "specimenIds"], filters.search)) {
             return false;
         }
@@ -594,12 +645,14 @@ export async function deleteSpecies(speciesId) {
 }
 
 export async function listSpeciesOptions() {
-    const rows = await SPECIES_SELECT;
+    const [rows, taxonomyRows] = await Promise.all([SPECIES_SELECT, TAXONOMY_SELECT]);
+    const speciesRows = enrichSpeciesRowsWithTaxonomy(aggregateSpeciesRows(rows), taxonomyRows);
+
     return {
-        subgenus: Array.from(new Set(rows.map((row) => row.subgenus).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-        province: Array.from(new Set(rows.map((row) => row.province).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-        municipality: Array.from(new Set(rows.map((row) => row.municipality).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-        diet: Array.from(new Set(rows.map((row) => row.diet).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+        subgenus: listOptionValues(speciesRows, "subgenus"),
+        province: listOptionValues(speciesRows, "province"),
+        municipality: listOptionValues(speciesRows, "municipality"),
+        diet: listOptionValues(speciesRows, "diet"),
     };
 }
 

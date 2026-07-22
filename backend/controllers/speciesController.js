@@ -7,6 +7,7 @@ import {
     deleteSpecies,
     getSpeciesById,
     listSpecies,
+    listSpeciesOptions,
     updateSpecies,
 } from "../models/speciesModel.js";
 
@@ -27,6 +28,14 @@ export const getAllSpecies = asyncHandler(async (req, res) => {
         data: rows,
         pagination,
         message: "Successfully fetched species.",
+    });
+});
+
+export const getSpeciesOptions = asyncHandler(async (_req, res) => {
+    const filters = await listSpeciesOptions();
+    return sendSuccess(res, {
+        data: filters,
+        message: "Successfully fetched species filters.",
     });
 });
 

@@ -49,6 +49,9 @@ export default function SpeciesExplorerFilters({
           aria-label="Search species"
           value={filters.search || ''}
           onChange={(event) => updateFilters({ search: event.target.value })}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') onFilterChange(filters)
+          }}
         />
         <div className="space-y-4">
           <SelectField label="Subgenus" options={options.subgenus || []} value={filters.subgenus || 'All Subgenus'} onChange={(value) => updateFilters({ subgenus: value })} />
@@ -62,7 +65,7 @@ export default function SpeciesExplorerFilters({
         <Button variant="outline" size="md" className="bg-white text-[var(--app-text)]" onClick={resetFilters}>
           Reset All
         </Button>
-        <Button variant="primary" size="md" className="bg-brand-700">
+        <Button variant="primary" size="md" className="bg-brand-700" onClick={() => onFilterChange(filters)}>
           Apply Filter
         </Button>
       </div>

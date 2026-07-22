@@ -1,122 +1,40 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-import { fetchPublicationExplorerRows } from '@/services/catalogService'
+import { fetchPublicationExplorerOptions, fetchPublicationExplorerPage } from '@/services/catalogService'
 
-const publicationExplorerBreadcrumbs = [
-  { label: 'Home', to: '/' },
-  { label: 'Publications' },
-]
-
-const publicationExplorerMeta = {
-  title: 'Publications Explorer',
-  subtitle: 'Browse publications linked to Philippine cone snail, conopeptide, and biomarker evidence.',
-}
-
-const publicationExplorerInitialFilters = {
-  search: '',
-  year: 'All Years',
-  journal: 'All Journals',
-}
-
-const publicationPageSize = 5
-const publicationPagination = {
-  page: 1,
-  totalPages: 1,
-}
-
-const isDefaultOption = (value) => !value || value.startsWith('All ')
-const normalize = (value) => String(value ?? '').toLowerCase()
-const uniqueOptions = (label, rows, field) => [
-  label,
-  ...Array.from(new Set(rows.map((row) => row[field]).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-]
-
-function rowMatchesFilters(row, filters) {
-  const searchTerm = normalize(filters.search).trim()
-  const searchableText = normalize(Object.values(row).join(' '))
-
-  if (searchTerm && !searchableText.includes(searchTerm)) return false
-  if (!isDefaultOption(filters.year) && row.year !== filters.year) return false
-  if (!isDefaultOption(filters.journal) && row.journal !== filters.journal) return false
-
-  return true
-}
+const pageSize = 5
+const initialFilters = { search: '', year: '', journal: '' }
 
 export function usePublicationsExplorerController() {
-  const [filters, setFilters] = useState(publicationExplorerInitialFilters)
-  const [page, setPage] = useState(publicationPagination.page)
-  const [rowsSource, setRowsSource] = useState([])
-  const [rowsStatus, setRowsStatus] = useState('loading')
+  const [filters, setFilters] = useState(initialFilters)
+  const [page, setPage] = useState(1)
+  const [rows, setRows] = useState([])
+  const [filterOptions, setFilterOptions] = useState({})
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
+  const [status, setStatus] = useState('loading')
 
+  useEffect(() => { fetchPublicationExplorerOptions().then(setFilterOptions).catch(() => setFilterOptions({})) }, [])
   useEffect(() => {
     let active = true
+    setStatus('loading')
+    fetchPublicationExplorerPage({ ...filters, page, limit: pageSize })
+      .then((result) => { if (active) { setRows(result.rows); setPagination(result.pagination); setStatus('live') } })
+      .catch(() => { if (active) { setRows([]); setPagination({ page: 1, totalPages: 1, total: 0 }); setStatus('empty') } })
+    return () => { active = false }
+  }, [filters, page])
 
-    async function loadRows() {
-      setRowsStatus('loading')
-
-      try {
-        const liveRows = await fetchPublicationExplorerRows()
-        if (active) {
-          setRowsSource(liveRows)
-          setRowsStatus('live')
-        }
-      } catch {
-        if (active) {
-          setRowsSource([])
-          setRowsStatus('empty')
-        }
-      }
-    }
-
-    loadRows()
-
-    return () => {
-      active = false
-    }
-  }, [])
-
-  const filteredRows = useMemo(
-    () => rowsSource.filter((row) => rowMatchesFilters(row, filters)),
-    [filters, rowsSource],
-  )
-
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / publicationPageSize))
-  const rows = useMemo(
-    () => filteredRows.slice((page - 1) * publicationPageSize, page * publicationPageSize),
-    [filteredRows, page],
-  )
-  const filterOptions = useMemo(
-    () => ({
-      year: uniqueOptions('All Years', rowsSource, 'year'),
-      journal: uniqueOptions('All Journals', rowsSource, 'journal'),
-    }),
-    [rowsSource],
-  )
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
-
-  const handleFilterChange = useCallback((nextFilters) => {
-    setFilters(nextFilters)
-    setPage(1)
-  }, [])
-
-  const handlePageChange = useCallback((nextPage) => {
-    setPage(nextPage)
-  }, [])
+  const handleFilterChange = useCallback((nextFilters) => { setFilters({ ...initialFilters, ...nextFilters }); setPage(1) }, [])
+  const options = { year: ['All Years', ...(filterOptions.year || [])], journal: ['All Journals', ...(filterOptions.journal || [])] }
 
   return {
-    breadcrumbs: publicationExplorerBreadcrumbs,
-    filters,
-    filterOptions,
+    breadcrumbs: [{ label: 'Home', to: '/' }, { label: 'Publications' }],
+    filters: { ...filters, year: filters.year || 'All Years', journal: filters.journal || 'All Journals' },
+    filterOptions: options,
     handleFilterChange,
-    handlePageChange,
-    meta: publicationExplorerMeta,
-    pagination: { ...publicationPagination, page, totalPages },
-    resultCount: rowsStatus === 'loading' ? 'Loading data...' : `${filteredRows.length.toLocaleString()} results`,
+    handlePageChange: setPage,
+    meta: { title: 'Publications Explorer', subtitle: 'Browse publications linked to Philippine cone snail, conopeptide, and biomarker evidence.' },
+    pagination: { ...pagination, page },
+    resultCount: status === 'loading' ? 'Loading data...' : `${(pagination.total || 0).toLocaleString()} results`,
     rows,
   }
 }
