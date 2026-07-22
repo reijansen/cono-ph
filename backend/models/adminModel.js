@@ -256,6 +256,36 @@ async function upsertImportRows(resource, rows) {
     }
 }
 
+async function archiveAndDeleteLegacyBiomarkerRows(resourceName, resource, rows) {
+    if (resourceName !== "biomarkers" || !rows.length) return 0;
+
+    const importedSpeciesIds = Array.from(new Set(rows.map((row) => String(row.species_id ?? "").trim()).filter(Boolean)));
+    const importedBiomarkerIds = new Set(rows.map((row) => String(row.biomarker_id ?? "").trim()).filter(Boolean));
+    const legacyIds = importedSpeciesIds.filter((speciesId) => !importedBiomarkerIds.has(speciesId));
+
+    if (!legacyIds.length) return 0;
+
+    const existingLegacyRows = await getExistingRowsByIds(resource, legacyIds);
+    const legacyRows = Array.from(existingLegacyRows.entries())
+        .filter(([id, row]) => String(row.species_id ?? "").trim() === id)
+        .map(([id, existing]) => ({ resource, id, existing }));
+
+    if (!legacyRows.length) return 0;
+
+    await archiveExistingRecords(resourceName, legacyRows, "csv-import-legacy-biomarker-id-cleanup");
+
+    for (let index = 0; index < legacyRows.length; index += 500) {
+        const batch = legacyRows.slice(index, index + 500).map((row) => row.id);
+        const placeholders = batch.map((_, batchIndex) => `$${batchIndex + 1}`).join(", ");
+        await sql.unsafe(
+            `DELETE FROM ${resource.table} WHERE ${resource.idColumn} IN (${placeholders})`,
+            batch,
+        );
+    }
+
+    return legacyRows.length;
+}
+
 export async function listAdminRows(resourceName, filters = {}) {
     const resource = assertResource(resourceName);
     const rows = await sql.unsafe(`SELECT ${resource.columns.join(", ")} FROM ${resource.table}`);
@@ -464,6 +494,8 @@ export async function importAdminCsv(resourceName, { filename = "dataset.csv", c
             .filter(Boolean),
     );
 
+    const legacyCleanupCount = await archiveAndDeleteLegacyBiomarkerRows(resourceName, resource, upsertRows);
+
     await upsertImportRows(resource, upsertRows);
 
     const log = {
@@ -477,6 +509,9 @@ export async function importAdminCsv(resourceName, { filename = "dataset.csv", c
         status: "completed",
         notes: [
             "CSV import used upsert by primary key. Existing records were archived before update.",
+            legacyCleanupCount
+                ? `Archived and removed ${legacyCleanupCount} legacy biomarker rows that used specimen IDs as barcode IDs.`
+                : "",
             skippedReasons.size
                 ? `Skipped rows: ${Array.from(skippedReasons.entries()).map(([reason, count]) => `${reason} (${count})`).join(", ")}.`
                 : "",
