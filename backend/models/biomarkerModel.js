@@ -26,9 +26,7 @@ function hasUsableSequence(value) {
     const sequence = String(value ?? "").trim();
     const normalized = normalize(sequence);
     if (!sequence || ["unavailable", "n/a", "na", "none", "-"].includes(normalized)) return false;
-
-    const compactSequence = sequence.toUpperCase().replace(/[\s.-]/g, "");
-    return compactSequence.length >= 10 && /^[ACGTURYSWKMBDHVN]+$/.test(compactSequence);
+    return true;
 }
 
 function getPublicBiomarkerRows(rows) {
