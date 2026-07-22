@@ -20,6 +20,8 @@ const tabs = [
   { label: 'Publications', value: 'publications' },
 ]
 
+const tabPageSize = 5
+
 function InfoList({ items }) {
   return (
     <dl className="space-y-0">
@@ -68,6 +70,33 @@ function valueOrUnavailable(...values) {
   return value == null ? 'Unavailable' : String(value)
 }
 
+function normalizeText(value) {
+  return String(value ?? '').trim().toLowerCase()
+}
+
+function uniqueSorted(values) {
+  return Array.from(new Set(values.map((value) => String(value ?? '').trim()).filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b),
+  )
+}
+
+function matchesSearch(search, values) {
+  const term = normalizeText(search)
+  if (!term) return true
+  return values.some((value) => normalizeText(value).includes(term))
+}
+
+function paginateRows(rows, page, pageSize = tabPageSize) {
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
+  const safePage = Math.min(page, totalPages)
+  const start = (safePage - 1) * pageSize
+  return {
+    page: safePage,
+    totalPages,
+    rows: rows.slice(start, start + pageSize),
+  }
+}
+
 function firstAuthorSurname(authors) {
   const firstAuthor = String(authors ?? '').split(',')[0]?.trim()
   if (!firstAuthor) return 'Unavailable'
@@ -81,16 +110,59 @@ function visibleHeaderStats(statistics = []) {
 }
 
 function ConopeptidesTab({ species }) {
-  const totalCount = species.statistics[0]?.value ?? species.conopeptides.length
+  const conopeptides = Array.isArray(species.conopeptides) ? species.conopeptides : []
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
   const [geneSuperfamily, setGeneSuperfamily] = useState('All Superfamilies')
   const [cysteineFramework, setCysteineFramework] = useState('All Cysteine Frameworks')
+
+  const geneSuperfamilyOptions = useMemo(
+    () => uniqueSorted(conopeptides.map((row) => row.geneSuperfamily ?? row.superfamily)),
+    [conopeptides],
+  )
+  const frameworkOptions = useMemo(
+    () => uniqueSorted(conopeptides.map((row) => row.framework ?? row.cysteineFramework)),
+    [conopeptides],
+  )
+  const filteredRows = useMemo(() => {
+    return conopeptides.filter((row) => {
+      if (geneSuperfamily !== 'All Superfamilies' && row.geneSuperfamily !== geneSuperfamily && row.superfamily !== geneSuperfamily) {
+        return false
+      }
+      if (
+        cysteineFramework !== 'All Cysteine Frameworks' &&
+        row.framework !== cysteineFramework &&
+        row.cysteineFramework !== cysteineFramework
+      ) {
+        return false
+      }
+
+      return matchesSearch(search, [
+        row.conopeptideId,
+        row.geneSuperfamily,
+        row.superfamily,
+        row.framework,
+        row.specimenId,
+        row.matchedToxin,
+        row.percentSimilarity,
+      ])
+    })
+  }, [conopeptides, geneSuperfamily, cysteineFramework, search])
+
+  const { page: currentPage, totalPages, rows } = useMemo(
+    () => paginateRows(filteredRows, page),
+    [filteredRows, page],
+  )
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, geneSuperfamily, cysteineFramework])
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="font-serif text-[clamp(2rem,3.6vw,3.1rem)] leading-[0.95] text-black">
-          Conopeptides <span className="text-brand-700">({totalCount})</span>
+          Conopeptides <span className="text-brand-700">({filteredRows.length})</span>
         </h2>
         <p className="max-w-4xl text-[0.98rem] leading-7 text-[var(--app-muted)] sm:text-[1.05rem]">
           Predicted conopeptides identified from transcriptomic data for this species.
@@ -100,17 +172,29 @@ function ConopeptidesTab({ species }) {
       <div className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-wrap xl:items-end">
-            <SearchInput placeholder="Search by.." className="w-full lg:max-w-[328px]" />
+            <SearchInput
+              placeholder="Search by.."
+              className="w-full lg:max-w-[328px]"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  setPage(1)
+                }
+              }}
+            />
 
             <SelectWithChevron
               value={geneSuperfamily}
               onChange={(event) => setGeneSuperfamily(event.target.value)}
             >
               <option>All Superfamilies</option>
-              <option>M</option>
-              <option>O1</option>
-              <option>T</option>
-              <option>A</option>
+              {geneSuperfamilyOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </SelectWithChevron>
 
             <SelectWithChevron
@@ -118,9 +202,11 @@ function ConopeptidesTab({ species }) {
               onChange={(event) => setCysteineFramework(event.target.value)}
             >
               <option>All Cysteine Frameworks</option>
-              <option>Framework III</option>
-              <option>Framework VI/VII</option>
-              <option>Framework XII</option>
+              {frameworkOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </SelectWithChevron>
           </div>
 
@@ -128,7 +214,7 @@ function ConopeptidesTab({ species }) {
             <button
               type="button"
               className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
-              onClick={() => {}}
+              onClick={() => setPage(1)}
             >
               Apply Filter
             </button>
@@ -137,8 +223,10 @@ function ConopeptidesTab({ species }) {
               type="button"
               className="px-5 py-3 text-sm font-medium text-[var(--app-muted)] transition hover:bg-brand-50 hover:text-brand-700"
               onClick={() => {
+                setSearch('')
                 setGeneSuperfamily('All Superfamilies')
                 setCysteineFramework('All Cysteine Frameworks')
+                setPage(1)
               }}
             >
               Reset
@@ -168,7 +256,7 @@ function ConopeptidesTab({ species }) {
               </tr>
             </thead>
             <tbody>
-              {species.conopeptides.map((row) => (
+              {rows.map((row) => (
                 <tr
                   key={row.conopeptideId}
                   className="border-t border-[var(--app-border)] transition hover:bg-brand-50/60"
@@ -194,28 +282,71 @@ function ConopeptidesTab({ species }) {
                   </td>
                 </tr>
               ))}
+              {!rows.length ? (
+                <tr>
+                  <td className="px-5 py-8 text-center text-[var(--app-muted)]" colSpan={6}>
+                    No conopeptides matched your filters.
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
       </div>
 
-      <Pagination page={page} totalPages={4} onPageChange={setPage} />
+      <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
     </div>
   )
 }
 
 function SpecimensTab({ species }) {
-  const totalCount = species.specimens.length
+  const specimens = Array.isArray(species.specimens) ? species.specimens : []
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
   const [province, setProvince] = useState('All Provinces')
   const [repository, setRepository] = useState('All Repositories')
   const [sequencingPlatform, setSequencingPlatform] = useState('All Platforms')
+
+  const provinceOptions = useMemo(() => uniqueSorted(specimens.map((specimen) => specimen.province)), [specimens])
+  const repositoryOptions = useMemo(() => uniqueSorted(specimens.map((specimen) => specimen.repository)), [specimens])
+  const platformOptions = useMemo(
+    () => uniqueSorted(specimens.map((specimen) => specimen.sequencingPlatform)),
+    [specimens],
+  )
+  const filteredRows = useMemo(() => {
+    return specimens.filter((specimen) => {
+      if (province !== 'All Provinces' && specimen.province !== province) return false
+      if (repository !== 'All Repositories' && specimen.repository !== repository) return false
+      if (sequencingPlatform !== 'All Platforms' && specimen.sequencingPlatform !== sequencingPlatform) return false
+
+      return matchesSearch(search, [
+        specimen.specimenId,
+        specimen.author,
+        specimen.repository,
+        specimen.province,
+        specimen.municipality,
+        specimen.tissueSource,
+        specimen.sequencingPlatform,
+        specimen.doi,
+        specimen.project,
+      ])
+    })
+  }, [specimens, province, repository, sequencingPlatform, search])
+
+  const { page: currentPage, totalPages, rows } = useMemo(
+    () => paginateRows(filteredRows, page),
+    [filteredRows, page],
+  )
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, province, repository, sequencingPlatform])
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="font-serif text-[clamp(2rem,3.6vw,3.1rem)] leading-[0.95] text-black">
-          Specimens <span className="text-brand-700">({totalCount})</span>
+          Specimens <span className="text-brand-700">({filteredRows.length})</span>
         </h2>
         <p className="max-w-4xl text-[0.98rem] leading-7 text-[var(--app-muted)] sm:text-[1.05rem]">
           Individual specimen records collected for this species.
@@ -225,19 +356,35 @@ function SpecimensTab({ species }) {
       <div className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-wrap xl:items-end">
-            <SearchInput placeholder="Search by.." className="w-full lg:max-w-[328px]" />
+            <SearchInput
+              placeholder="Search by.."
+              className="w-full lg:max-w-[328px]"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  setPage(1)
+                }
+              }}
+            />
 
             <SelectWithChevron value={province} onChange={(event) => setProvince(event.target.value)}>
               <option>All Provinces</option>
-              <option>Cebu</option>
-              <option>Bohol</option>
-              <option>Palawan</option>
+              {provinceOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </SelectWithChevron>
 
             <SelectWithChevron value={repository} onChange={(event) => setRepository(event.target.value)}>
               <option>All Repositories</option>
-              <option>The Marine Science Institute (MSI)</option>
-              <option>University Repository</option>
+              {repositoryOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </SelectWithChevron>
 
             <SelectWithChevron
@@ -245,9 +392,11 @@ function SpecimensTab({ species }) {
               onChange={(event) => setSequencingPlatform(event.target.value)}
             >
               <option>All Platforms</option>
-              <option>Novaseq 6000</option>
-              <option>Oxford Nanopore</option>
-              <option>PacBio</option>
+              {platformOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </SelectWithChevron>
           </div>
 
@@ -255,7 +404,7 @@ function SpecimensTab({ species }) {
             <button
               type="button"
               className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
-              onClick={() => {}}
+              onClick={() => setPage(1)}
             >
               Apply Filter
             </button>
@@ -264,9 +413,11 @@ function SpecimensTab({ species }) {
               type="button"
               className="px-5 py-3 text-sm font-medium text-[var(--app-muted)] transition hover:bg-brand-50 hover:text-brand-700"
               onClick={() => {
+                setSearch('')
                 setProvince('All Provinces')
                 setRepository('All Repositories')
                 setSequencingPlatform('All Platforms')
+                setPage(1)
               }}
             >
               Reset
@@ -297,7 +448,7 @@ function SpecimensTab({ species }) {
               </tr>
             </thead>
             <tbody>
-              {species.specimens.map((specimen) => (
+              {rows.map((specimen) => (
                 <tr
                   key={specimen.specimenId}
                   className="border-t border-[var(--app-border)] transition hover:bg-brand-50/60"
@@ -321,12 +472,19 @@ function SpecimensTab({ species }) {
                   </td>
                 </tr>
               ))}
+              {!rows.length ? (
+                <tr>
+                  <td className="px-5 py-8 text-center text-[var(--app-muted)]" colSpan={7}>
+                    No specimens matched your filters.
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
       </div>
 
-      <Pagination page={page} totalPages={4} onPageChange={setPage} />
+      <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
     </div>
   )
 }
@@ -368,7 +526,9 @@ function PublicationCard({ publication }) {
             </div>
             <div className="contents">
               <dt className="font-semibold text-brand-700">Linked Conopeptides</dt>
-              <dd className="text-[var(--app-muted)]">{publication.linkedConopeptidesCount}</dd>
+              <dd className="text-[var(--app-muted)]">
+                {publication.linkedConopeptides ?? publication.linkedConopeptidesCount ?? 'Unavailable'}
+              </dd>
             </div>
           </dl>
 
@@ -391,16 +551,45 @@ function PublicationCard({ publication }) {
 }
 
 function PublicationsTab({ species }) {
-  const totalCount = species.publications.length
+  const publications = Array.isArray(species.publications) ? species.publications : []
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
   const [year, setYear] = useState('All Years')
   const [journal, setJournal] = useState('All Journals')
+
+  const yearOptions = useMemo(() => uniqueSorted(publications.map((publication) => publication.year)), [publications])
+  const journalOptions = useMemo(() => uniqueSorted(publications.map((publication) => publication.journal)), [publications])
+  const filteredRows = useMemo(() => {
+    return publications.filter((publication) => {
+      if (year !== 'All Years' && publication.year !== year) return false
+      if (journal !== 'All Journals' && publication.journal !== journal) return false
+
+      return matchesSearch(search, [
+        publication.title,
+        publication.authors,
+        publication.journal,
+        publication.year,
+        publication.doi,
+        publication.evidenceType,
+        publication.specimenId,
+      ])
+    })
+  }, [publications, year, journal, search])
+
+  const { page: currentPage, totalPages, rows } = useMemo(
+    () => paginateRows(filteredRows, page),
+    [filteredRows, page],
+  )
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, year, journal])
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="font-serif text-[clamp(2rem,3.6vw,3.1rem)] leading-[0.95] text-black">
-          Publications <span className="text-brand-700">({totalCount})</span>
+          Publications <span className="text-brand-700">({filteredRows.length})</span>
         </h2>
         <p className="max-w-4xl text-[0.98rem] leading-7 text-[var(--app-muted)] sm:text-[1.05rem]">
           Reference papers and related studies associated with this species.
@@ -410,20 +599,35 @@ function PublicationsTab({ species }) {
       <div className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-wrap xl:items-end">
-            <SearchInput placeholder="Search by.." className="w-full lg:max-w-[328px]" />
+            <SearchInput
+              placeholder="Search by.."
+              className="w-full lg:max-w-[328px]"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  setPage(1)
+                }
+              }}
+            />
 
             <SelectWithChevron value={year} onChange={(event) => setYear(event.target.value)}>
               <option>All Years</option>
-              <option>2020</option>
-              <option>2021</option>
-              <option>2022</option>
+              {yearOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </SelectWithChevron>
 
             <SelectWithChevron value={journal} onChange={(event) => setJournal(event.target.value)}>
               <option>All Journals</option>
-              <option>Marine Drugs</option>
-              <option>Frontiers in Marine Science</option>
-              <option>Journal of Proteomics</option>
+              {journalOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </SelectWithChevron>
           </div>
 
@@ -431,7 +635,7 @@ function PublicationsTab({ species }) {
             <button
               type="button"
               className="px-5 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
-              onClick={() => {}}
+              onClick={() => setPage(1)}
             >
               Apply Filter
             </button>
@@ -440,8 +644,10 @@ function PublicationsTab({ species }) {
               type="button"
               className="px-5 py-3 text-sm font-medium text-[var(--app-muted)] transition hover:bg-brand-50 hover:text-brand-700"
               onClick={() => {
+                setSearch('')
                 setYear('All Years')
                 setJournal('All Journals')
+                setPage(1)
               }}
             >
               Reset
@@ -470,7 +676,7 @@ function PublicationsTab({ species }) {
               </tr>
             </thead>
             <tbody>
-              {species.publications.map((publication) => (
+              {rows.map((publication) => (
                 <tr
                   key={publication.doi || publication.publicationId || publication.title}
                   className="border-t border-[var(--app-border)] transition hover:bg-brand-50/60"
@@ -497,18 +703,25 @@ function PublicationsTab({ species }) {
                       >
                         {publication.doi}
                       </a>
-                    ) : (
+                  ) : (
                       'Unavailable'
                     )}
                   </td>
                 </tr>
               ))}
+              {!rows.length ? (
+                <tr>
+                  <td className="px-5 py-8 text-center text-[var(--app-muted)]" colSpan={5}>
+                    No publications matched your filters.
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
       </div>
 
-      <Pagination page={page} totalPages={4} onPageChange={setPage} />
+      <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
     </div>
   )
 }

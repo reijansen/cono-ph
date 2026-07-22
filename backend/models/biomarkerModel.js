@@ -22,6 +22,15 @@ function normalize(value) {
     return String(value ?? "").toLowerCase();
 }
 
+function hasUsableSequence(value) {
+    const sequence = String(value ?? "").trim();
+    const normalized = normalize(sequence);
+    if (!sequence || ["unavailable", "n/a", "na", "none", "-"].includes(normalized)) return false;
+
+    const compactSequence = sequence.toUpperCase().replace(/[\s.-]/g, "");
+    return compactSequence.length >= 10 && /^[ACGTURYSWKMBDHVN]+$/.test(compactSequence);
+}
+
 function getPublicBiomarkerRows(rows) {
     const referencedSpeciesIds = new Set(
         rows.map((row) => String(row?.speciesId ?? "").trim()).filter(Boolean),
@@ -143,7 +152,7 @@ function mapBiomarkerDetail(row) {
 }
 
 export async function listBiomarkers(filters = {}) {
-    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT);
+    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT).filter((row) => hasUsableSequence(row.sequence));
     let filtered = rows.filter((row) => {
         const searchTerm = normalize(filters.search).trim();
         const searchable = normalize([row.biomarkerId, row.speciesId, row.speciesName, row.markerType, row.accession, row.sequence, row.province, row.validationStatus, row.publicationDoi].join(" "));
@@ -164,12 +173,12 @@ export async function listBiomarkers(filters = {}) {
 }
 
 export async function getBiomarkerById(biomarkerId) {
-    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT).filter((row) => row.biomarkerId === biomarkerId);
+    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT).filter((row) => row.biomarkerId === biomarkerId && hasUsableSequence(row.sequence));
     return mapBiomarkerDetail(rows[0] ?? null);
 }
 
 export async function listBiomarkerFilters() {
-    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT);
+    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT).filter((row) => hasUsableSequence(row.sequence));
     return {
         markerType: Array.from(new Set(rows.map((row) => row.markerType).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
         species: Array.from(new Set(rows.map((row) => row.speciesName).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
@@ -179,6 +188,6 @@ export async function listBiomarkerFilters() {
 }
 
 export async function getBiomarkerSummary() {
-    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT);
+    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT).filter((row) => hasUsableSequence(row.sequence));
     return { biomarkerCount: rows.length };
 }
