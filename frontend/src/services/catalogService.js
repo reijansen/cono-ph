@@ -135,6 +135,7 @@ function normalizeConopeptideRow(row) {
     superfamily: String(row.superfamily ?? ''),
     framework: String(row.framework ?? row.cysteineFramework ?? ''),
     predictedPeptide: String(row.predictedPeptide ?? ''),
+    maturePeptideSequence: String(row.maturePeptideSequence ?? row.mature_peptide_sequence ?? ''),
     matchedToxin: String(row.matchedToxin ?? ''),
     species: String(row.speciesName ?? row.species ?? ''),
     speciesId: String(row.speciesId ?? ''),

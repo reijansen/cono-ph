@@ -43,13 +43,21 @@ export default function ConopeptideSidebar({
     setLocalFilters((current) => ({ ...current, ...patch }))
   }
 
+  const updateAndApplyFilters = (patch) => {
+    setLocalFilters((current) => {
+      const nextFilters = { ...current, ...patch }
+      onFilterChange(nextFilters)
+      return nextFilters
+    })
+  }
+
   const handleResetFilters = () => {
     const resetFilters = {
       search: '',
       species: 'All Species',
       superfamily: 'All Superfamilies',
       cysteineFramework: 'All Cysteine Frameworks',
-      hasPredictedPeptide: 'all',
+      hasMaturePeptideSequence: 'all',
     }
 
     setLocalFilters(resetFilters)
@@ -124,11 +132,11 @@ export default function ConopeptideSidebar({
           <div className="space-y-2">
             <TogglePill
               label="Has Mature Peptide Sequence"
-              enabled={localFilters.hasPredictedPeptide === 'yes'}
+              enabled={localFilters.hasMaturePeptideSequence === 'yes'}
               onClick={() =>
-                updateLocalFilters({
-                  hasPredictedPeptide:
-                    localFilters.hasPredictedPeptide === 'yes' ? 'all' : 'yes',
+                updateAndApplyFilters({
+                  hasMaturePeptideSequence:
+                    localFilters.hasMaturePeptideSequence === 'yes' ? 'all' : 'yes',
                 })
               }
             />

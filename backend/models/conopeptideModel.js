@@ -31,6 +31,11 @@ function normalize(value) {
     return String(value ?? "").toLowerCase();
 }
 
+function hasUsableSequence(value) {
+    const sequence = normalize(value).trim();
+    return Boolean(sequence && !["unavailable", "n/a", "na", "none", "-"].includes(sequence));
+}
+
 function buildPagination(total, page, limit) {
     return {
         page,
@@ -127,7 +132,7 @@ export async function listConopeptides(filters = {}) {
         if (filters.species && !String(filters.species).startsWith("All ") && row.speciesName !== filters.species) return false;
         if (filters.superfamily && !String(filters.superfamily).startsWith("All ") && row.superfamily !== filters.superfamily) return false;
         if (filters.cysteineFramework && !String(filters.cysteineFramework).startsWith("All ") && row.cysteineFramework !== filters.cysteineFramework) return false;
-        if (filters.hasPredictedPeptide === "yes" && !row.predictedPeptide) return false;
+        if ((filters.hasMaturePeptideSequence === "yes" || filters.hasPredictedPeptide === "yes") && !hasUsableSequence(row.maturePeptideSequence)) return false;
         return true;
     });
 

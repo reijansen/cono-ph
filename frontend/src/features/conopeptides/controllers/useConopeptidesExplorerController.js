@@ -24,11 +24,15 @@ export const conopeptideExplorerInitialFilters = {
   species: 'All Species',
   superfamily: 'All Superfamilies',
   cysteineFramework: 'All Cysteine Frameworks',
-  hasPredictedPeptide: 'all',
+  hasMaturePeptideSequence: 'all',
 }
 
 const isDefaultOption = (value) => !value || value.startsWith('All ')
 const normalize = (value) => String(value ?? '').toLowerCase()
+const hasUsableSequence = (value) => {
+  const sequence = normalize(value).trim()
+  return Boolean(sequence && !['unavailable', 'n/a', 'na', 'none', '-'].includes(sequence))
+}
 const uniqueOptions = (label, rows, field) => [
   label,
   ...Array.from(new Set(rows.map((row) => row[field]).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
@@ -42,7 +46,7 @@ function rowMatchesFilters(row, filters) {
   if (!isDefaultOption(filters.species) && row.species !== filters.species) return false
   if (!isDefaultOption(filters.superfamily) && row.superfamily !== filters.superfamily) return false
   if (!isDefaultOption(filters.cysteineFramework) && row.framework !== filters.cysteineFramework) return false
-  if (filters.hasPredictedPeptide === 'yes' && !row.predictedPeptide) return false
+  if (filters.hasMaturePeptideSequence === 'yes' && !hasUsableSequence(row.maturePeptideSequence)) return false
 
   return true
 }

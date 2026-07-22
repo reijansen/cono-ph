@@ -18,6 +18,7 @@ export const getAllConopeptides = asyncHandler(async (req, res) => {
         species: parseString(req.query.species),
         superfamily: parseString(req.query.superfamily),
         cysteineFramework: parseString(req.query.cysteineFramework),
+        hasMaturePeptideSequence: parseString(req.query.hasMaturePeptideSequence),
         hasPredictedPeptide: parseString(req.query.hasPredictedPeptide),
     });
 
