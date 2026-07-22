@@ -184,7 +184,7 @@ export default function ConopeptideDetailPage() {
   const generalInformationRows = [
     { label: 'Conopeptide ID', value: <ValueText value={record.generalInformation.conopeptideId} /> },
     { label: 'Species', value: <ValueText value={record.generalInformation.species} italic /> },
-    { label: 'Species ID', value: <ValueText value={record.generalInformation.speciesId} /> },
+    { label: 'Specimen ID', value: <ValueText value={record.generalInformation.speciesId} /> },
     { label: 'Sequence remarks', value: <ValueText value={record.generalInformation.sequenceRemarks} /> },
   ]
 
@@ -212,7 +212,10 @@ export default function ConopeptideDetailPage() {
   ]
 
   const expressionRows = [
-    { label: 'Expression value', value: <ValueText value={record.expression.expressionValue} /> },
+    {
+      label: 'Expression value',
+      value: <ValueText value={`${record.expression.expressionValue} TPM`} />,
+    },
   ]
 
   const referenceRows = [{ label: 'DOI', value: <ValueText value={record.reference.doi} /> }]
