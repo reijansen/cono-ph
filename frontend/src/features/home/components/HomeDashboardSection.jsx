@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 import mapImage from '@/assets/map.png'
 import StatCard from '@/components/ui/StatCard'
@@ -294,13 +295,14 @@ export default function HomeDashboardSection() {
     }
   }, [])
 
-  const liveHomeMetrics = summary?.homeMetrics ?? homeMetrics
-  const liveSuperfamilyBreakdown = summary?.superfamilyBreakdown ?? superfamilyBreakdown
-  const liveSpecimenDistribution = summary?.specimenDistribution ?? specimenDistribution
-  const liveDiscoveryTrend = summary?.discoveryTrend ?? discoveryTrend
-  const liveRecentSpecies = summary?.recentSpecies ?? recentSpecies
-  const liveRecentPublications = summary?.recentPublications ?? recentPublications
-  const liveDatabaseUpdates = summary?.databaseUpdates ?? databaseUpdates
+  const preferLive = (live, fallback) => (live?.length ? live : fallback)
+  const liveHomeMetrics = preferLive(summary?.homeMetrics, homeMetrics)
+  const liveSuperfamilyBreakdown = preferLive(summary?.superfamilyBreakdown, superfamilyBreakdown)
+  const liveSpecimenDistribution = preferLive(summary?.specimenDistribution, specimenDistribution)
+  const liveDiscoveryTrend = preferLive(summary?.discoveryTrend, discoveryTrend)
+  const liveRecentSpecies = preferLive(summary?.recentSpecies, recentSpecies)
+  const liveRecentPublications = preferLive(summary?.recentPublications, recentPublications)
+  const liveDatabaseUpdates = preferLive(summary?.databaseUpdates, databaseUpdates)
 
   return (
     <section className="space-y-7 border-t border-brand-100 pt-8">
@@ -324,11 +326,13 @@ export default function HomeDashboardSection() {
 
         <div className="space-y-6">
           <section className="overflow-hidden rounded-[2rem] border border-[var(--app-border)] bg-white shadow-[0_10px_26px_rgba(16,16,16,0.04)]">
-            <img
-              src={mapImage}
-              alt="Philippine map preview"
-              className="h-[240px] w-full object-cover sm:h-[320px] lg:h-full"
-            />
+            <Link to="/visualization/species" className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+              <img
+                src={mapImage}
+                alt="Philippine map preview; open the species visualization"
+                className="h-[240px] w-full object-cover sm:h-[320px] lg:h-full"
+              />
+            </Link>
           </section>
         </div>
       </div>

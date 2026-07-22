@@ -113,22 +113,30 @@ function toDateString(value) {
     return date.toISOString().slice(0, 10);
 }
 
+function publicationYear(value) {
+    const year = Number.parseInt(String(value ?? "").slice(0, 4), 10);
+    return Number.isFinite(year) ? year : 0;
+}
+
 export async function getDashboardSummary() {
     const [speciesRows, conopeptideRows, biomarkerRows, publicationRows] = await Promise.all([
         sql`
-            SELECT species_id, scientific_name, common_name, province, subgenus, num_conopeptides, created_at
-            FROM species
+            SELECT s.species_id, s.scientific_name, s.common_name, s.province, s.municipality,
+                COALESCE(NULLIF(s.subgenus, ''), t.subgenus) AS subgenus,
+                s.num_conopeptides, s.doi, s.created_at
+            FROM species s
+            LEFT JOIN taxonomy t ON t.species_id = s.species_id
         `,
         sql`
-            SELECT accession, species_name, superfamily, framework, predicted_peptide, species_id
+            SELECT accession, species_name, superfamily, framework, predicted_peptide, matched_toxin, precursor_length AS "predictedLength", species_id, doi
             FROM conopeptide
         `,
         sql`
-            SELECT biomarker_id, species_name, marker_type, province, accession, sequence_length, validation_status
+            SELECT biomarker_id, species_name, marker_type, province, accession, sequence_length, validation_status, publication_doi
             FROM biomarker
         `,
         sql`
-            SELECT publication_id, title, authors, year_published, journal, doi, linked_species, linked_conopeptides, linked_biomarkers, created_at
+            SELECT publication_id, title, authors, year_published, journal, doi, linked_species, linked_conopeptides, linked_biomarkers, evidence_type, created_at
             FROM publication
         `,
     ]);
@@ -141,13 +149,42 @@ export async function getDashboardSummary() {
 
     const speciesWithBiomarkerData = new Set(biomarkerRows.map((row) => row.species_name).filter(Boolean)).size;
     const speciesWithConopeptides = new Set(conopeptideRows.map((row) => row.species_name).filter(Boolean)).size;
+    const subgenusCount = new Set(uniqueSpecies.map((row) => String(row.subgenus || "").trim()).filter((value) => value && value.toLowerCase() !== "unknown")).size;
+    const provinceCount = new Set(uniqueSpecies.map((row) => row.province).filter(Boolean)).size;
+    const speciesWithSequenceData = new Set([
+        ...speciesRows.filter((row) => Number(row.num_conopeptides || 0) > 0).map((row) => row.scientific_name),
+        ...conopeptideRows.map((row) => row.species_name),
+    ].filter(Boolean)).size;
+    const uniquePeptideCount = new Set(conopeptideRows.map((row) => row.predicted_peptide).filter(Boolean)).size;
+    const biomarkerTypeCount = new Set(biomarkerRows.map((row) => row.marker_type).filter(Boolean)).size;
+    const biomarkerCoveragePercent = speciesCount
+        ? Math.round((speciesWithBiomarkerData / speciesCount) * 100)
+        : 0;
 
-    const speciesCountsByName = entriesFromValueMap(sumBy(speciesRows, (row) => row.scientific_name, (row) => row.num_conopeptides)).slice(0, 5);
+    const speciesCountsByName = entriesFromValueMap(sumBy(speciesRows, (row) => row.scientific_name, (row) => row.num_conopeptides));
     const conopeptideCountsBySpecies = topEntriesFromCountMap(countBy(conopeptideRows, (row) => row.species_name), 5);
     const biomarkerCountsBySpecies = topEntriesFromCountMap(countBy(biomarkerRows, (row) => row.species_name), 5);
-    const provinceCounts = entriesFromCountMap(countBy([...speciesRows, ...biomarkerRows], (row) => row.province)).slice(0, 5);
+    const conopeptideTopRows = conopeptideRows.slice(0, 10).map((row) => ({
+        name: row.matched_toxin || row.accession || "Unavailable",
+        superfamily: row.superfamily || "Unavailable",
+        framework: row.framework || "Unavailable",
+        count: 1,
+        species: row.species_name || "Unavailable",
+    }));
+    const biomarkerTopRows = biomarkerRows.slice(0, 10).map((row) => ({
+        biomarkerId: row.biomarker_id || "Unavailable",
+        markerType: row.marker_type || "Unavailable",
+        species: row.species_name || "Unavailable",
+        accession: row.accession || "Unavailable",
+        sequenceLength: row.sequence_length ? `${row.sequence_length} bp` : "Unavailable",
+        province: row.province || "Unavailable",
+    }));
+    const topSpeciesWithSequenceData = speciesCountsByName.slice(0, 10);
+    const provinceCounts = entriesFromCountMap(countBy(biomarkerRows, (row) => row.province)).slice(0, 5);
     const superfamilyCounts = entriesFromCountMap(countBy(conopeptideRows, (row) => row.superfamily)).slice(0, 6);
     const markerTypeCounts = entriesFromCountMap(countBy(biomarkerRows, (row) => row.marker_type)).slice(0, 6);
+    const speciesSubgenusData = entriesFromCountMap(countBy(uniqueSpecies, (row) => row.subgenus)).filter((item) => item.name !== "Unknown").slice(0, 8)
+        .map((item) => ({ name: item.name, value: item.value }));
 
     const publicationLinkCounts = publicationRows.map((publication) => ({
         publicationId: publication.publication_id,
@@ -167,11 +204,17 @@ export async function getDashboardSummary() {
     const linkedSpeciesCoverage = countNonEmpty(publicationLinkCounts, (row) => row.linkedSpecies);
     const linkedConopeptideCoverage = countNonEmpty(publicationLinkCounts, (row) => row.linkedConopeptides);
     const linkedBiomarkerCoverage = countNonEmpty(publicationLinkCounts, (row) => row.linkedBiomarkers);
+    const linkedPublicationCount = new Set(
+        publicationLinkCounts
+            .filter((row) => row.linkedSpecies > 0 || row.linkedConopeptides > 0 || row.linkedBiomarkers > 0)
+            .map((row) => row.publicationId)
+            .filter(Boolean),
+    ).size;
 
     const topSpeciesName = speciesCountsByName[0]?.name ?? "Unavailable";
     const topConopeptideSpecies = conopeptideCountsBySpecies[0]?.name ?? "Unavailable";
     const topBiomarkerSpecies = biomarkerCountsBySpecies[0]?.name ?? "Unavailable";
-    const provinceEntryCounts = entriesFromCountMap(countBy(speciesRows, (row) => row.province));
+    const provinceEntryCounts = entriesFromCountMap(countBy(uniqueSpecies, (row) => row.province));
     const provinceTotal = provinceEntryCounts.reduce((sum, item) => sum + item.value, 0) || 1;
     const topProvinceCounts = provinceEntryCounts.slice(0, 4);
     const specimenDistribution = topProvinceCounts.map((item, index) => ({
@@ -186,7 +229,7 @@ export async function getDashboardSummary() {
         color: ["#8ab4f8", "#5fd0c1", "#111827", "#6fb0ff", "#b79be8", "#71d57d"][index % 6],
     }));
     const discoveryTrendMap = entriesFromCountMap(countBy(publicationRows, (row) => row.year_published)).sort(
-        (left, right) => String(left.name).localeCompare(String(right.name)),
+        (left, right) => publicationYear(left.name) - publicationYear(right.name),
     );
     const discoveryTrend = discoveryTrendMap.map((item) => ({
         year: item.name,
@@ -203,13 +246,13 @@ export async function getDashboardSummary() {
             status: row.species_id ? "Curated" : "Unavailable",
         }));
     const recentPublications = [...publicationRows]
-        .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))
+        .sort((left, right) => publicationYear(right.year_published) - publicationYear(left.year_published))
         .slice(0, 3)
         .map((row) => ({
             id: row.publication_id,
             title: row.title,
             journal: row.journal || "Unavailable",
-            publicationDate: toDateString(row.created_at) || row.year_published || "",
+            publicationDate: row.year_published || toDateString(row.created_at) || "",
             authors: row.authors || "Unavailable",
             badge: row.evidence_type || "Publication",
         }));
@@ -270,9 +313,17 @@ export async function getDashboardSummary() {
             publicationCount,
             speciesWithBiomarkerData,
             speciesWithConopeptides,
+            subgenusCount,
+            provinceCount,
+            speciesWithSequenceData,
+            superfamilyCount: new Set(conopeptideRows.map((row) => row.superfamily).filter(Boolean)).size,
+            uniquePeptideCount,
+            biomarkerTypeCount,
+            biomarkerCoveragePercent,
             linkedSpeciesCoverage,
             linkedConopeptideCoverage,
             linkedBiomarkerCoverage,
+            linkedPublicationCount,
         },
         metrics: [
             { icon: null, label: "Total Species", value: String(speciesCount), description: "Live record count from Supabase." },
@@ -295,12 +346,13 @@ export async function getDashboardSummary() {
                 viewAllTo: "/visualization/species",
                 metricValue: String(speciesCountsByName[0]?.value ?? speciesCount),
                 metricDescription: topSpeciesName,
-                chartData: entriesFromCountMap(countBy(speciesRows, (row) => row.province)).map((item) => ({
+                    chartData: entriesFromCountMap(countBy(uniqueSpecies, (row) => row.province)).map((item) => ({
                     name: item.name,
                     value: item.value,
                 })),
-                listItems: speciesCountsByName,
-                listTitle: "Top 5 Most Sequenced Species",
+                subgenusChartData: speciesSubgenusData,
+                listItems: topSpeciesWithSequenceData,
+                listTitle: "Top 10 Species with Sequence Data",
                 ctaLabel: "Explore Species",
                 ctaTo: "/visualization/species",
             },
@@ -313,6 +365,7 @@ export async function getDashboardSummary() {
                 metricDescription: topConopeptideSpecies,
                 chartData: superfamilyCounts.map((item) => ({ name: item.name, value: item.value })),
                 listItems: conopeptideCountsBySpecies,
+                tableRows: conopeptideTopRows,
                 listTitle: "Top Species",
                 ctaLabel: "Explore Conopeptides",
                 ctaTo: "/visualization/conopeptides",
@@ -326,15 +379,17 @@ export async function getDashboardSummary() {
                 metricDescription: topBiomarkerSpecies,
                 chartData: markerTypeCounts.map((item) => ({ name: item.name, value: item.value })),
                 listItems: biomarkerCountsBySpecies,
+                tableRows: biomarkerTopRows,
                 listTitle: "Top Species",
                 ctaLabel: "Explore Biomarkers",
                 ctaTo: "/visualization/biomarkers",
             },
         ],
-        speciesAreaData: entriesFromCountMap(countBy(speciesRows, (row) => row.province)).map((item) => ({
+        speciesAreaData: entriesFromCountMap(countBy(uniqueSpecies, (row) => row.province)).map((item) => ({
             province: item.name,
             Species: item.value,
         })),
+        speciesSubgenusData,
         biomarkerBarData: provinceCounts.map((item) => ({
             name: item.name,
             value: item.value,
@@ -358,8 +413,8 @@ export async function getDashboardSummary() {
                 },
                 {
                     label: "Linked publications",
-                    value: String(linkedSpeciesCoverage + linkedConopeptideCoverage + linkedBiomarkerCoverage),
-                    hint: "Cross-links captured across the loaded records",
+                    value: String(linkedPublicationCount),
+                    hint: "Unique publications linked to at least one catalog record",
                 },
             ],
             highlights: [

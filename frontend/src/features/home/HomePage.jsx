@@ -40,6 +40,15 @@ export default function HomePage() {
           <p className="mx-auto max-w-3xl text-[clamp(1rem,1.7vw,1.4rem)] leading-6 text-brand-700 sm:leading-7">
             Database for Philippine Cone Snails and Conopeptides
           </p>
+          <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
+            <Button as={Link} to="/visualization" variant="primary" size="lg">
+              Explore visualizations
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button as={Link} to="/species" variant="outline" size="lg">
+              Browse species
+            </Button>
+          </div>
         </div>
         <div className="relative mt-4 h-[210px] w-full overflow-visible sm:mt-8 sm:h-[300px] md:h-[330px] xl:h-[370px]">
           <HomeShellBackdrop />

@@ -1,18 +1,13 @@
-import { useEffect, useState } from 'react'
-import { BarChart, BarList, DonutChart } from '@tremor/react'
-
 import ChartCard from '@/features/visualization/components/ChartCard'
+import { DonutViz, HorizontalBarChart, VerticalBarChart } from '@/features/visualization/components/DataVizPrimitives'
+import VisualizationMetricPill from '@/features/visualization/components/VisualizationMetricPill'
 import VisualizationLayout from '@/features/visualization/components/VisualizationLayout'
-import { fetchDashboardSummary } from '@/services/catalogService'
+import { useVisualizationSummary } from '@/features/visualization/hooks/useVisualizationSummary'
+import { VisualizationErrorState, VisualizationLoadingState } from '@/features/visualization/components/VisualizationDataStates'
 import {
   speciesOverviewBreadcrumbs,
   speciesOverviewMeta,
-  speciesOverviewMetrics,
-  speciesProvinceCoverage,
   speciesProvinceLegend,
-  speciesSubgenusLegend,
-  speciesSubgenusChartData,
-  speciesTopSequencedSpecies,
   visualizationMapPreview,
 } from '@/features/visualization/data/visualizationMockData'
 
@@ -47,69 +42,30 @@ function ZoomControl() {
 }
 
 function MetricJoinCard({ metric }) {
-  const Icon = metric.icon
-
-  return (
-    <div className="join-item flex min-w-0 flex-1 gap-3 border border-[var(--app-border)] bg-white p-3 sm:p-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
-        {Icon ? <Icon className="h-5 w-5" strokeWidth={1.8} /> : null}
-      </div>
-
-      <div className="min-w-0">
-        <p className="text-[1.35rem] font-semibold tracking-tight text-[var(--app-text)] sm:text-[1.5rem]">
-          {metric.value}
-        </p>
-        <p className="mt-0.5 text-[0.82rem] font-semibold text-brand-700">{metric.label}</p>
-        {metric.description ? (
-          <p className="mt-1 text-[0.82rem] leading-5 text-[var(--app-muted)]">{metric.description}</p>
-        ) : null}
-      </div>
-    </div>
-  )
+  return <VisualizationMetricPill metric={metric} />
 }
 
 export default function SpeciesOverviewPage() {
-  const [summary, setSummary] = useState(null)
+  const { summary, loading, error, reload } = useVisualizationSummary()
 
-  useEffect(() => {
-    let active = true
-
-    async function load() {
-      try {
-        const data = await fetchDashboardSummary()
-        if (active) setSummary(data)
-      } catch {
-        if (active) setSummary(null)
-      }
-    }
-
-    load()
-
-    return () => {
-      active = false
-    }
-  }, [])
-
-  const liveMetrics = speciesOverviewMetrics.map((metric, index) => {
-    if (!summary) return metric
-    const values = [
-      summary.summary?.speciesCount,
-      summary.summary?.subgenusCount ?? metric.value,
-      summary.summary?.provinceCount ?? metric.value,
-      summary.summary?.speciesCount,
-    ]
-    return { ...metric, value: String(values[index] ?? metric.value) }
-  })
+  const liveMetrics = [
+    { label: 'Total Species', value: summary?.summary?.speciesCount ?? 0 },
+    { label: 'Subgenera', value: summary?.summary?.subgenusCount ?? 0 },
+    { label: 'Provinces', value: summary?.summary?.provinceCount ?? 0 },
+    { label: 'Species with Sequence Data', value: summary?.summary?.speciesWithSequenceData ?? 0 },
+  ].map((metric) => ({ ...metric, value: String(metric.value) }))
 
   const liveProvinceCoverage = summary?.speciesAreaData?.map((item) => ({
     province: item.province,
     Species: item.Species,
-  })) ?? speciesProvinceCoverage.map((item) => ({
-    province: item.label,
-    Species: item.value,
-  }))
+  })) ?? []
 
-  const liveTopSpecies = summary?.overviewCards?.find((card) => card.id === 'species')?.listItems ?? speciesTopSequencedSpecies
+  const liveTopSpecies = summary?.overviewCards?.find((card) => card.id === 'species')?.listItems ?? []
+  const liveSubgenusData = summary?.speciesSubgenusData ?? []
+  const liveSubgenusLegend = liveSubgenusData.map((item, index) => ({
+    label: item.name,
+    color: ['bg-slate-900', 'bg-[#9eb8e8]', 'bg-[#8be2b2]', 'bg-[#df9ee9]', 'bg-[#aac0e4]', 'bg-brand-200'][index % 6],
+  }))
 
   return (
     <VisualizationLayout
@@ -117,6 +73,9 @@ export default function SpeciesOverviewPage() {
       title={speciesOverviewMeta.title}
       subtitle={speciesOverviewMeta.subtitle}
     >
+      {loading ? <VisualizationLoadingState label="Loading species visualization" /> : null}
+      {error ? <VisualizationErrorState onRetry={reload} /> : null}
+      {loading || error ? null : <>
       <section className="join w-full flex-col overflow-hidden rounded-[1.5rem] border border-[var(--app-border)] bg-white shadow-[0_10px_26px_rgba(16,16,16,0.04)] xl:flex-row">
         {liveMetrics.map((metric) => (
           <MetricJoinCard key={metric.label} metric={metric} />
@@ -167,10 +126,7 @@ export default function SpeciesOverviewPage() {
           viewAllTo="/visualization/species"
           className="h-full"
         >
-          <BarList
-            data={liveTopSpecies.map((item) => ({ name: item.name, value: item.value }))}
-            valueFormatter={(value) => `${value}`}
-          />
+          <HorizontalBarChart data={liveTopSpecies} />
         </ChartCard>
 
         <ChartCard
@@ -181,18 +137,12 @@ export default function SpeciesOverviewPage() {
         >
           <div className="flex h-full flex-col gap-5">
             <div className="grid place-items-center">
-              <DonutChart
-                data={speciesSubgenusChartData}
-                category="name"
-                value="value"
-                variant="donut"
-                className="h-[260px] w-full"
-              />
+              <DonutViz data={liveSubgenusData} className="w-full" />
             </div>
 
             <div className="space-y-3">
               <ul className="grid gap-3 sm:grid-cols-2">
-                {speciesSubgenusLegend.map((item) => (
+                {liveSubgenusLegend.map((item) => (
                   <LegendItem key={item.label} label={item.label} color={item.color} />
                 ))}
               </ul>
@@ -205,16 +155,9 @@ export default function SpeciesOverviewPage() {
         title="Sequencing Coverage Across Provinces"
         subtitle="A lightweight support chart for province-level sequencing spread."
       >
-        <BarChart
-          data={liveProvinceCoverage}
-          index="province"
-          categories={['Species']}
-          colors={['indigo']}
-          yAxisWidth={40}
-          showLegend={false}
-          className="h-[340px]"
-        />
+        <VerticalBarChart data={liveProvinceCoverage} labelKey="province" valueKey="Species" />
       </ChartCard>
-      </VisualizationLayout>
+      </>}
+    </VisualizationLayout>
   )
 }

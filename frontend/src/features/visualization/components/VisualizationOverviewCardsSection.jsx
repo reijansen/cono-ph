@@ -1,8 +1,8 @@
-import { DonutChart, Metric } from '@tremor/react'
 import { Link } from 'react-router-dom'
 
 import Button from '@/components/ui/Button'
 import ChartCard from '@/features/visualization/components/ChartCard'
+import { DonutViz } from '@/features/visualization/components/DataVizPrimitives'
 
 function PreviewList({ title, items }) {
   return (
@@ -59,11 +59,11 @@ function OverviewPreviewCard({ card }) {
             </div>
           ) : (
             <div className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
-              <Metric className="text-[2rem] leading-none text-[var(--app-text)]">{metricValue}</Metric>
+              <div className="text-[2rem] leading-none text-[var(--app-text)]">{metricValue}</div>
 
               <div className="mt-5">
                 {hasChartData ? (
-                  <DonutChart data={card.chartData} category="name" value="value" variant="donut" className="h-72" />
+                  <DonutViz data={card.chartData} className="min-h-72" />
                 ) : (
                   <div className="flex h-72 items-center justify-center rounded-3xl border border-dashed border-[var(--app-border)] bg-white text-sm text-[var(--app-muted)]">
                     No chart data available
