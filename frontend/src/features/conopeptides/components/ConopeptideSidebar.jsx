@@ -1,172 +1,21 @@
-import { useEffect, useState } from 'react'
-import { Search } from 'lucide-react'
-
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
-import SelectWithChevron from '@/components/ui/SelectWithChevron'
-import { cn } from '@/utils/cn'
+import MultiSelectFilter from '@/components/ui/MultiSelectFilter'
 
-function TogglePill({ label, enabled, onClick }) {
+export default function ConopeptideSidebar({ filters = {}, options = {}, onFilterChange = () => {} }) {
+  const update = (patch) => onFilterChange({ ...filters, ...patch })
+  const reset = () => onFilterChange({ search: '', species: [], superfamily: [], cysteineFramework: [], hasMaturePeptideSequence: false })
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition',
-        enabled
-          ? 'border-brand-300 bg-brand-50 text-brand-800'
-          : 'border-[var(--app-border)] bg-white text-[var(--app-text)] hover:border-brand-200',
-      )}
-    >
-      <span className="font-medium">{label}</span>
-      <span
-        className={cn(
-          'inline-flex h-6 w-11 items-center rounded-full p-0.5 transition',
-          enabled ? 'justify-end bg-brand-700' : 'justify-start bg-[#b8b8b8]',
-        )}
-      >
-        <span className="h-5 w-5 rounded-full bg-white shadow-sm" />
-      </span>
-    </button>
-  )
-}
-
-export default function ConopeptideSidebar({
-  filters = {},
-  options = {},
-  onFilterChange = () => {},
-}) {
-  const [localFilters, setLocalFilters] = useState(filters)
-
-  useEffect(() => setLocalFilters(filters), [filters])
-
-  const updateLocalFilters = (patch) => {
-    setLocalFilters((current) => ({ ...current, ...patch }))
-  }
-
-  const updateAndApplyFilters = (patch) => {
-    setLocalFilters((current) => {
-      const nextFilters = { ...current, ...patch }
-      onFilterChange(nextFilters)
-      return nextFilters
-    })
-  }
-
-  const handleResetFilters = () => {
-    const resetFilters = {
-      search: '',
-      species: 'All Species',
-      superfamily: 'All Superfamilies',
-      cysteineFramework: 'All Cysteine Frameworks',
-      hasMaturePeptideSequence: 'all',
-    }
-
-    setLocalFilters(resetFilters)
-    onFilterChange(resetFilters)
-  }
-
-  const handleApplyFilters = () => {
-    onFilterChange(localFilters)
-  }
-
-  return (
-    <Card className="space-y-5 bg-[#ece8e8] p-4 sm:p-5">
-      <div className="space-y-4">
-        <label className="relative block">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--app-muted)]" />
-          <Input
-            type="search"
-            placeholder="Search by.."
-            aria-label="Search conopeptides"
-            value={localFilters.search || ''}
-            onChange={(e) => updateLocalFilters({ search: e.target.value })}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') handleApplyFilters()
-            }}
-            className="pl-11"
-          />
-        </label>
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Scientific Name</label>
-            <SelectWithChevron
-              value={localFilters.species || 'All Species'}
-              onChange={(e) => updateLocalFilters({ species: e.target.value })}
-              selectClassName="pr-12"
-            >
-              {(options.species || []).map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Gene Superfamily</label>
-            <SelectWithChevron
-              value={localFilters.superfamily || 'All Superfamilies'}
-              onChange={(e) => updateLocalFilters({ superfamily: e.target.value })}
-              selectClassName="pr-12"
-            >
-              {(options.superfamily || []).map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-black">Cysteine Framework</label>
-            <SelectWithChevron
-              value={localFilters.cysteineFramework || 'All Cysteine Frameworks'}
-              onChange={(e) => updateLocalFilters({ cysteineFramework: e.target.value })}
-              selectClassName="pr-12"
-            >
-              {(options.cysteineFramework || []).map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-          </div>
-
-          <div className="space-y-2">
-            <TogglePill
-              label="Has Mature Peptide Sequence"
-              enabled={localFilters.hasMaturePeptideSequence === 'yes'}
-              onClick={() =>
-                updateAndApplyFilters({
-                  hasMaturePeptideSequence:
-                    localFilters.hasMaturePeptideSequence === 'yes' ? 'all' : 'yes',
-                })
-              }
-            />
-          </div>
-        </div>
+    <Card className="space-y-4 bg-[#ece8e8] p-4 sm:p-5">
+      <Input type="search" placeholder="Search by.." aria-label="Search conopeptides" value={filters.search || ''} onChange={(event) => update({ search: event.target.value })} onKeyDown={(event) => { if (event.key === 'Enter') update({ search: filters.search || '' }) }} />
+      <div className="space-y-3">
+        <MultiSelectFilter label="Scientific names" options={options.species || []} value={filters.species} onChange={(value) => update({ species: value })} />
+        <MultiSelectFilter label="Gene superfamilies" options={options.superfamily || []} value={filters.superfamily} onChange={(value) => update({ superfamily: value })} />
+        <MultiSelectFilter label="Cysteine frameworks" options={options.cysteineFramework || []} value={filters.cysteineFramework} onChange={(value) => update({ cysteineFramework: value })} />
+        <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--app-border)] bg-white px-4 text-sm"><span>Has mature sequence</span><input type="checkbox" className="toggle toggle-success" checked={Boolean(filters.hasMaturePeptideSequence)} onChange={(event) => update({ hasMaturePeptideSequence: event.target.checked })} /></label>
       </div>
-
-      <div className="grid gap-3 pt-1 sm:grid-cols-2">
-        <Button
-          variant="outline"
-          size="md"
-          className="bg-white text-[var(--app-text)]"
-          onClick={handleResetFilters}
-        >
-          Reset All
-        </Button>
-        <Button
-          variant="primary"
-          size="md"
-          className="bg-brand-700"
-          onClick={handleApplyFilters}
-        >
-          Apply Filter
-        </Button>
-      </div>
+      <div className="grid gap-3 pt-1 sm:grid-cols-2"><Button variant="outline" className="bg-white" onClick={reset}>Reset All</Button><Button onClick={() => onFilterChange(filters)}>Apply Filters</Button></div>
     </Card>
   )
 }

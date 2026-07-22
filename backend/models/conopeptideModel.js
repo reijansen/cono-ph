@@ -132,9 +132,13 @@ export async function listConopeptides(filters = {}) {
         const searchable = normalize([row.accession, row.speciesName, row.superfamily, row.cysteineFramework, row.predictedPeptide, row.maturePeptideSequence, row.matchedToxin, row.doi].join(" "));
 
         if (searchTerm && !searchable.includes(searchTerm)) return false;
-        if (filters.species && !String(filters.species).startsWith("All ") && row.speciesName !== filters.species) return false;
-        if (filters.superfamily && !String(filters.superfamily).startsWith("All ") && row.superfamily !== filters.superfamily) return false;
-        if (filters.cysteineFramework && !String(filters.cysteineFramework).startsWith("All ") && row.cysteineFramework !== filters.cysteineFramework) return false;
+        const matches = (value, selected) => {
+            const values = (Array.isArray(selected) ? selected : [selected]).map((item) => String(item ?? "").trim()).filter((item) => item && !item.startsWith("All "));
+            return !values.length || values.includes(String(value ?? "").trim());
+        };
+        if (!matches(row.speciesName, filters.species)) return false;
+        if (!matches(row.superfamily, filters.superfamily)) return false;
+        if (!matches(row.cysteineFramework, filters.cysteineFramework)) return false;
         if ((filters.hasMaturePeptideSequence === "yes" || filters.hasPredictedPeptide === "yes") && !hasUsableSequence(row.maturePeptideSequence)) return false;
         return true;
     });

@@ -3,12 +3,15 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
 function buildPages(currentPage, totalPages) {
-  const pages = []
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1)
 
-  for (let page = 1; page <= totalPages; page += 1) {
-    pages.push(page)
-  }
-
+  const pages = [1]
+  const start = Math.max(2, currentPage - 1)
+  const end = Math.min(totalPages - 1, currentPage + 1)
+  if (start > 2) pages.push('ellipsis-start')
+  for (let page = start; page <= end; page += 1) pages.push(page)
+  if (end < totalPages - 1) pages.push('ellipsis-end')
+  pages.push(totalPages)
   return pages
 }
 
@@ -28,19 +31,10 @@ export default function Pagination({ page = 1, totalPages = 1, onPageChange, cla
         >
           <ChevronLeft className="h-4 w-4 shrink-0" />
         </button>
-        {pages.map((pageNumber) => (
-          <button
-            key={pageNumber}
-            type="button"
-            onClick={() => onPageChange?.(pageNumber)}
-            className={
-              pageNumber === page
-                ? 'btn btn-sm join-item border-brand-700 bg-brand-700 text-white hover:border-brand-700 hover:bg-brand-700'
-                : 'btn btn-sm join-item border-[var(--app-border)] bg-white text-[var(--app-text)] hover:border-brand-200 hover:bg-brand-50'
-            }
-          >
-            {pageNumber}
-          </button>
+        {pages.map((pageNumber) => pageNumber.toString().startsWith('ellipsis') ? (
+          <span key={pageNumber} className="btn btn-sm join-item cursor-default border-[var(--app-border)] bg-white text-[var(--app-muted)]">...</span>
+        ) : (
+          <button key={pageNumber} type="button" onClick={() => onPageChange?.(pageNumber)} className={pageNumber === page ? 'btn btn-sm join-item border-brand-700 bg-brand-700 text-white hover:border-brand-700 hover:bg-brand-700' : 'btn btn-sm join-item border-[var(--app-border)] bg-white text-[var(--app-text)] hover:border-brand-200 hover:bg-brand-50'}>{pageNumber}</button>
         ))}
         <button
           type="button"

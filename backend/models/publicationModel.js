@@ -132,8 +132,12 @@ export async function listPublications(filters = {}) {
         const searchable = normalize([row.id, row.title, row.authors, row.journal, row.doi, row.evidenceType].join(" "));
 
         if (searchTerm && !searchable.includes(searchTerm)) return false;
-        if (filters.year && !String(filters.year).startsWith("All ") && row.year !== filters.year) return false;
-        if (filters.journal && !String(filters.journal).startsWith("All ") && row.journal !== filters.journal) return false;
+        const matches = (value, selected) => {
+            const values = (Array.isArray(selected) ? selected : [selected]).map((item) => String(item ?? "").trim()).filter((item) => item && !item.startsWith("All "));
+            return !values.length || values.includes(String(value ?? "").trim());
+        };
+        if (!matches(row.year, filters.year)) return false;
+        if (!matches(row.journal, filters.journal)) return false;
         return true;
     });
 

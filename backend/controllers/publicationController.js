@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/apiError.js";
-import { parsePositiveInt, parseString } from "../utils/query.js";
+import { parsePositiveInt, parseString, parseStringArray } from "../utils/query.js";
 import {
     getPublicationById,
     listPublicationFilters,
@@ -15,8 +15,8 @@ export const getAllPublications = asyncHandler(async (req, res) => {
         search: parseString(req.query.search),
         sortBy: parseString(req.query.sortBy),
         order: parseString(req.query.order, "DESC"),
-        year: parseString(req.query.year),
-        journal: parseString(req.query.journal),
+        year: parseStringArray(req.query.year),
+        journal: parseStringArray(req.query.journal),
     });
 
     return sendSuccess(res, {

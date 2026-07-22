@@ -74,8 +74,8 @@ export function useBiomarkersExplorerController() {
 
   return {
     breadcrumbs: [{ label: 'Home', to: '/' }, { label: 'Biomarkers' }],
-    filters: { ...filters, markerType: filters.markerType || 'All Marker Types', species: filters.species || 'All Species', province: filters.province || 'All Provinces' },
-    filterOptions: { markerType: ['All Marker Types', ...(filterOptions.markerType || [])], species: ['All Species', ...(filterOptions.species || [])], province: ['All Provinces', ...(filterOptions.province || [])], status: filterOptions.status || [] },
+    filters,
+    filterOptions: { markerType: filterOptions.markerType || [], species: filterOptions.species || [], province: filterOptions.province || [], status: filterOptions.status || [] },
     handleFilterChange, handlePageChange: setPage, handleRowKeyDown,
     meta: { title: 'Biomarkers Explorer', subtitle: 'Explore biomarker records, marker types, and linked sequence evidence from Philippine cone snails.' },
     openBiomarker, pagination, resultCount: loading ? 'Loading' : `${(pagination.total || 0).toLocaleString()} results`, rows,

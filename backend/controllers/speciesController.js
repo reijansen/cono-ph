@@ -1,7 +1,7 @@
 import { ApiError } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
-import { parsePositiveInt, parseString } from "../utils/query.js";
+import { parsePositiveInt, parseString, parseStringArray } from "../utils/query.js";
 import {
     createSpecies,
     deleteSpecies,
@@ -18,10 +18,10 @@ export const getAllSpecies = asyncHandler(async (req, res) => {
         search: parseString(req.query.search),
         sortBy: parseString(req.query.sortBy, "createdAt"),
         order: parseString(req.query.order, "DESC"),
-        subgenus: parseString(req.query.subgenus),
-        province: parseString(req.query.province),
-        municipality: parseString(req.query.municipality),
-        diet: parseString(req.query.diet),
+        subgenus: parseStringArray(req.query.subgenus),
+        province: parseStringArray(req.query.province),
+        municipality: parseStringArray(req.query.municipality),
+        diet: parseStringArray(req.query.diet),
     });
 
     return sendSuccess(res, {

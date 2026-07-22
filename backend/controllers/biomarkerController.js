@@ -15,9 +15,9 @@ export const getAllBiomarkers = asyncHandler(async (req, res) => {
         search: parseString(req.query.search),
         sortBy: parseString(req.query.sortBy),
         order: parseString(req.query.order, "DESC"),
-        markerType: parseString(req.query.markerType),
-        species: parseString(req.query.species),
-        province: parseString(req.query.province),
+        markerType: parseStringArray(req.query.markerType),
+        species: parseStringArray(req.query.species),
+        province: parseStringArray(req.query.province),
         status: parseStringArray(req.query.status),
         hasAccession: parseBoolean(req.query.hasAccession),
     });

@@ -156,9 +156,13 @@ export async function listBiomarkers(filters = {}) {
         const searchable = normalize([row.biomarkerId, row.speciesId, row.speciesName, row.markerType, row.accession, row.sequence, row.province, row.validationStatus, row.publicationDoi].join(" "));
 
         if (searchTerm && !searchable.includes(searchTerm)) return false;
-        if (filters.markerType && !String(filters.markerType).startsWith("All ") && row.markerType !== filters.markerType) return false;
-        if (filters.species && !String(filters.species).startsWith("All ") && row.speciesName !== filters.species) return false;
-        if (filters.province && !String(filters.province).startsWith("All ") && row.province !== filters.province) return false;
+        const matches = (value, selected) => {
+            const values = (Array.isArray(selected) ? selected : [selected]).map((item) => String(item ?? "").trim()).filter((item) => item && !item.startsWith("All "));
+            return !values.length || values.includes(String(value ?? "").trim());
+        };
+        if (!matches(row.markerType, filters.markerType)) return false;
+        if (!matches(row.speciesName, filters.species)) return false;
+        if (!matches(row.province, filters.province)) return false;
         if (Array.isArray(filters.status) && filters.status.length > 0 && !filters.status.includes(normalizeStatus(row.validationStatus))) return false;
         if (filters.hasAccession && !String(row.accession ?? "").trim()) return false;
         return true;

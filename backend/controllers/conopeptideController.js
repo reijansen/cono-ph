@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/apiError.js";
-import { parsePositiveInt, parseString } from "../utils/query.js";
+import { parsePositiveInt, parseString, parseStringArray } from "../utils/query.js";
 import {
     getConopeptideById,
     listConopeptideFilters,
@@ -15,9 +15,9 @@ export const getAllConopeptides = asyncHandler(async (req, res) => {
         search: parseString(req.query.search),
         sortBy: parseString(req.query.sortBy),
         order: parseString(req.query.order, "DESC"),
-        species: parseString(req.query.species),
-        superfamily: parseString(req.query.superfamily),
-        cysteineFramework: parseString(req.query.cysteineFramework),
+        species: parseStringArray(req.query.species),
+        superfamily: parseStringArray(req.query.superfamily),
+        cysteineFramework: parseStringArray(req.query.cysteineFramework),
         hasMaturePeptideSequence: parseString(req.query.hasMaturePeptideSequence),
         hasPredictedPeptide: parseString(req.query.hasPredictedPeptide),
     });

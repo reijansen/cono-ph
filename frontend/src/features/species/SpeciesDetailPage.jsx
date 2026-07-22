@@ -7,8 +7,9 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Pagination from '@/components/ui/Pagination'
 import SearchInput from '@/components/ui/SearchInput'
-import SelectWithChevron from '@/components/ui/SelectWithChevron'
+import MultiSelectFilter from '@/components/ui/MultiSelectFilter'
 import { cn } from '@/utils/cn'
+import { matchesAnyFilter } from '@/utils/multiSelectFilters'
 import { fetchSpeciesDetail } from '@/services/catalogService'
 
 import speciesShellImage from '@/assets/HomeShell.png'
@@ -113,8 +114,8 @@ function ConopeptidesTab({ species }) {
   const conopeptides = Array.isArray(species.conopeptides) ? species.conopeptides : []
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [geneSuperfamily, setGeneSuperfamily] = useState('All Superfamilies')
-  const [cysteineFramework, setCysteineFramework] = useState('All Cysteine Frameworks')
+  const [geneSuperfamily, setGeneSuperfamily] = useState([])
+  const [cysteineFramework, setCysteineFramework] = useState([])
 
   const geneSuperfamilyOptions = useMemo(
     () => uniqueSorted(conopeptides.map((row) => row.geneSuperfamily ?? row.superfamily)),
@@ -126,16 +127,8 @@ function ConopeptidesTab({ species }) {
   )
   const filteredRows = useMemo(() => {
     return conopeptides.filter((row) => {
-      if (geneSuperfamily !== 'All Superfamilies' && row.geneSuperfamily !== geneSuperfamily && row.superfamily !== geneSuperfamily) {
-        return false
-      }
-      if (
-        cysteineFramework !== 'All Cysteine Frameworks' &&
-        row.framework !== cysteineFramework &&
-        row.cysteineFramework !== cysteineFramework
-      ) {
-        return false
-      }
+      if (!matchesAnyFilter([row.geneSuperfamily, row.superfamily], geneSuperfamily)) return false
+      if (!matchesAnyFilter([row.framework, row.cysteineFramework], cysteineFramework)) return false
 
       return matchesSearch(search, [
         row.conopeptideId,
@@ -171,10 +164,11 @@ function ConopeptidesTab({ species }) {
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-wrap xl:items-end">
+          <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-nowrap xl:items-end">
             <SearchInput
               placeholder="Search by.."
-              className="w-full lg:max-w-[328px]"
+              className="w-full xl:flex-1 xl:max-w-none"
+              inputClassName="h-11"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               onKeyDown={(event) => {
@@ -185,29 +179,8 @@ function ConopeptidesTab({ species }) {
               }}
             />
 
-            <SelectWithChevron
-              value={geneSuperfamily}
-              onChange={(event) => setGeneSuperfamily(event.target.value)}
-            >
-              <option>All Superfamilies</option>
-              {geneSuperfamilyOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-
-            <SelectWithChevron
-              value={cysteineFramework}
-              onChange={(event) => setCysteineFramework(event.target.value)}
-            >
-              <option>All Cysteine Frameworks</option>
-              {frameworkOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
+            <MultiSelectFilter className="xl:flex-1" label="Gene superfamilies" options={geneSuperfamilyOptions} value={geneSuperfamily} onChange={setGeneSuperfamily} />
+            <MultiSelectFilter className="xl:flex-1" label="Cysteine frameworks" options={frameworkOptions} value={cysteineFramework} onChange={setCysteineFramework} />
           </div>
 
           <div className="grid w-full grid-cols-2 self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm sm:w-auto sm:inline-flex xl:self-auto">
@@ -224,8 +197,8 @@ function ConopeptidesTab({ species }) {
               className="px-5 py-3 text-sm font-medium text-[var(--app-muted)] transition hover:bg-brand-50 hover:text-brand-700"
               onClick={() => {
                 setSearch('')
-                setGeneSuperfamily('All Superfamilies')
-                setCysteineFramework('All Cysteine Frameworks')
+                setGeneSuperfamily([])
+                setCysteineFramework([])
                 setPage(1)
               }}
             >
@@ -303,9 +276,9 @@ function SpecimensTab({ species }) {
   const specimens = Array.isArray(species.specimens) ? species.specimens : []
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [province, setProvince] = useState('All Provinces')
-  const [repository, setRepository] = useState('All Repositories')
-  const [sequencingPlatform, setSequencingPlatform] = useState('All Platforms')
+  const [province, setProvince] = useState([])
+  const [repository, setRepository] = useState([])
+  const [sequencingPlatform, setSequencingPlatform] = useState([])
 
   const provinceOptions = useMemo(() => uniqueSorted(specimens.map((specimen) => specimen.province)), [specimens])
   const repositoryOptions = useMemo(() => uniqueSorted(specimens.map((specimen) => specimen.repository)), [specimens])
@@ -315,9 +288,9 @@ function SpecimensTab({ species }) {
   )
   const filteredRows = useMemo(() => {
     return specimens.filter((specimen) => {
-      if (province !== 'All Provinces' && specimen.province !== province) return false
-      if (repository !== 'All Repositories' && specimen.repository !== repository) return false
-      if (sequencingPlatform !== 'All Platforms' && specimen.sequencingPlatform !== sequencingPlatform) return false
+      if (!matchesAnyFilter(specimen.province, province)) return false
+      if (!matchesAnyFilter(specimen.repository, repository)) return false
+      if (!matchesAnyFilter(specimen.sequencingPlatform, sequencingPlatform)) return false
 
       return matchesSearch(search, [
         specimen.specimenId,
@@ -355,10 +328,11 @@ function SpecimensTab({ species }) {
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-wrap xl:items-end">
+          <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-nowrap xl:items-end">
             <SearchInput
               placeholder="Search by.."
-              className="w-full lg:max-w-[328px]"
+              className="w-full xl:flex-1 xl:max-w-none"
+              inputClassName="h-11"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               onKeyDown={(event) => {
@@ -369,35 +343,9 @@ function SpecimensTab({ species }) {
               }}
             />
 
-            <SelectWithChevron value={province} onChange={(event) => setProvince(event.target.value)}>
-              <option>All Provinces</option>
-              {provinceOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-
-            <SelectWithChevron value={repository} onChange={(event) => setRepository(event.target.value)}>
-              <option>All Repositories</option>
-              {repositoryOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-
-            <SelectWithChevron
-              value={sequencingPlatform}
-              onChange={(event) => setSequencingPlatform(event.target.value)}
-            >
-              <option>All Platforms</option>
-              {platformOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
+            <MultiSelectFilter className="xl:flex-1" label="Provinces" options={provinceOptions} value={province} onChange={setProvince} />
+            <MultiSelectFilter className="xl:flex-1" label="Repositories" options={repositoryOptions} value={repository} onChange={setRepository} />
+            <MultiSelectFilter className="xl:flex-1" label="Sequencing platforms" options={platformOptions} value={sequencingPlatform} onChange={setSequencingPlatform} />
           </div>
 
           <div className="grid w-full grid-cols-2 self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm sm:w-auto sm:inline-flex xl:self-auto">
@@ -414,9 +362,9 @@ function SpecimensTab({ species }) {
               className="px-5 py-3 text-sm font-medium text-[var(--app-muted)] transition hover:bg-brand-50 hover:text-brand-700"
               onClick={() => {
                 setSearch('')
-                setProvince('All Provinces')
-                setRepository('All Repositories')
-                setSequencingPlatform('All Platforms')
+                setProvince([])
+                setRepository([])
+                setSequencingPlatform([])
                 setPage(1)
               }}
             >
@@ -554,15 +502,15 @@ function PublicationsTab({ species }) {
   const publications = Array.isArray(species.publications) ? species.publications : []
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [year, setYear] = useState('All Years')
-  const [journal, setJournal] = useState('All Journals')
+  const [year, setYear] = useState([])
+  const [journal, setJournal] = useState([])
 
   const yearOptions = useMemo(() => uniqueSorted(publications.map((publication) => publication.year)), [publications])
   const journalOptions = useMemo(() => uniqueSorted(publications.map((publication) => publication.journal)), [publications])
   const filteredRows = useMemo(() => {
     return publications.filter((publication) => {
-      if (year !== 'All Years' && publication.year !== year) return false
-      if (journal !== 'All Journals' && publication.journal !== journal) return false
+      if (!matchesAnyFilter(publication.year, year)) return false
+      if (!matchesAnyFilter(publication.journal, journal)) return false
 
       return matchesSearch(search, [
         publication.title,
@@ -598,10 +546,11 @@ function PublicationsTab({ species }) {
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-wrap xl:items-end">
+          <div className="flex flex-col gap-4 xl:flex-1 xl:flex-row xl:flex-nowrap xl:items-end">
             <SearchInput
               placeholder="Search by.."
-              className="w-full lg:max-w-[328px]"
+              className="w-full xl:flex-1 xl:max-w-none"
+              inputClassName="h-11"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               onKeyDown={(event) => {
@@ -612,23 +561,8 @@ function PublicationsTab({ species }) {
               }}
             />
 
-            <SelectWithChevron value={year} onChange={(event) => setYear(event.target.value)}>
-              <option>All Years</option>
-              {yearOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
-
-            <SelectWithChevron value={journal} onChange={(event) => setJournal(event.target.value)}>
-              <option>All Journals</option>
-              {journalOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectWithChevron>
+            <MultiSelectFilter className="xl:flex-1" label="Publication years" options={yearOptions} value={year} onChange={setYear} />
+            <MultiSelectFilter className="xl:flex-1" label="Journals" options={journalOptions} value={journal} onChange={setJournal} />
           </div>
 
           <div className="grid w-full grid-cols-2 self-start overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm sm:w-auto sm:inline-flex xl:self-auto">
@@ -645,8 +579,8 @@ function PublicationsTab({ species }) {
               className="px-5 py-3 text-sm font-medium text-[var(--app-muted)] transition hover:bg-brand-50 hover:text-brand-700"
               onClick={() => {
                 setSearch('')
-                setYear('All Years')
-                setJournal('All Journals')
+                setYear([])
+                setJournal([])
                 setPage(1)
               }}
             >

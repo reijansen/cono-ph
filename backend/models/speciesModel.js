@@ -238,12 +238,15 @@ function splitMultiValue(value) {
 }
 
 function includesFilterValue(rowValue, filterValue) {
-    if (!filterValue || String(filterValue).startsWith("All ")) return true;
-
-    return String(rowValue ?? "")
+    const selected = (Array.isArray(filterValue) ? filterValue : [filterValue])
+        .map((value) => String(value ?? "").trim())
+        .filter((value) => value && !value.startsWith("All "));
+    if (!selected.length) return true;
+    const rowValues = String(rowValue ?? "")
         .split(",")
         .map((value) => value.trim())
-        .includes(String(filterValue).trim());
+        .filter(Boolean);
+    return selected.some((value) => rowValues.includes(value));
 }
 
 function aggregateSpeciesRows(rows) {
