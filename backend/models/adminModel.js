@@ -434,16 +434,28 @@ export async function importAdminCsv(resourceName, { filename = "dataset.csv", c
             continue;
         }
 
-        validRows.push(Object.fromEntries(resource.columns.map((column) => [column, column in data ? data[column] : null])));
+        validRows.push({
+            data,
+            presentColumns: new Set(Object.keys(data)),
+        });
     }
 
-    const existingRows = await getExistingRowsByIds(resource, validRows.map((row) => row[resource.idColumn]));
-    const updatedCount = validRows.filter((row) => existingRows.has(String(row[resource.idColumn]))).length;
+    const existingRows = await getExistingRowsByIds(resource, validRows.map((row) => row.data[resource.idColumn]));
+    const updatedCount = validRows.filter((row) => existingRows.has(String(row.data[resource.idColumn]))).length;
     const createdCount = validRows.length - updatedCount;
+    const upsertRows = validRows.map(({ data, presentColumns }) => {
+        const id = data[resource.idColumn];
+        const existing = existingRows.get(String(id));
+
+        return Object.fromEntries(resource.columns.map((column) => [
+            column,
+            presentColumns.has(column) ? data[column] : existing?.[column] ?? null,
+        ]));
+    });
 
     await archiveExistingRecords(
         resourceName,
-        validRows
+        upsertRows
             .map((row) => {
                 const id = row[resource.idColumn];
                 const existing = existingRows.get(String(id));
@@ -452,7 +464,7 @@ export async function importAdminCsv(resourceName, { filename = "dataset.csv", c
             .filter(Boolean),
     );
 
-    await upsertImportRows(resource, validRows);
+    await upsertImportRows(resource, upsertRows);
 
     const log = {
         log_id: crypto.randomUUID(),

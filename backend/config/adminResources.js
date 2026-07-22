@@ -1,5 +1,19 @@
 const resourceOrder = ["species", "conopeptides", "biomarkers", "publications", "taxonomy", "archive", "datasetLogs"];
 
+function normalizeSpeciesImagePath(value) {
+    const imagePath = String(value ?? "").trim();
+    if (!imagePath) return "";
+
+    const dashboardBucketMatch = imagePath.match(/\/storage\/files\/buckets\/species-images\/?([^?#]*)/i);
+    if (dashboardBucketMatch?.[1]) {
+        return dashboardBucketMatch[1].replace(/^\/+/, "");
+    }
+
+    return imagePath
+        .replace(/^\/?species-image\//i, "species-images/")
+        .replace(/^\/+/, "");
+}
+
 export const adminResources = {
     species: {
         table: "species",
@@ -45,10 +59,25 @@ export const adminResources = {
             "Tissue source": "tissue_source",
             "Raw data in NCBI SRA": "raw_data_in_ncbi_sra",
             "Shell image": "shell_image",
+            "Shell Image": "shell_image",
+            "Shell image path": "shell_image",
+            "Shell Image Path": "shell_image",
+            "Shell image URL": "shell_image",
+            "Shell Image URL": "shell_image",
+            "Image": "shell_image",
+            "Image URL": "shell_image",
+            "Image path": "shell_image",
+            "Species image": "shell_image",
+            "Species image URL": "shell_image",
+            "Photo": "shell_image",
             "Project": "project",
             "DOI": "doi",
             "Status": "status",
         },
+        importDefaults: (data) => ({
+            ...data,
+            ...("shell_image" in data ? { shell_image: normalizeSpeciesImagePath(data.shell_image) } : {}),
+        }),
         types: {
             num_conopeptides: "number",
             raw_data_in_ncbi_sra: "boolean",
