@@ -52,7 +52,7 @@ export default function BiomarkersExplorerPage() {
             <thead>
               <tr className="bg-brand-50/45 text-left text-[0.72rem] uppercase tracking-[0.16em] text-[var(--app-muted)]">
                 {[
-                  'Biomarker ID',
+                  'Barcode ID',
                   'Marker Type',
                   'Species',
                   'Accession Number',

@@ -92,12 +92,22 @@ const BIOMARKER_SELECT = sql`
     SELECT
         biomarker_id AS "biomarkerId",
         species_id AS "speciesId",
-        species_name AS "speciesName"
+        species_name AS "speciesName",
+        sequence
     FROM biomarker
 `;
 
 function normalize(value) {
     return String(value ?? "").toLowerCase();
+}
+
+function hasUsableSequence(value) {
+    const sequence = String(value ?? "").trim();
+    const normalized = normalize(sequence);
+    if (!sequence || ["unavailable", "n/a", "na", "none", "-"].includes(normalized)) return false;
+
+    const compactSequence = sequence.toUpperCase().replace(/[\s.-]/g, "");
+    return compactSequence.length >= 10 && /^[ACGTURYSWKMBDHVN]+$/.test(compactSequence);
 }
 
 function normalizeDoi(value) {
@@ -280,7 +290,10 @@ function countRelatedBiomarkers(rows, species, specimenIds = []) {
     const speciesName = normalize(species?.scientificName);
     const specimenSet = new Set(specimenIds.map(String));
     const relatedIds = rows
-        .filter((row) => specimenSet.has(String(row.speciesId)) || (speciesName && normalize(row.speciesName) === speciesName))
+        .filter((row) => {
+            const matchesSpecies = specimenSet.has(String(row.speciesId)) || (speciesName && normalize(row.speciesName) === speciesName);
+            return matchesSpecies && hasUsableSequence(row.sequence);
+        })
         .map((row) => String(row.biomarkerId ?? "").trim())
         .filter(Boolean);
 

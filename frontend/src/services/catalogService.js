@@ -52,6 +52,15 @@ function normalizeText(value) {
   return String(value ?? '').trim().toLowerCase()
 }
 
+function hasUsableSequence(value) {
+  const sequence = String(value ?? '').trim()
+  const normalized = normalizeText(sequence)
+  if (!sequence || ['unavailable', 'n/a', 'na', 'none', '-'].includes(normalized)) return false
+
+  const compactSequence = sequence.toUpperCase().replace(/[\s.-]/g, '')
+  return compactSequence.length >= 10 && /^[ACGTURYSWKMBDHVN]+$/.test(compactSequence)
+}
+
 function normalizeDoi(value) {
   return String(value ?? '')
     .trim()
@@ -154,6 +163,7 @@ function normalizeBiomarkerRow(row) {
     species: String(row.speciesName ?? row.species ?? ''),
     accession: String(row.accession ?? 'Unavailable'),
     sequenceLength: String(row.sequenceLength ?? 'Unavailable'),
+    sequence: String(row.sequence ?? ''),
     province: String(row.province ?? ''),
     status: String(row.validationStatus ?? row.status ?? 'Unavailable'),
     publicationDoi: String(row.publicationDoi ?? row.publication_doi ?? ''),
@@ -256,7 +266,6 @@ async function withPublicationFallback(detail) {
 
 async function withBiomarkerCountFallback(detail) {
   if (!detail) return detail
-  if (detail.molecular && detail.molecular.totalRecordedBiomarkers != null) return detail
 
   try {
     const biomarkers = await fetchBiomarkerExplorerRows()
@@ -268,6 +277,7 @@ async function withBiomarkerCountFallback(detail) {
     )
     const matchedBiomarkerIds = biomarkers
       .filter((biomarker) => {
+        if (!hasUsableSequence(biomarker.sequence)) return false
         if (biomarker.speciesId && specimenIds.has(biomarker.speciesId)) return true
         return scientificName && normalizeText(biomarker.species) === scientificName
       })

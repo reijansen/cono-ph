@@ -167,6 +167,7 @@ export default function BiomarkerDetailPage() {
   }
 
   const generalInformationItems = [
+    { label: 'Barcode ID', value: getTopSummaryValue('Barcode ID') || record.biomarkerId },
     { label: 'Scientific Name', value: getTopSummaryValue('Species Name') },
     { label: 'Specimen ID', value: getTopSummaryValue('Specimen ID') },
     { label: 'Province', value: getTopSummaryValue('Collection Province') },

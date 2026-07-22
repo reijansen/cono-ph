@@ -71,15 +71,16 @@ function mapBiomarkerDetail(row) {
         subtitle: "Biomarker Record",
         status,
         topSummaryItems: [
+            { label: "Barcode ID", value: row.biomarkerId || "Unavailable" },
             { label: "Species Name", value: row.speciesName || "Unavailable" },
-            { label: "Specimen ID", value: row.biomarkerId || "Unavailable" },
+            { label: "Specimen ID", value: row.speciesId || "Unavailable" },
             { label: "Gene Marker", value: row.markerType || "Unavailable" },
             { label: "Collection Province", value: row.province || "Unavailable" },
             { label: "Validation Status", value: status },
         ],
         overview: {
             fields: [
-                { label: "Biomarker ID", value: row.biomarkerId || "Unavailable" },
+                { label: "Barcode ID", value: row.biomarkerId || "Unavailable" },
                 { label: "Species Name", value: row.speciesName || "Unavailable" },
                 { label: "Gene Marker", value: row.markerType || "Unavailable" },
                 { label: "External Accession", value: row.accession || "Unavailable" },
@@ -114,9 +115,9 @@ function mapBiomarkerDetail(row) {
         },
         metadataTab: {
             rows: [
-                { label: "Biomarker ID", value: row.biomarkerId || "Unavailable" },
+                { label: "Barcode ID", value: row.biomarkerId || "Unavailable" },
                 { label: "Species Name", value: row.speciesName || "Unavailable" },
-                { label: "Specimen ID", value: row.biomarkerId || "Unavailable" },
+                { label: "Specimen ID", value: row.speciesId || "Unavailable" },
                 { label: "Collection Province", value: row.province || "Unavailable" },
                 { label: "Collection Site (Municipality)", value: row.municipality || "Unavailable" },
                 { label: "Source Method", value: row.sourceMethod || "Unavailable" },

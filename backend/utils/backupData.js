@@ -199,12 +199,12 @@ export async function loadBiomarkerSeedRows() {
 
     return records
         .map((record) => {
-            const biomarkerId = String(record["Specimen ID"] ?? record.biomarkerId ?? record.biomarker_id ?? "");
+            const biomarkerId = String(record["Barcode ID"] ?? record["Biomarker ID"] ?? record.biomarkerId ?? record.biomarker_id ?? "");
 
             return {
                 biomarker_id: biomarkerId,
                 species_name: String(record["Species Name"] ?? record.species ?? ""),
-                species_id: String(record["Species ID"] ?? record.speciesId ?? record.species_id ?? ""),
+                species_id: String(record["Specimen ID"] ?? record["Species ID"] ?? record.speciesId ?? record.species_id ?? ""),
                 marker_type: String(record["Gene Marker"] ?? record.markerType ?? record.marker_type ?? "Unavailable"),
                 province: String(record.Province ?? record.province ?? ""),
                 municipality: String(record.Municipality ?? record.municipality ?? ""),
@@ -243,7 +243,7 @@ export async function loadPublicationSeedRows() {
             );
             const linkedBiomarkers = uniqueCount(
                 biomarkerRows.filter((biomarker) => doiListIncludes(biomarker["Publication DOI"] ?? biomarker.publicationDoi ?? biomarker.publication_doi, doi)),
-                (biomarker) => biomarker["Specimen ID"] ?? biomarker.biomarkerId ?? biomarker.biomarker_id,
+                (biomarker) => biomarker["Barcode ID"] ?? biomarker["Biomarker ID"] ?? biomarker.biomarkerId ?? biomarker.biomarker_id,
             );
 
             return {

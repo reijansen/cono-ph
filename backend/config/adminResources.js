@@ -177,7 +177,8 @@ export const adminResources = {
         importAliases: {
             "Species Name": "species_name",
             "Barcode ID": "biomarker_id",
-            "Specimen ID": "biomarker_id",
+            "Biomarker ID": "biomarker_id",
+            "Specimen ID": "species_id",
             "Species ID": "species_id",
             "Gene Marker": "marker_type",
             "Province": "province",
