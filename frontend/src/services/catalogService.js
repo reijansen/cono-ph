@@ -32,6 +32,7 @@ function normalizeSpeciesRow(row) {
     diet: String(row.diet ?? row.diet_type ?? ''),
     sequencingPlatform: String(row.sequencingPlatform ?? row.sequencing_platform ?? ''),
     tissueSource: String(row.tissueSource ?? row.tissue_source ?? ''),
+    specimenDepositories: String(row.specimenDepositories ?? row.specimen_depositories ?? row.specimenRepository ?? row.specimen_repository ?? ''),
     rawDataInNcbiSra: Boolean(row.rawDataInNcbiSra ?? row.raw_data_in_ncbi_sra ?? false),
     image: String(row.image ?? ''),
     imageFallback: String(row.imageFallback ?? row.image_fallback ?? ''),
@@ -89,7 +90,7 @@ function buildSpecimensFromSpeciesRows(detail, rows) {
   return matchingRows.map((row) => ({
     specimenId: row.speciesId,
     author: 'Unavailable',
-    repository: 'Unavailable',
+    repository: row.specimenDepositories || 'Unavailable',
     province: row.province || 'Unavailable',
     municipality: row.municipality || 'Unavailable',
     tissueSource: row.tissueSource || 'Unavailable',

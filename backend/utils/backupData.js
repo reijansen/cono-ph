@@ -126,6 +126,7 @@ export async function loadSpeciesSeedRows() {
                 tissue_source: String(record["Tissue source"] ?? record.tissueSource ?? record.tissue_source ?? taxonomic.tissue_source ?? ""),
                 raw_data_in_ncbi_sra: toBoolean(record.rawDataInNcbiSra ?? record.raw_data_in_ncbi_sra),
                 shell_image: normalizeImage(record["Shell image"] ?? record.image ?? record.imageUrl ?? record.image_url),
+                specimen_depositories: String(record["Specimen Depositories"] ?? record.specimenDepositories ?? record.specimen_depositories ?? record.specimenRepository ?? ""),
                 project: String(record.Project ?? record.project ?? ""),
                 doi: String(record.DOI ?? record.doi ?? ""),
                 status: String(record.DOI ?? record.status ?? "Published") === "Unpublished" ? "Unpublished" : "Published",

@@ -20,6 +20,7 @@ const SPECIES_SELECT = sql`
         tissue_source AS "tissueSource",
         raw_data_in_ncbi_sra AS "rawDataInNcbiSra",
         shell_image AS image,
+        specimen_depositories AS "specimenDepositories",
         project,
         doi,
         status,
@@ -249,6 +250,7 @@ function aggregateSpeciesRows(rows) {
             municipality: joinUnique(group, "municipality"),
             sequencingPlatform: joinUnique(group, "sequencingPlatform"),
             tissueSource: joinUnique(group, "tissueSource"),
+            specimenDepositories: joinUnique(group, "specimenDepositories"),
             project: joinUnique(group, "project"),
             doi: joinUnique(group, "doi"),
             status: joinUnique(group, "status", primary.status),
@@ -263,7 +265,7 @@ function mapSpecimenRows(rows) {
     return rows.map((row) => ({
         specimenId: row.speciesId,
         author: "Unavailable",
-        repository: "Unavailable",
+        repository: row.specimenDepositories || "Unavailable",
         province: row.province || "Unavailable",
         municipality: row.municipality || "Unavailable",
         tissueSource: row.tissueSource || "Unavailable",
@@ -321,7 +323,7 @@ function mapSpeciesDetail(species, taxonomy, conopeptides, publications, specime
             province: species.province || "Unavailable",
             municipality: species.municipality || "Unavailable",
             psgc: "Unavailable",
-            specimenRepository: "Unavailable",
+            specimenRepository: species.specimenDepositories || "Unavailable",
             tissueSource: species.tissueSource || taxonomy?.tissueSource || "Unavailable",
         },
         molecular: {
@@ -369,6 +371,7 @@ function mapSpeciesRow(row) {
         diet: row.diet,
         sequencingPlatform: row.sequencingPlatform,
         tissueSource: row.tissueSource,
+        specimenDepositories: row.specimenDepositories,
         rawDataInNcbiSra: row.rawDataInNcbiSra,
         image: resolveShellImageUrl(row.image),
         imageFallback: toPublicImagePath(row.image),
@@ -483,6 +486,7 @@ export async function createSpecies(data) {
             tissue_source,
             raw_data_in_ncbi_sra,
             shell_image,
+            specimen_depositories,
             project,
             doi,
             status
@@ -503,6 +507,7 @@ export async function createSpecies(data) {
             ${String(data.tissue_source ?? data.tissueSource ?? "")},
             ${Boolean(data.raw_data_in_ncbi_sra ?? data.rawDataInNcbiSra ?? false)},
             ${String(data.shell_image ?? data.image ?? "")},
+            ${String(data.specimen_depositories ?? data.specimenDepositories ?? data.specimen_repository ?? data.specimenRepository ?? "")},
             ${String(data.project ?? "")},
             ${String(data.doi ?? "")},
             ${String(data.status ?? "Published")}
@@ -535,6 +540,7 @@ export async function updateSpecies(speciesId, data) {
         tissue_source: String(data.tissue_source ?? data.tissueSource ?? current[0].tissueSource ?? ""),
         raw_data_in_ncbi_sra: Boolean(data.raw_data_in_ncbi_sra ?? data.rawDataInNcbiSra ?? current[0].rawDataInNcbiSra ?? false),
         shell_image: String(data.shell_image ?? data.image ?? current[0].image ?? ""),
+        specimen_depositories: String(data.specimen_depositories ?? data.specimenDepositories ?? data.specimen_repository ?? data.specimenRepository ?? current[0].specimenDepositories ?? ""),
         project: String(data.project ?? current[0].project ?? ""),
         doi: String(data.doi ?? current[0].doi ?? ""),
         status: String(data.status ?? current[0].status ?? "Published"),
@@ -558,6 +564,7 @@ export async function updateSpecies(speciesId, data) {
             tissue_source = ${next.tissue_source},
             raw_data_in_ncbi_sra = ${next.raw_data_in_ncbi_sra},
             shell_image = ${next.shell_image},
+            specimen_depositories = ${next.specimen_depositories},
             project = ${next.project},
             doi = ${next.doi},
             status = ${next.status}

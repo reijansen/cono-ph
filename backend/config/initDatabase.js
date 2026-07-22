@@ -26,6 +26,7 @@ async function createTables() {
             tissue_source TEXT,
             raw_data_in_ncbi_sra BOOLEAN DEFAULT FALSE,
             shell_image TEXT,
+            specimen_depositories TEXT,
             project TEXT,
             doi TEXT,
             status TEXT DEFAULT 'Published',
@@ -146,6 +147,11 @@ async function createTables() {
         ALTER COLUMN percent_similarity TYPE TEXT
         USING percent_similarity::TEXT;
     `;
+
+    await sql`
+        ALTER TABLE species
+        ADD COLUMN IF NOT EXISTS specimen_depositories TEXT;
+    `;
 }
 
 async function seedTable({ tableName, idColumn, rows, columns }) {
@@ -190,6 +196,7 @@ export async function initializeDatabase() {
             "tissue_source",
             "raw_data_in_ncbi_sra",
             "shell_image",
+            "specimen_depositories",
             "project",
             "doi",
             "status",
