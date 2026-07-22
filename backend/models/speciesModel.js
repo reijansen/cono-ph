@@ -87,6 +87,14 @@ const PUBLICATION_SELECT = sql`
     FROM publication
 `;
 
+const BIOMARKER_SELECT = sql`
+    SELECT
+        biomarker_id AS "biomarkerId",
+        species_id AS "speciesId",
+        species_name AS "speciesName"
+    FROM biomarker
+`;
+
 function normalize(value) {
     return String(value ?? "").toLowerCase();
 }
@@ -266,7 +274,18 @@ function mapSpecimenRows(rows) {
     }));
 }
 
-function mapSpeciesDetail(species, taxonomy, conopeptides, publications, specimens = []) {
+function countRelatedBiomarkers(rows, species, specimenIds = []) {
+    const speciesName = normalize(species?.scientificName);
+    const specimenSet = new Set(specimenIds.map(String));
+    const relatedIds = rows
+        .filter((row) => specimenSet.has(String(row.speciesId)) || (speciesName && normalize(row.speciesName) === speciesName))
+        .map((row) => String(row.biomarkerId ?? "").trim())
+        .filter(Boolean);
+
+    return new Set(relatedIds).size;
+}
+
+function mapSpeciesDetail(species, taxonomy, conopeptides, publications, specimens = [], totalRecordedBiomarkers = 0) {
     if (!species) return null;
 
     const scientificName = species.scientificName || taxonomy?.scientificName || "";
@@ -308,9 +327,8 @@ function mapSpeciesDetail(species, taxonomy, conopeptides, publications, specime
         molecular: {
             specimensSequenced: String(specimens.length || 1),
             totalConopeptides: String(totalConopeptides),
-            totalGeneSuperfamilies: "Unavailable",
             sequencingPlatform: species.sequencingPlatform || "Unavailable",
-            coiMarker: "Unavailable",
+            totalRecordedBiomarkers: String(totalRecordedBiomarkers),
             rawDataAvailable: species.rawDataInNcbiSra ? "Available" : "Unavailable",
             sraAccession: "Unavailable",
         },
@@ -413,6 +431,7 @@ export async function getSpeciesById(speciesId) {
     const specimenDoiEntries = speciesRows.flatMap((row) => splitDoiList(row.doi)
         .map((doi) => ({ specimenId: row.speciesId, doi })));
     const specimenDois = specimenDoiEntries.map((entry) => entry.doi);
+    const totalRecordedBiomarkers = countRelatedBiomarkers(await BIOMARKER_SELECT, species, specimenIds);
 
     const relatedPublications = (await PUBLICATION_SELECT).map((row) => {
         const title = normalize(row.title);
@@ -433,7 +452,7 @@ export async function getSpeciesById(speciesId) {
         };
     }).filter(Boolean);
 
-    return mapSpeciesDetail(species, taxonomyRows[0] ?? null, relatedConopeptides, relatedPublications, mapSpecimenRows(speciesRows));
+    return mapSpeciesDetail(species, taxonomyRows[0] ?? null, relatedConopeptides, relatedPublications, mapSpecimenRows(speciesRows), totalRecordedBiomarkers);
 }
 
 export async function createSpecies(data) {

@@ -649,9 +649,11 @@ export default function SpeciesDetailPage() {
                 items={[
                   { label: 'Specimens Sequenced', value: species.molecular.specimensSequenced },
                   { label: 'Total Conopeptides', value: species.molecular.totalConopeptides },
-                  { label: 'Total Gene Superfamilies', value: species.molecular.totalGeneSuperfamilies },
                   { label: 'Sequencing Platform', value: species.molecular.sequencingPlatform },
-                  { label: 'COI Marker', value: species.molecular.coiMarker },
+                  {
+                    label: 'Total Recorded Biomarkers',
+                    value: species.molecular.totalRecordedBiomarkers ?? 'Unavailable',
+                  },
                   {
                     label: 'Raw Data Availability in NCBI SRA',
                     value: species.molecular.rawDataAvailable,

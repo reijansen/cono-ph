@@ -147,6 +147,7 @@ function normalizeConopeptideRow(row) {
 function normalizeBiomarkerRow(row) {
   return {
     biomarkerId: String(row.biomarkerId ?? ''),
+    speciesId: String(row.speciesId ?? row.species_id ?? ''),
     markerType: String(row.markerType ?? ''),
     species: String(row.speciesName ?? row.species ?? ''),
     accession: String(row.accession ?? 'Unavailable'),
@@ -251,6 +252,38 @@ async function withPublicationFallback(detail) {
   }
 }
 
+async function withBiomarkerCountFallback(detail) {
+  if (!detail) return detail
+  if (detail.molecular && detail.molecular.totalRecordedBiomarkers != null) return detail
+
+  try {
+    const biomarkers = await fetchBiomarkerExplorerRows()
+    const scientificName = normalizeText(detail?.species?.scientificName)
+    const specimenIds = new Set(
+      (Array.isArray(detail.specimens) ? detail.specimens : [])
+        .map((specimen) => String(specimen.specimenId ?? '').trim())
+        .filter(Boolean),
+    )
+    const matchedBiomarkerIds = biomarkers
+      .filter((biomarker) => {
+        if (biomarker.speciesId && specimenIds.has(biomarker.speciesId)) return true
+        return scientificName && normalizeText(biomarker.species) === scientificName
+      })
+      .map((biomarker) => biomarker.biomarkerId)
+      .filter(Boolean)
+
+    return {
+      ...detail,
+      molecular: {
+        ...detail.molecular,
+        totalRecordedBiomarkers: String(new Set(matchedBiomarkerIds).size),
+      },
+    }
+  } catch {
+    return detail
+  }
+}
+
 async function fetchList(pathname, fallbackKey) {
   const response = await apiClient.get(pathname)
   if (!response.success) throw new Error(response.message || `Failed to fetch ${fallbackKey}`)
@@ -274,7 +307,8 @@ export async function fetchSpeciesDetail(speciesId) {
 
   const rows = await fetchSpeciesExplorerRows()
   const withSpecimens = withSpecimenFallback(detail, rows)
-  return withPublicationFallback(withSpecimens)
+  const withPublications = await withPublicationFallback(withSpecimens)
+  return withBiomarkerCountFallback(withPublications)
 }
 
 export async function fetchConopeptideExplorerRows() {
