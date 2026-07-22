@@ -15,7 +15,7 @@ export default function SpeciesExplorerFilters({ filters = {}, options = {}, onF
         <MultiSelectFilter label="Municipalities" options={options.municipality || []} value={filters.municipality} onChange={(value) => update({ municipality: value })} />
         <MultiSelectFilter label="Diet type" options={options.diet || []} value={filters.diet} onChange={(value) => update({ diet: value })} />
       </div>
-      <div className="grid gap-3 pt-1 sm:grid-cols-2"><Button variant="outline" className="bg-white" onClick={reset}>Reset All</Button><Button onClick={() => onFilterChange(filters)}>Apply Filters</Button></div>
+      <div className="grid gap-3 pt-1 sm:grid-cols-2"><Button variant="outline" className="bg-white" onClick={reset}>Reset All</Button><Button onClick={() => onFilterChange(filters)}>Apply</Button></div>
     </Card>
   )
 }

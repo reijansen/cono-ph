@@ -1,6 +1,6 @@
-import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { cn } from '@/utils/cn'
 
@@ -9,6 +9,7 @@ export default function ChartCard({
   subtitle,
   viewAllTo,
   viewAllLabel = 'View full list',
+  viewAllVariant = 'link',
   children,
   className,
 }) {
@@ -19,13 +20,16 @@ export default function ChartCard({
           <h2 className="text-[1.5rem] leading-none text-[var(--app-text)]">{title}</h2>
           {subtitle ? <p className="text-sm leading-6 text-[var(--app-muted)]">{subtitle}</p> : null}
         </div>
-        {viewAllTo ? (
+        {viewAllTo && viewAllVariant === 'button' ? (
+          <Button as={Link} to={viewAllTo} size="sm" className="shrink-0 rounded-xl px-4">
+            {viewAllLabel}
+          </Button>
+        ) : viewAllTo ? (
           <Link
             to={viewAllTo}
             className="inline-flex items-center gap-1 text-sm font-medium text-[var(--app-muted)] transition hover:text-brand-700"
           >
             <span>{viewAllLabel}</span>
-            <ArrowRight className="h-4 w-4" />
           </Link>
         ) : null}
       </div>

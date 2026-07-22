@@ -31,7 +31,8 @@ function OverviewPreviewCard({ card }) {
   return (
     <ChartCard
       title={card.title}
-      viewAllLabel={card.viewAllLabel}
+      viewAllLabel="Explore"
+      viewAllVariant="button"
       viewAllTo={card.viewAllTo}
       className="h-full"
     >

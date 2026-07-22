@@ -15,7 +15,7 @@ export default function ConopeptideSidebar({ filters = {}, options = {}, onFilte
         <MultiSelectFilter label="Cysteine frameworks" options={options.cysteineFramework || []} value={filters.cysteineFramework} onChange={(value) => update({ cysteineFramework: value })} />
         <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--app-border)] bg-white px-4 text-sm"><span>Has mature sequence</span><input type="checkbox" className="toggle toggle-success" checked={Boolean(filters.hasMaturePeptideSequence)} onChange={(event) => update({ hasMaturePeptideSequence: event.target.checked })} /></label>
       </div>
-      <div className="grid gap-3 pt-1 sm:grid-cols-2"><Button variant="outline" className="bg-white" onClick={reset}>Reset All</Button><Button onClick={() => onFilterChange(filters)}>Apply Filters</Button></div>
+      <div className="grid gap-3 pt-1 sm:grid-cols-2"><Button variant="outline" className="bg-white" onClick={reset}>Reset All</Button><Button onClick={() => onFilterChange(filters)}>Apply</Button></div>
     </Card>
   )
 }

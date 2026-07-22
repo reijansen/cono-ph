@@ -180,7 +180,7 @@ export async function getDashboardSummary() {
         sequenceLength: row.sequence_length ? `${row.sequence_length} bp` : "Unavailable",
         province: row.province || "Unavailable",
     }));
-    const topSpeciesWithSequenceData = speciesCountsByName.slice(0, 10);
+    const topSpeciesWithSequenceData = speciesCountsByName.slice(0, 5);
     const provinceCounts = entriesFromCountMap(countBy(biomarkerRows, (row) => row.province)).slice(0, 5);
     const superfamilyCounts = entriesFromCountMap(countBy(conopeptideRows, (row) => row.superfamily)).slice(0, 6);
     const markerTypeCounts = entriesFromCountMap(countBy(biomarkerRows, (row) => row.marker_type)).slice(0, 6);
@@ -342,7 +342,7 @@ export async function getDashboardSummary() {
         overviewCards: [
             {
                 id: "species",
-                title: "1. Species Overview",
+                title: "Species Overview",
                 previewTitle: "Species Distribution by Province",
                 viewAllTo: "/visualization/species",
                 metricValue: String(speciesCountsByName[0]?.value ?? speciesCount),
@@ -353,13 +353,13 @@ export async function getDashboardSummary() {
                 })),
                 subgenusChartData: speciesSubgenusData,
                 listItems: topSpeciesWithSequenceData,
-                listTitle: "Top 10 Species with Sequence Data",
+                listTitle: "Top 5 Species with Sequence Data",
                 ctaLabel: "Explore Species",
                 ctaTo: "/visualization/species",
             },
             {
                 id: "conopeptides",
-                title: "2. Conopeptide Overview",
+                title: "Conopeptide Overview",
                 previewTitle: "Conopeptide Superfamily Distribution",
                 viewAllTo: "/visualization/conopeptides",
                 metricValue: String(conopeptideCountsBySpecies[0]?.value ?? conopeptideCount),
@@ -373,7 +373,7 @@ export async function getDashboardSummary() {
             },
             {
                 id: "biomarkers",
-                title: "3. Biomarker Overview",
+                title: "Biomarker Overview",
                 previewTitle: "Marker Type Distribution",
                 viewAllTo: "/visualization/biomarkers",
                 metricValue: String(biomarkerCountsBySpecies[0]?.value ?? biomarkerCount),
