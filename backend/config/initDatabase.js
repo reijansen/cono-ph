@@ -65,7 +65,7 @@ async function createTables() {
             post_peptide_sequence TEXT,
             remarks_sequence TEXT,
             doi TEXT,
-            percent_similarity NUMERIC,
+            percent_similarity TEXT,
             source_percent_similarity TEXT,
             expression_value NUMERIC,
             precursor_length INTEGER,
@@ -139,6 +139,12 @@ async function createTables() {
             imported_by TEXT DEFAULT 'admin',
             imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+    `;
+
+    await sql`
+        ALTER TABLE conopeptide
+        ALTER COLUMN percent_similarity TYPE TEXT
+        USING percent_similarity::TEXT;
     `;
 }
 

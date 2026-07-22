@@ -180,7 +180,7 @@ export async function loadConopeptideSeedRows() {
                 post_peptide_sequence: String(record["Post Peptide Sequence"] ?? record.postPeptideSequence ?? record.post_peptide_sequence ?? ""),
                 remarks_sequence: String(record["Remarks for Sequence"] ?? record.remarkSequence ?? record.remarks_sequence ?? ""),
                 doi: String(record.DOI ?? record.doi ?? ""),
-                percent_similarity: toNumber(record["Percent Similarity"] ?? record.percentSimilarity ?? record.percent_similarity, null),
+                percent_similarity: String(record["Percent Similarity"] ?? record.percentSimilarity ?? record.percent_similarity ?? ""),
                 source_percent_similarity: String(record["Source of Percent Similarity"] ?? record.sourcePercentSimilarity ?? record.source_percent_similarity ?? ""),
                 expression_value: toNumber(record["Expression Value"] ?? record.expressionValue ?? record.expression_value, null),
                 precursor_length: toNumber(record["Length of Precursor Sequence"] ?? record.precursorLength ?? record.precursor_length, null),

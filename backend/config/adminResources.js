@@ -112,7 +112,6 @@ export const adminResources = {
             predicted_peptide: data.predicted_peptide || data.mature_peptide_sequence || "",
         }),
         types: {
-            percent_similarity: "number",
             expression_value: "number",
             precursor_length: "number",
             mature_length: "number",

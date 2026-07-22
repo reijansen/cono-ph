@@ -59,6 +59,11 @@ function StatItem({ value, label }) {
   )
 }
 
+function valueOrUnavailable(...values) {
+  const value = values.find((item) => String(item ?? '').trim())
+  return value == null ? 'Unavailable' : String(value)
+}
+
 function ConopeptidesTab({ species }) {
   const totalCount = species.statistics[0]?.value ?? species.conopeptides.length
   const [page, setPage] = useState(1)
@@ -142,7 +147,8 @@ function ConopeptidesTab({ species }) {
                 <th className="px-5 py-4">Gene Superfamily</th>
                 <th className="px-5 py-4">Framework</th>
                 <th className="px-5 py-4">Specimen ID</th>
-                <th className="px-5 py-4">Publication</th>
+                <th className="px-5 py-4">Matched Toxin</th>
+                <th className="px-5 py-4">Percent Similarity</th>
               </tr>
             </thead>
             <tbody>
@@ -164,7 +170,12 @@ function ConopeptidesTab({ species }) {
                   <td className="px-5 py-4 text-[var(--app-text)]">{row.geneSuperfamily}</td>
                   <td className="px-5 py-4 text-[var(--app-text)]">{row.framework}</td>
                   <td className="px-5 py-4 text-[var(--app-text)]">{row.specimenId}</td>
-                  <td className="px-5 py-4 text-[var(--app-text)]">{row.publication}</td>
+                  <td className="px-5 py-4 text-[var(--app-text)]">
+                    {valueOrUnavailable(row.matchedToxin, row.matched_toxin)}
+                  </td>
+                  <td className="px-5 py-4 text-[var(--app-text)]">
+                    {valueOrUnavailable(row.percentSimilarity, row.percent_similarity, row.sourcePercentSimilarity, row.source_percent_similarity)}
+                  </td>
                 </tr>
               ))}
             </tbody>

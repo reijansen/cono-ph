@@ -389,6 +389,9 @@ export async function getSpeciesById(speciesId) {
             geneSuperfamily: row.superfamily || "Unavailable",
             framework: row.framework || row.cysteineFramework || "Unavailable",
             specimenId: row.speciesId || "Unavailable",
+            matchedToxin: row.matchedToxin || "Unavailable",
+            percentSimilarity: String(row.percentSimilarity ?? "Unavailable"),
+            sourcePercentSimilarity: row.sourcePercentSimilarity || "Unavailable",
         }));
     const specimenDois = uniqueValues(speciesRows, "doi").map(normalize);
 
