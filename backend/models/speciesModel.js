@@ -283,6 +283,7 @@ function mapSpeciesDetail(species, taxonomy, conopeptides, publications, specime
             orderName: species.orderName || taxonomy?.orderName || "",
             familyName: species.familyName || taxonomy?.familyName || "",
             genusName: species.genusName || taxonomy?.genusName || "",
+            diet: species.diet || taxonomy?.organismsDiet || "",
             image: resolveShellImageUrl(species.image),
             imageFallback: toPublicImagePath(species.image),
         },

@@ -579,6 +579,9 @@ export default function SpeciesDetailPage() {
           <p className="mt-2 text-[1rem] text-[var(--app-muted)]">
             Subgenus: <span className="text-[var(--app-text)]">{species.species.subgenus}</span>
           </p>
+          <p className="mt-2 text-[1rem] text-[var(--app-muted)]">
+            Diet: <span className="text-[var(--app-text)]">{species.species.diet || species.taxonomy.organismsDiet || 'Unavailable'}</span>
+          </p>
 
           <div className="mt-8 border-t border-brand-300">
             <div className="grid divide-x divide-brand-300 sm:grid-cols-2 xl:grid-cols-5">
