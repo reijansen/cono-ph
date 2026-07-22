@@ -615,7 +615,7 @@ export default function SpeciesDetailPage() {
       {activeTab === 'overview' ? (
         <div className="space-y-8">
           <section className="grid gap-6 lg:grid-cols-3">
-            <SectionCard title="Taxonomy and Biological Information">
+            <SectionCard title="Taxonomy Information">
               <InfoList
                 items={[
                   { label: 'Scientific Name', value: species.taxonomy.scientificName },
@@ -625,8 +625,6 @@ export default function SpeciesDetailPage() {
                   { label: 'Family', value: species.taxonomy.familyName },
                   { label: 'Genus', value: species.taxonomy.genusName },
                   { label: 'Subgenus', value: species.taxonomy.subgenus },
-                  { label: 'Organisms Diet', value: species.taxonomy.organismsDiet },
-                  { label: 'Anatomical Sample', value: species.taxonomy.anatomicalSample },
                 ]}
               />
             </SectionCard>
@@ -659,70 +657,6 @@ export default function SpeciesDetailPage() {
                 ]}
               />
             </SectionCard>
-          </section>
-
-          <section>
-            <Card className="!p-0 overflow-hidden">
-              <div className="rounded-t-2xl bg-brand-700 px-5 py-4 text-[1rem] font-semibold text-white sm:text-[1.05rem]">
-                Publication Information
-              </div>
-
-              <div className="grid gap-8 px-5 py-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <div className="space-y-8">
-                  <div>
-                    <p className="text-[0.9rem] font-semibold text-[var(--app-muted)]">DOI</p>
-                    <a
-                      href={species.publication.doi}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-1 inline-flex break-all text-[1rem] text-[var(--app-muted)] underline underline-offset-2 transition hover:text-brand-700"
-                    >
-                      {species.publication.doi}
-                    </a>
-                  </div>
-
-                  <div>
-                    <p className="text-[0.9rem] font-semibold text-[var(--app-muted)]">Authors</p>
-                    <p className="mt-1 max-w-[34rem] text-[1rem] leading-7 text-[var(--app-muted)]">
-                      {species.publication.authors}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-8">
-                  <div>
-                    <p className="text-[0.9rem] font-semibold text-[var(--app-muted)]">Title of Paper</p>
-                    <p className="mt-1 max-w-[48rem] text-[1rem] leading-7 text-[var(--app-muted)]">
-                      {species.publication.title}
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <p className="text-[0.9rem] font-semibold text-[var(--app-muted)]">
-                        Associated Project
-                      </p>
-                      <p className="mt-1 text-[1rem] text-[var(--app-muted)]">
-                        {species.publication.project}
-                      </p>
-                    </div>
-
-                    <div className="flex items-end justify-start sm:justify-end">
-                      <Button
-                        as="a"
-                        href={species.publication.doi}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="gap-2 px-5"
-                      >
-                        View Publication
-                        <ArrowUpRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
           </section>
         </div>
       ) : activeTab === 'conopeptides' ? (
