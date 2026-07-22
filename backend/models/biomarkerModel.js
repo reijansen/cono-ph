@@ -22,6 +22,20 @@ function normalize(value) {
     return String(value ?? "").toLowerCase();
 }
 
+function getPublicBiomarkerRows(rows) {
+    const referencedSpeciesIds = new Set(
+        rows.map((row) => String(row?.speciesId ?? "").trim()).filter(Boolean),
+    );
+
+    return rows.filter((row) => !isLegacySpecimenIdRow(row, referencedSpeciesIds));
+}
+
+function isLegacySpecimenIdRow(row, referencedSpeciesIds = new Set()) {
+    const biomarkerId = String(row?.biomarkerId ?? "").trim();
+    const speciesId = String(row?.speciesId ?? "").trim();
+    return Boolean(biomarkerId && ((speciesId && biomarkerId === speciesId) || referencedSpeciesIds.has(biomarkerId)));
+}
+
 function buildPagination(total, page, limit) {
     return {
         page,
@@ -129,7 +143,7 @@ function mapBiomarkerDetail(row) {
 }
 
 export async function listBiomarkers(filters = {}) {
-    const rows = await BIOMARKER_SELECT;
+    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT);
     let filtered = rows.filter((row) => {
         const searchTerm = normalize(filters.search).trim();
         const searchable = normalize(Object.values(row).join(" "));
@@ -150,12 +164,12 @@ export async function listBiomarkers(filters = {}) {
 }
 
 export async function getBiomarkerById(biomarkerId) {
-    const rows = await sql`${BIOMARKER_SELECT} WHERE biomarker_id = ${biomarkerId}`;
+    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT).filter((row) => row.biomarkerId === biomarkerId);
     return mapBiomarkerDetail(rows[0] ?? null);
 }
 
 export async function listBiomarkerFilters() {
-    const rows = await BIOMARKER_SELECT;
+    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT);
     return {
         markerType: Array.from(new Set(rows.map((row) => row.markerType).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
         species: Array.from(new Set(rows.map((row) => row.speciesName).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
@@ -165,6 +179,6 @@ export async function listBiomarkerFilters() {
 }
 
 export async function getBiomarkerSummary() {
-    const rows = await BIOMARKER_SELECT;
+    const rows = getPublicBiomarkerRows(await BIOMARKER_SELECT);
     return { biomarkerCount: rows.length };
 }

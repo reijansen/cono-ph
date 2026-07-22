@@ -187,6 +187,16 @@ function normalizePublicationRow(row) {
   }
 }
 
+function onlyBarcodeBiomarkerRows(rows) {
+  const referencedSpeciesIds = new Set(rows.map((row) => row.speciesId).filter(Boolean))
+  return rows.filter((row) => {
+    if (!row.biomarkerId) return false
+    if (row.speciesId && row.biomarkerId === row.speciesId) return false
+    if (referencedSpeciesIds.has(row.biomarkerId)) return false
+    return true
+  })
+}
+
 function enrichPublicationLinkCounts(publications, speciesRows, conopeptideRows, biomarkerRows) {
   return publications.map((publication) => {
     const linkedSpecies = uniqueCount(
@@ -334,7 +344,7 @@ export async function fetchConopeptideDetail(accession) {
 
 export async function fetchBiomarkerExplorerRows() {
   const rows = await fetchList(`/biomarkers${toQueryString({ limit: explorerFetchLimit, sortBy: 'speciesName', order: 'ASC' })}`)
-  return rows.map(normalizeBiomarkerRow)
+  return onlyBarcodeBiomarkerRows(rows.map(normalizeBiomarkerRow))
 }
 
 export async function fetchBiomarkerDetail(biomarkerId) {
