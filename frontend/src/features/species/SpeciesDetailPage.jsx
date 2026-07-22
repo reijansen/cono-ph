@@ -42,7 +42,7 @@ function InfoList({ items }) {
 function SectionCard({ title, children, className }) {
   return (
     <Card className={cn('!p-0 overflow-hidden', className)}>
-      <div className="border-b border-[var(--app-border)] bg-brand-50/70 px-5 py-4 text-[1rem] font-semibold text-brand-700">
+      <div className="border-b border-[var(--app-border)] bg-white px-5 py-4 text-[1rem] font-semibold text-brand-700">
         {title}
       </div>
       <div className="overflow-hidden px-5 py-1">{children}</div>
@@ -52,9 +52,13 @@ function SectionCard({ title, children, className }) {
 
 function StatItem({ value, label }) {
   return (
-    <div className="flex min-h-[92px] flex-col items-center justify-center px-3 py-4 text-center">
-      <div className="text-[1.75rem] font-semibold leading-none text-brand-700">{value}</div>
-      <div className="mt-2 max-w-[10rem] text-[0.92rem] leading-5 text-[var(--app-muted)]">{label}</div>
+    <div className="join-item flex min-h-[104px] min-w-0 flex-1 basis-0 flex-col items-center justify-center border-b border-brand-300 bg-white px-3 py-4 text-center last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0 xl:px-4">
+      <div className="max-w-full break-words text-[clamp(1.15rem,1.9vw,1.65rem)] font-semibold leading-tight text-brand-700">
+        {value}
+      </div>
+      <div className="mt-2 max-w-full text-[0.85rem] leading-5 text-[var(--app-muted)] sm:max-w-[8.5rem]">
+        {label}
+      </div>
     </div>
   )
 }
@@ -69,6 +73,11 @@ function firstAuthorSurname(authors) {
   if (!firstAuthor) return 'Unavailable'
   const parts = firstAuthor.split(/\s+/).filter(Boolean)
   return parts.at(-1) || firstAuthor
+}
+
+function visibleHeaderStats(statistics = []) {
+  const hiddenLabels = new Set(['Raw Data in NCBI SRA'])
+  return statistics.filter((stat) => !hiddenLabels.has(stat.label))
 }
 
 function ConopeptidesTab({ species }) {
@@ -583,9 +592,9 @@ export default function SpeciesDetailPage() {
             Diet: <span className="text-[var(--app-text)]">{species.species.diet || species.taxonomy.organismsDiet || 'Unavailable'}</span>
           </p>
 
-          <div className="mt-8 border-t border-brand-300">
-            <div className="grid divide-x divide-brand-300 sm:grid-cols-2 xl:grid-cols-5">
-              {species.statistics.map((stat) => (
+          <div className="mt-8">
+            <div className="join join-vertical w-full overflow-hidden rounded-2xl border border-brand-300 bg-white lg:join-horizontal">
+              {visibleHeaderStats(species.statistics).map((stat) => (
                 <StatItem key={stat.label} value={stat.value} label={stat.label} />
               ))}
             </div>
@@ -593,8 +602,8 @@ export default function SpeciesDetailPage() {
         </div>
       </section>
 
-      <section className="border-b border-brand-300">
-        <div className="flex flex-wrap gap-x-5 gap-y-3 sm:gap-x-10">
+      <section>
+        <div className="flex flex-wrap gap-2 rounded-2xl border border-brand-200 bg-[#f7f6ef] p-2">
           {tabs.map((tab) => {
             const isActive = tab.value === activeTab
 
@@ -604,8 +613,10 @@ export default function SpeciesDetailPage() {
                 type="button"
                 onClick={() => setActiveTab(tab.value)}
                 className={cn(
-                  'rounded-t-xl border-b-2 border-transparent pb-4 text-[1rem] font-medium transition sm:text-[1.08rem]',
-                  isActive ? 'border-brand-500 text-brand-700' : 'text-brand-700/80 hover:text-brand-700',
+                  'rounded-xl px-4 py-2.5 text-[0.98rem] font-semibold text-brand-700 transition sm:px-6 sm:text-[1.04rem]',
+                  isActive
+                    ? 'bg-brand-700 text-white shadow-sm'
+                    : 'text-brand-700/80 hover:bg-white hover:text-brand-800',
                 )}
               >
                 {tab.label}
@@ -653,10 +664,6 @@ export default function SpeciesDetailPage() {
                   {
                     label: 'Total Recorded Biomarkers',
                     value: species.molecular.totalRecordedBiomarkers ?? 'Unavailable',
-                  },
-                  {
-                    label: 'Raw Data Availability in NCBI SRA',
-                    value: species.molecular.rawDataAvailable,
                   },
                   { label: 'SRA Accession', value: species.molecular.sraAccession },
                 ]}

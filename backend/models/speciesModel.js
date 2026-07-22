@@ -343,7 +343,6 @@ function mapSpeciesDetail(species, taxonomy, conopeptides, publications, specime
             { label: "Total Gene Superfamilies", value: "Unavailable" },
             { label: "Specimens Sequenced", value: String(specimens.length || 1) },
             { label: "Sequencing Platform", value: species.sequencingPlatform || "Unavailable" },
-            { label: "Raw Data in NCBI SRA", value: species.rawDataInNcbiSra ? "Available" : "Unavailable" },
         ],
         conopeptides,
         specimens,
