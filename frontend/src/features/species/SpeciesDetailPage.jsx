@@ -64,6 +64,13 @@ function valueOrUnavailable(...values) {
   return value == null ? 'Unavailable' : String(value)
 }
 
+function firstAuthorSurname(authors) {
+  const firstAuthor = String(authors ?? '').split(',')[0]?.trim()
+  if (!firstAuthor) return 'Unavailable'
+  const parts = firstAuthor.split(/\s+/).filter(Boolean)
+  return parts.at(-1) || firstAuthor
+}
+
 function ConopeptidesTab({ species }) {
   const totalCount = species.statistics[0]?.value ?? species.conopeptides.length
   const [page, setPage] = useState(1)
@@ -441,10 +448,55 @@ function PublicationsTab({ species }) {
         </div>
       </div>
 
-      <div className="space-y-5">
-        {species.publications.map((publication) => (
-          <PublicationCard key={publication.doi} publication={publication} />
-        ))}
+      <div className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-white shadow-sm">
+        <div className="-mx-4 overflow-x-auto sm:mx-0">
+          <table className="w-full min-w-[900px] border-collapse">
+            <thead className="bg-brand-50">
+              <tr className="text-left text-sm font-semibold text-brand-800">
+                <th className="px-5 py-4">Specimen ID</th>
+                <th className="px-5 py-4">Author</th>
+                <th className="px-5 py-4">Journal</th>
+                <th className="px-5 py-4">Year</th>
+                <th className="px-5 py-4">DOI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {species.publications.map((publication) => (
+                <tr
+                  key={publication.doi || publication.publicationId || publication.title}
+                  className="border-t border-[var(--app-border)] transition hover:bg-brand-50/60"
+                >
+                  <td className="px-5 py-4 align-top text-[var(--app-text)]">
+                    {publication.specimenId || publication.specimen_id || 'Unavailable'}
+                  </td>
+                  <td className="px-5 py-4 align-top text-[var(--app-text)]">
+                    {firstAuthorSurname(publication.authors)}
+                  </td>
+                  <td className="px-5 py-4 align-top text-[var(--app-text)]">
+                    {publication.journal || 'Unavailable'}
+                  </td>
+                  <td className="px-5 py-4 align-top text-[var(--app-text)]">
+                    {publication.year || 'Unavailable'}
+                  </td>
+                  <td className="break-all px-5 py-4 align-top text-[var(--app-text)]">
+                    {publication.doi && publication.doi !== 'Unavailable' ? (
+                      <a
+                        href={publication.doi.startsWith('http') ? publication.doi : `https://doi.org/${publication.doi}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline underline-offset-2 transition hover:text-brand-700"
+                      >
+                        {publication.doi}
+                      </a>
+                    ) : (
+                      'Unavailable'
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <Pagination page={page} totalPages={4} onPageChange={setPage} />

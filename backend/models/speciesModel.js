@@ -393,23 +393,38 @@ export async function getSpeciesById(speciesId) {
             percentSimilarity: String(row.percentSimilarity ?? "Unavailable"),
             sourcePercentSimilarity: row.sourcePercentSimilarity || "Unavailable",
         }));
-    const specimenDois = uniqueValues(speciesRows, "doi").map(normalize);
+    const specimenDoiEntries = speciesRows.flatMap((row) => uniqueValues([row], "doi")
+        .flatMap((doi) => String(doi).split(","))
+        .map((doi) => ({ specimenId: row.speciesId, doi: normalize(doi).trim() }))
+        .filter((entry) => entry.doi));
+    const specimenDois = specimenDoiEntries.map((entry) => entry.doi);
 
-    const relatedPublications = (await PUBLICATION_SELECT).filter((row) => {
+    const relatedPublications = (await PUBLICATION_SELECT).map((row) => {
         const title = normalize(row.title);
         const authors = normalize(row.authors);
         const doi = normalize(row.doi);
         const speciesName = normalize(species.scientificName);
-
-        return (
-            (speciesName && title.includes(speciesName)) ||
-            specimenDois.some((needle) => needle && (
-                doi.includes(needle) ||
-                title.includes(needle) ||
-                authors.includes(needle)
+        const matchedSpecimenIds = Array.from(new Set(specimenDoiEntries
+            .filter((entry) => entry.doi && (
+                doi.includes(entry.doi) ||
+                title.includes(entry.doi) ||
+                authors.includes(entry.doi)
             ))
-        );
-    });
+            .map((entry) => entry.specimenId)));
+        const matchedBySpeciesName = speciesName && title.includes(speciesName);
+        const matchedByDoi = specimenDois.some((needle) => needle && (
+            doi.includes(needle) ||
+            title.includes(needle) ||
+            authors.includes(needle)
+        ));
+
+        if (!matchedBySpeciesName && !matchedByDoi) return null;
+
+        return {
+            ...row,
+            specimenId: matchedSpecimenIds.length ? matchedSpecimenIds.join(", ") : specimenIds.join(", "),
+        };
+    }).filter(Boolean);
 
     return mapSpeciesDetail(species, taxonomyRows[0] ?? null, relatedConopeptides, relatedPublications, mapSpecimenRows(speciesRows));
 }
