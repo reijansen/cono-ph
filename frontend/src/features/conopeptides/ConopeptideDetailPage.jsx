@@ -124,6 +124,11 @@ function ArchitectureGrid({ items, copiedField, onCopy }) {
   )
 }
 
+function visibleTopSummaryItems(items = []) {
+  const hiddenLabels = new Set(['Species', 'Species ID'])
+  return items.filter((item) => !hiddenLabels.has(item.label))
+}
+
 export default function ConopeptideDetailPage() {
   const { id } = useParams()
   const [copiedField, setCopiedField] = useState('')
@@ -241,8 +246,8 @@ export default function ConopeptideDetailPage() {
         </Button>
       </section>
 
-      <section className="join join-vertical w-full overflow-hidden rounded-[1.5rem] border border-brand-100 bg-brand-100/60 sm:grid sm:grid-cols-2 sm:gap-px sm:rounded-[1.5rem] xl:grid-cols-6">
-        {record.topSummaryItems.map((item) => (
+      <section className="join join-vertical w-full overflow-hidden rounded-[1.5rem] border border-brand-100 bg-brand-100/60 sm:grid sm:grid-cols-2 sm:gap-px sm:rounded-[1.5rem] xl:grid-cols-4">
+        {visibleTopSummaryItems(record.topSummaryItems).map((item) => (
           <SummaryItem key={item.label} label={item.label} value={item.value} />
         ))}
       </section>

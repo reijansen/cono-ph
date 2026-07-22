@@ -79,8 +79,6 @@ function mapConopeptideDetail(row) {
         status: String(row.doi ?? "Unavailable") === "Unpublished" ? "Unpublished" : "Published",
         topSummaryItems: [
             { label: "Conopeptide ID", value: row.accession || "Unavailable" },
-            { label: "Species", value: row.speciesName || "Unavailable" },
-            { label: "Species ID", value: row.speciesId || "Unavailable" },
             { label: "Gene superfamily", value: row.superfamily || "Unavailable" },
             { label: "Precursor length", value: `${String(row.precursorLength ?? "Unavailable")} aa` },
             { label: "Cysteine Framework", value: row.cysteineFramework || "Unavailable" },
