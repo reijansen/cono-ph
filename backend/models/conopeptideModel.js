@@ -27,6 +27,11 @@ const CONOPEPTIDE_SELECT = sql`
     FROM conopeptide
 `;
 
+function formatMatchedToxin(value) {
+    const toxin = String(value ?? "").trim();
+    return toxin || "Unidentified";
+}
+
 function normalize(value) {
     return String(value ?? "").toLowerCase();
 }
@@ -107,7 +112,7 @@ function mapConopeptideDetail(row) {
             cysteineFramework: row.cysteineFramework || "Unavailable",
         },
         similarity: {
-            matchedToxin: row.matchedToxin || "Unavailable",
+            matchedToxin: formatMatchedToxin(row.matchedToxin),
             percentSimilarity: String(row.percentSimilarity ?? "Unavailable"),
             similaritySource: row.sourcePercentSimilarity || "Unavailable",
         },

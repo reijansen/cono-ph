@@ -165,7 +165,8 @@ export async function getDashboardSummary() {
     const conopeptideCountsBySpecies = topEntriesFromCountMap(countBy(conopeptideRows, (row) => row.species_name), 5);
     const biomarkerCountsBySpecies = topEntriesFromCountMap(countBy(biomarkerRows, (row) => row.species_name), 5);
     const conopeptideTopRows = conopeptideRows.slice(0, 10).map((row) => ({
-        name: row.matched_toxin || row.accession || "Unavailable",
+        name: row.accession || row.matched_toxin || "Unavailable",
+        matchedToxin: row.matched_toxin || "Unavailable",
         superfamily: row.superfamily || "Unavailable",
         framework: row.framework || "Unavailable",
         count: 1,

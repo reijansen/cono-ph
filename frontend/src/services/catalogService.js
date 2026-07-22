@@ -138,13 +138,15 @@ function withSpecimenFallback(detail, rows) {
 }
 
 function normalizeConopeptideRow(row) {
+  const matchedToxin = String(row.matchedToxin ?? row.matched_toxin ?? '').trim() || 'Unidentified'
+
   return {
     accession: String(row.accession ?? ''),
     superfamily: String(row.superfamily ?? ''),
     framework: String(row.framework ?? row.cysteineFramework ?? ''),
     predictedPeptide: String(row.predictedPeptide ?? ''),
     maturePeptideSequence: String(row.maturePeptideSequence ?? row.mature_peptide_sequence ?? ''),
-    matchedToxin: String(row.matchedToxin ?? ''),
+    matchedToxin,
     species: String(row.speciesName ?? row.species ?? ''),
     speciesId: String(row.speciesId ?? ''),
     specimenId: String(row.specimenId ?? row.speciesId ?? ''),
@@ -332,12 +334,12 @@ export async function fetchSpeciesDetail(speciesId) {
 }
 
 export async function fetchConopeptideExplorerRows() {
-  const result = await fetchConopeptideExplorerPage({ limit: 10000, sortBy: 'speciesName', order: 'ASC' })
+  const result = await fetchConopeptideExplorerPage({ limit: 10000, sortBy: 'matchedToxin', order: 'ASC' })
   return result.rows
 }
 
 export async function fetchConopeptideExplorerPage(params = {}) {
-  const response = await apiClient.get(`/conopeptides${toQueryString({ sortBy: 'speciesName', order: 'ASC', ...params })}`)
+  const response = await apiClient.get(`/conopeptides${toQueryString({ sortBy: 'matchedToxin', order: 'ASC', ...params })}`)
   if (!response.success) throw new Error(response.message || 'Failed to fetch conopeptides')
   return { rows: (response.data || []).map(normalizeConopeptideRow), pagination: response.pagination }
 }

@@ -109,12 +109,13 @@ export default function ConopeptideOverviewPage() {
         viewAllTo="/visualization/conopeptides"
       >
           <Table
-            columns={['Conopeptide / Toxin Name', 'Superfamily', 'Framework', 'Records', 'Linked Species']}
+            columns={['Conopeptide / Toxin Name', 'Matched Toxin', 'Superfamily', 'Framework', 'Records', 'Linked Species']}
             className="shadow-none"
           >
           {liveTopRows.map((row) => (
             <tr key={`${row.name}-${row.count}`} className="border-b border-[var(--app-border)] last:border-b-0">
               <td className="px-4 py-4 font-medium text-[var(--app-text)]">{row.name}</td>
+              <td className="px-4 py-4 text-[var(--app-muted)]">{row.matchedToxin}</td>
               <td className="px-4 py-4 text-[var(--app-muted)]">{row.superfamily}</td>
               <td className="px-4 py-4 text-[var(--app-muted)]">{row.framework}</td>
               <td className="px-4 py-4 text-[var(--app-muted)]">{row.count}</td>
