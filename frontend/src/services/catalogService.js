@@ -198,6 +198,59 @@ function enrichPublicationLinkCounts(publications, speciesRows, conopeptideRows,
   })
 }
 
+function buildPublicationsFromRows(detail, publications) {
+  const scientificName = normalizeText(detail?.species?.scientificName)
+  const specimens = Array.isArray(detail?.specimens) ? detail.specimens : []
+  const specimenDoiEntries = specimens.flatMap((specimen) =>
+    splitDoiList(specimen.doi).map((doi) => ({
+      doi,
+      specimenId: specimen.specimenId,
+    })),
+  )
+
+  return publications
+    .map((publication) => {
+      const publicationDoi = normalizeDoi(publication.doi)
+      const title = normalizeText(publication.title)
+      const matchedSpecimenIds = Array.from(
+        new Set(
+          specimenDoiEntries
+            .filter((entry) => publicationDoi && entry.doi === publicationDoi)
+            .map((entry) => entry.specimenId)
+            .filter(Boolean),
+        ),
+      )
+      const matchedBySpeciesName = scientificName && title.includes(scientificName)
+
+      if (!matchedSpecimenIds.length && !matchedBySpeciesName) return null
+
+      return {
+        ...publication,
+        specimenId: matchedSpecimenIds.length
+          ? matchedSpecimenIds.join(', ')
+          : specimens.map((specimen) => specimen.specimenId).filter(Boolean).join(', '),
+      }
+    })
+    .filter(Boolean)
+}
+
+async function withPublicationFallback(detail) {
+  if (!detail || (Array.isArray(detail.publications) && detail.publications.length > 0)) return detail
+
+  try {
+    const publications = await fetchPublicationExplorerRows()
+    const matchedPublications = buildPublicationsFromRows(detail, publications)
+    if (!matchedPublications.length) return detail
+
+    return {
+      ...detail,
+      publications: matchedPublications,
+    }
+  } catch {
+    return detail
+  }
+}
+
 async function fetchList(pathname, fallbackKey) {
   const response = await apiClient.get(pathname)
   if (!response.success) throw new Error(response.message || `Failed to fetch ${fallbackKey}`)
@@ -217,10 +270,11 @@ export async function fetchSpeciesExplorerRows() {
 
 export async function fetchSpeciesDetail(speciesId) {
   const detail = await fetchDetail(`/species/${speciesId}`, 'species detail')
-  if (!detail || (Array.isArray(detail.specimens) && detail.specimens.length > 0)) return detail
+  if (!detail) return detail
 
   const rows = await fetchSpeciesExplorerRows()
-  return withSpecimenFallback(detail, rows)
+  const withSpecimens = withSpecimenFallback(detail, rows)
+  return withPublicationFallback(withSpecimens)
 }
 
 export async function fetchConopeptideExplorerRows() {

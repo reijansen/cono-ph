@@ -91,6 +91,22 @@ function normalize(value) {
     return String(value ?? "").toLowerCase();
 }
 
+function normalizeDoi(value) {
+    return String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\/(dx\.)?doi\.org\//, "")
+        .replace(/^doi:\s*/, "")
+        .replace(/[.,;\s]+$/, "");
+}
+
+function splitDoiList(value) {
+    return String(value ?? "")
+        .split(/[,;]+/)
+        .map(normalizeDoi)
+        .filter((item) => item && item !== "unavailable" && item !== "unpublished");
+}
+
 function normalizeImagePath(value) {
     return String(value ?? "").trim();
 }
@@ -393,30 +409,20 @@ export async function getSpeciesById(speciesId) {
             percentSimilarity: String(row.percentSimilarity ?? "Unavailable"),
             sourcePercentSimilarity: row.sourcePercentSimilarity || "Unavailable",
         }));
-    const specimenDoiEntries = speciesRows.flatMap((row) => uniqueValues([row], "doi")
-        .flatMap((doi) => String(doi).split(","))
-        .map((doi) => ({ specimenId: row.speciesId, doi: normalize(doi).trim() }))
-        .filter((entry) => entry.doi));
+    const specimenDoiEntries = speciesRows.flatMap((row) => splitDoiList(row.doi)
+        .map((doi) => ({ specimenId: row.speciesId, doi })));
     const specimenDois = specimenDoiEntries.map((entry) => entry.doi);
 
     const relatedPublications = (await PUBLICATION_SELECT).map((row) => {
         const title = normalize(row.title);
         const authors = normalize(row.authors);
-        const doi = normalize(row.doi);
+        const doi = normalizeDoi(row.doi);
         const speciesName = normalize(species.scientificName);
         const matchedSpecimenIds = Array.from(new Set(specimenDoiEntries
-            .filter((entry) => entry.doi && (
-                doi.includes(entry.doi) ||
-                title.includes(entry.doi) ||
-                authors.includes(entry.doi)
-            ))
+            .filter((entry) => entry.doi && entry.doi === doi)
             .map((entry) => entry.specimenId)));
         const matchedBySpeciesName = speciesName && title.includes(speciesName);
-        const matchedByDoi = specimenDois.some((needle) => needle && (
-            doi.includes(needle) ||
-            title.includes(needle) ||
-            authors.includes(needle)
-        ));
+        const matchedByDoi = specimenDois.some((needle) => needle && needle === doi);
 
         if (!matchedBySpeciesName && !matchedByDoi) return null;
 
